@@ -1,0 +1,1 @@
+@extends('layouts.portal') @section('title','New category') @section('section','Publishing') @section('eyebrow','Taxonomy') @section('page-title','New category') @section('page-description','Create a discipline or nested subject area.') @section('content')<div class="portal-card"><div class="portal-card-body">@include('admin.categories._form')</div></div>@endsection

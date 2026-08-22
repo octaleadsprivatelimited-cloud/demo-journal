@@ -1,0 +1,148 @@
+name: demo-journal
+
+x-app: &app
+  build:
+    context: .
+    target: development
+  restart: unless-stopped
+  env_file:
+    - .env
+  environment:
+    APP_ENV: ${APP_ENV:-local}
+    APP_DEBUG: ${APP_DEBUG:-true}
+    APP_URL: ${APP_URL:-http://localhost:8080}
+    DB_CONNECTION: pgsql
+    DB_HOST: postgres
+    DB_PORT: 5432
+    DB_DATABASE: ${DB_DATABASE:-journal}
+    DB_USERNAME: ${DB_USERNAME:-journal}
+    DB_PASSWORD: ${DB_PASSWORD:-journal}
+    REDIS_HOST: redis
+    REDIS_PORT: 6379
+    CACHE_STORE: redis
+    QUEUE_CONNECTION: database
+    SESSION_DRIVER: database
+    RUN_MIGRATIONS: ${RUN_MIGRATIONS:-false}
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+  volumes:
+    - journal-storage:/var/www/html/storage/app
+
+services:
+  app:
+    <<: *app
+
+  web:
+    build:
+      context: .
+      target: web
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:80"
+    depends_on:
+      - app
+    volumes:
+      - journal-storage:/var/www/html/storage/app:ro
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/up"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  queue:
+    <<: *app
+    command: ["php", "artisan", "queue:work", "--queue=default,mail", "--sleep=2", "--tries=3", "--max-time=3600"]
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      APP_DEBUG: ${APP_DEBUG:-true}
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: ${DB_DATABASE:-journal}
+      DB_USERNAME: ${DB_USERNAME:-journal}
+      DB_PASSWORD: ${DB_PASSWORD:-journal}
+      REDIS_HOST: redis
+      CACHE_STORE: redis
+      QUEUE_CONNECTION: database
+      SESSION_DRIVER: database
+      RUN_MIGRATIONS: "false"
+
+  scheduler:
+    <<: *app
+    command: ["php", "artisan", "schedule:work"]
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      APP_DEBUG: ${APP_DEBUG:-true}
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: ${DB_DATABASE:-journal}
+      DB_USERNAME: ${DB_USERNAME:-journal}
+      DB_PASSWORD: ${DB_PASSWORD:-journal}
+      REDIS_HOST: redis
+      CACHE_STORE: redis
+      QUEUE_CONNECTION: database
+      SESSION_DRIVER: database
+      RUN_MIGRATIONS: "false"
+
+  test:
+    build:
+      context: .
+      target: development
+    profiles: ["tools"]
+    restart: "no"
+    env_file:
+      - .env
+    environment:
+      APP_ENV: testing
+      APP_DEBUG: "true"
+      DB_CONNECTION: sqlite
+      DB_DATABASE: ":memory:"
+      DB_URL: ""
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+      MAIL_MAILER: array
+      RUN_MIGRATIONS: "false"
+    command: ["php", "artisan", "test"]
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-journal}
+      POSTGRES_USER: ${DB_USERNAME:-journal}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-journal}
+    volumes:
+      - journal-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-journal} -d ${DB_DATABASE:-journal}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - journal-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    restart: unless-stopped
+    ports:
+      - "${MAILPIT_PORT:-8025}:8025"
+
+volumes:
+  journal-postgres:
+  journal-redis:
+  journal-storage:

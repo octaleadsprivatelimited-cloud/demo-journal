@@ -1,0 +1,17 @@
+.git
+.github
+.env
+.env.*
+!.env.example
+node_modules
+vendor
+storage/*.key
+storage/app/public
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*
+README.md
+docker-compose*.yml
+npm-debug.log*
+.phpunit.cache

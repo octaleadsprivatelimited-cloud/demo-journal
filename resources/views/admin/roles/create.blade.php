@@ -1,0 +1,1 @@
+@extends('layouts.portal') @section('title','New role') @section('section','Audience & system') @section('eyebrow','Granular access') @section('page-title','New custom role') @section('content')@include('admin.roles._form')@endsection

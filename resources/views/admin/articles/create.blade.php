@@ -1,0 +1,1 @@
+@extends('layouts.portal') @section('title','New editorial article') @section('section','Editorial') @section('eyebrow','Commission or publish') @section('page-title','New article') @section('page-description','Create a staff-owned draft with full author, media, and SEO metadata.') @section('content')@include('admin.articles._form')@endsection
