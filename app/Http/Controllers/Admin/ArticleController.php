@@ -120,8 +120,13 @@ final class ArticleController extends Controller
 
     public function action(ArticleActionRequest $request, Article $article, ArticleWorkflowService $workflow): RedirectResponse
     {
-        Gate::authorize('update', $article);
         $action = $request->string('action')->toString();
+        Gate::authorize(match ($action) {
+            'publish', 'unpublish', 'schedule' => 'publish',
+            'approve', 'reject', 'revision', 'assign_reviewer' => 'transition',
+            default => 'update',
+        }, $article);
+
         try {
             match ($action) {
                 'feature' => $article->update(['is_featured' => true]), 'unfeature' => $article->update(['is_featured' => false]),
@@ -146,7 +151,11 @@ final class ArticleController extends Controller
     {
         $articles = Article::query()->whereKey($request->input('article_ids'))->get();
         foreach ($articles as $article) {
-            Gate::authorize($request->input('action') === 'delete' ? 'delete' : 'update', $article);
+            Gate::authorize(match ($request->input('action')) {
+                'delete' => 'delete',
+                'publish' => 'publish',
+                default => 'update',
+            }, $article);
         }
         $completed = 0;
         $skipped = 0;

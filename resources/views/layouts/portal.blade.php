@@ -15,24 +15,54 @@
         <div class="portal-brand"><a href="{{ route('home') }}"><span class="portal-brand-mark">O</span><span><strong>{{ config('app.name', 'octaleads Journal') }}</strong><small>Editorial workspace</small></span></a><button type="button" data-sidebar-close aria-label="Close navigation"><x-portal.icon name="close" /></button></div>
         <nav aria-label="Workspace navigation">
             @if(auth()->user()->hasAnyRole('admin','super-admin','editor'))
+                @php
+                    $portalUser = auth()->user();
+                    $portalOverview = $portalUser->hasAnyRole('admin', 'super-admin')
+                        ? route('admin.dashboard')
+                        : route('editor.dashboard');
+                @endphp
                 <p class="portal-nav-label">Editorial</p>
-                <x-portal.nav-link :href="route('admin.dashboard')" icon="dashboard" :active="request()->routeIs('admin.dashboard')">Overview</x-portal.nav-link>
-                <x-portal.nav-link :href="route('admin.articles.index')" icon="article" :active="request()->routeIs('admin.articles.*')">Articles</x-portal.nav-link>
-                <x-portal.nav-link :href="route('admin.submissions.index')" icon="review" :active="request()->routeIs('admin.submissions.*')">Submissions</x-portal.nav-link>
-                <x-portal.nav-link :href="route('admin.reviews.index')" icon="review" :active="request()->routeIs('admin.reviews.*')">Reviews</x-portal.nav-link>
-                <p class="portal-nav-label">Publishing</p>
-                <x-portal.nav-link :href="route('admin.categories.index')" icon="folder" :active="request()->routeIs('admin.categories.*')">Categories</x-portal.nav-link>
-                <x-portal.nav-link :href="route('admin.tags.index')" icon="tag" :active="request()->routeIs('admin.tags.*')">Tags</x-portal.nav-link>
-                <x-portal.nav-link :href="route('admin.media.index')" icon="media" :active="request()->routeIs('admin.media.*')">Media library</x-portal.nav-link>
-                @if(auth()->user()->hasPermission('comments.moderate'))
+                @if($portalUser->hasPermission('dashboard.view'))
+                    <x-portal.nav-link :href="$portalOverview" icon="dashboard" :active="request()->routeIs('admin.dashboard', 'editor.dashboard')">Overview</x-portal.nav-link>
+                @endif
+                @if($portalUser->hasPermission('articles.view'))
+                    <x-portal.nav-link :href="route('admin.articles.index')" icon="article" :active="request()->routeIs('admin.articles.*')">Articles</x-portal.nav-link>
+                @endif
+                @if($portalUser->hasPermission('articles.review'))
+                    <x-portal.nav-link :href="route('admin.submissions.index')" icon="review" :active="request()->routeIs('admin.submissions.*')">Submissions</x-portal.nav-link>
+                    <x-portal.nav-link :href="route('admin.reviews.index')" icon="review" :active="request()->routeIs('admin.reviews.*')">Reviews</x-portal.nav-link>
+                @endif
+                @if($portalUser->hasPermission('categories.manage') || $portalUser->hasPermission('tags.manage') || $portalUser->hasPermission('media.manage') || $portalUser->hasPermission('comments.moderate'))
+                    <p class="portal-nav-label">Publishing</p>
+                @endif
+                @if($portalUser->hasPermission('categories.manage'))
+                    <x-portal.nav-link :href="route('admin.categories.index')" icon="folder" :active="request()->routeIs('admin.categories.*')">Categories</x-portal.nav-link>
+                @endif
+                @if($portalUser->hasPermission('tags.manage'))
+                    <x-portal.nav-link :href="route('admin.tags.index')" icon="tag" :active="request()->routeIs('admin.tags.*')">Tags</x-portal.nav-link>
+                @endif
+                @if($portalUser->hasPermission('media.manage'))
+                    <x-portal.nav-link :href="route('admin.media.index')" icon="media" :active="request()->routeIs('admin.media.*')">Media library</x-portal.nav-link>
+                @endif
+                @if($portalUser->hasPermission('comments.moderate'))
                     <x-portal.nav-link :href="route('admin.comments.index')" icon="review" :active="request()->routeIs('admin.comments.*')">Comments</x-portal.nav-link>
                 @endif
-                @if(auth()->user()->hasAnyRole('admin','super-admin'))
+                @if($portalUser->hasPermission('users.manage') || $portalUser->hasPermission('contacts.manage') || $portalUser->hasPermission('newsletter.manage') || $portalUser->hasPermission('settings.manage') || $portalUser->hasPermission('audit.view'))
                     <p class="portal-nav-label">Audience &amp; system</p>
+                @endif
+                @if($portalUser->hasPermission('users.manage'))
                     <x-portal.nav-link :href="route('admin.users.index')" icon="users" :active="request()->routeIs('admin.users.*')">People &amp; roles</x-portal.nav-link>
+                @endif
+                @if($portalUser->hasPermission('contacts.manage'))
                     <x-portal.nav-link :href="route('admin.contacts.index')" icon="mail" :active="request()->routeIs('admin.contacts.*')">Enquiries</x-portal.nav-link>
+                @endif
+                @if($portalUser->hasPermission('newsletter.manage'))
                     <x-portal.nav-link :href="route('admin.newsletter.index')" icon="mail" :active="request()->routeIs('admin.newsletter.*')">Newsletter</x-portal.nav-link>
+                @endif
+                @if($portalUser->hasPermission('settings.manage'))
                     <x-portal.nav-link :href="route('admin.settings.index')" icon="settings" :active="request()->routeIs('admin.settings.*')">Settings</x-portal.nav-link>
+                @endif
+                @if($portalUser->hasPermission('audit.view'))
                     <x-portal.nav-link :href="route('admin.audit.index')" icon="audit" :active="request()->routeIs('admin.audit.*')">Audit log</x-portal.nav-link>
                 @endif
             @elseif(auth()->user()->hasRole('reviewer'))
@@ -56,7 +86,7 @@
     </div>
 </div>
 @else
-<main class="auth-shell"><a class="auth-brand" href="{{ route('home') }}"><span class="portal-brand-mark">O</span><span><strong>{{ config('app.name', 'octaleads Journal') }}</strong><small>Journal of ideas &amp; inquiry</small></span></a><section class="auth-card"><div class="auth-card-head"><p class="portal-eyebrow">Secure author access</p><h1>@yield('page-title', 'Welcome')</h1><p>@yield('page-description')</p></div><x-portal.flash />@yield('content')</section><p class="auth-foot"><a href="{{ route('home') }}">← Return to the journal</a></p></main>
+<main class="auth-shell"><a class="auth-brand" href="{{ route('home') }}"><span class="portal-brand-mark">O</span><span><strong>{{ config('app.name', 'octaleads Journal') }}</strong><small>Journal of ideas &amp; inquiry</small></span></a><section class="auth-card"><div class="auth-card-head"><p class="portal-eyebrow">@yield('auth-eyebrow', 'Secure journal access')</p><h1>@yield('page-title', 'Welcome')</h1><p>@yield('page-description')</p></div><x-portal.flash />@yield('content')</section><p class="auth-foot"><a href="{{ route('home') }}">← Return to the journal</a></p></main>
 @endauth
 <script>{!! file_get_contents(resource_path('js/portal.js')) !!}</script>@stack('scripts')
 </body></html>

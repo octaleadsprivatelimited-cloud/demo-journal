@@ -11,26 +11,26 @@ class NewsletterSubscriberPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole('super-admin', 'admin');
+        return $user->hasPermission('newsletter.manage');
     }
 
     public function view(User $user, NewsletterSubscriber $subscriber): bool
     {
-        return $user->hasAnyRole('super-admin', 'admin');
+        return $user->hasPermission('newsletter.manage');
     }
 
     public function update(User $user, NewsletterSubscriber $subscriber): bool
     {
-        return $user->hasAnyRole('super-admin', 'admin');
+        return $user->hasPermission('newsletter.manage');
     }
 
     public function delete(User $user, NewsletterSubscriber $subscriber): bool
     {
-        return $user->hasAnyRole('super-admin', 'admin');
+        return $user->hasPermission('newsletter.manage');
     }
 
     public function export(User $user): bool
     {
-        return $user->hasAnyRole('super-admin', 'admin');
+        return $user->hasPermission('newsletter.manage');
     }
 }

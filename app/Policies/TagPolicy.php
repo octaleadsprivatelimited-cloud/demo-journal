@@ -21,21 +21,21 @@ class TagPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasAnyRole('super-admin', 'admin', 'editor');
+        return $user->hasPermission('tags.manage');
     }
 
     public function update(User $user, Tag $tag): bool
     {
-        return $user->hasAnyRole('super-admin', 'admin', 'editor');
+        return $user->hasPermission('tags.manage');
     }
 
     public function delete(User $user, Tag $tag): bool
     {
-        return $user->hasAnyRole('super-admin', 'admin');
+        return $user->hasPermission('tags.delete');
     }
 
     public function restore(User $user, Tag $tag): bool
     {
-        return $user->hasAnyRole('super-admin', 'admin');
+        return $user->hasPermission('tags.delete');
     }
 }

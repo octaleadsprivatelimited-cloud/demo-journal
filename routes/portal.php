@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\Author;
+use App\Http\Controllers\Editor;
 use App\Http\Controllers\Reviewer;
 use Illuminate\Support\Facades\Route;
 
@@ -29,8 +30,12 @@ Route::middleware(['auth', 'active', 'verified'])->group(function (): void {
         Route::get('/reviews/{review}/manuscript', [Reviewer\ReviewController::class, 'download'])->name('reviews.manuscript');
     });
 
-    Route::prefix('admin')->name('admin.')->middleware('role:editor,admin,super-admin')->group(function (): void {
-        Route::get('/', Admin\DashboardController::class)->name('dashboard');
+    Route::prefix('editor')->name('editor.')->middleware('role:editor')->group(function (): void {
+        Route::get('/dashboard', Editor\DashboardController::class)->name('dashboard');
+    });
+
+    Route::prefix('admin')->name('admin.')->middleware(['local-admin-bypass', 'role:editor,admin,super-admin'])->group(function (): void {
+        Route::get('/', Admin\DashboardController::class)->middleware('role:admin,super-admin')->name('dashboard');
         Route::post('/articles/bulk', [Admin\ArticleController::class, 'bulk'])->middleware('throttle:10,1')->name('articles.bulk');
         Route::post('/articles/{article}/restore', [Admin\ArticleController::class, 'restore'])->name('articles.restore');
         Route::post('/articles/{article}/action', [Admin\ArticleController::class, 'action'])->middleware('throttle:20,1')->name('articles.action');
@@ -38,8 +43,6 @@ Route::middleware(['auth', 'active', 'verified'])->group(function (): void {
         Route::resource('categories', Admin\CategoryController::class)->except('show');
         Route::post('/tags/{tag}/merge', [Admin\TagController::class, 'merge'])->name('tags.merge');
         Route::resource('tags', Admin\TagController::class)->except('show');
-        Route::resource('users', Admin\UserController::class)->except('show');
-        Route::resource('roles', Admin\RoleController::class)->except('show');
         Route::get('/media/{medium}/download', [Admin\MediaController::class, 'download'])->name('media.download');
         Route::resource('media', Admin\MediaController::class)->only(['index', 'store', 'edit', 'update', 'destroy'])->parameters(['media' => 'medium']);
         Route::get('/comments', [Admin\CommentController::class, 'index'])->name('comments.index');
@@ -59,11 +62,18 @@ Route::middleware(['auth', 'active', 'verified'])->group(function (): void {
         Route::delete('/newsletter-campaigns/{campaign}', [Admin\NewsletterSubscriberController::class, 'destroyCampaign'])->name('newsletter.campaigns.destroy');
         Route::get('/newsletter-subscribers', [Admin\NewsletterSubscriberController::class, 'index'])->name('newsletter.index');
         Route::delete('/newsletter-subscribers/{subscriber}', [Admin\NewsletterSubscriberController::class, 'destroy'])->name('newsletter.destroy');
-        Route::get('/settings', [Admin\SettingController::class, 'index'])->name('settings.index');
-        Route::put('/settings', [Admin\SettingController::class, 'update'])->name('settings.update');
         Route::resource('reviews', Admin\ReviewController::class)->only(['index', 'show', 'update']);
         Route::resource('submissions', Admin\SubmissionController::class)->only(['index', 'show', 'update']);
         Route::get('/audit-logs', [Admin\AuditLogController::class, 'index'])->name('audit.index');
         Route::get('/audit-logs/{auditLog}', [Admin\AuditLogController::class, 'show'])->name('audit.show');
+
+        Route::middleware('role:super-admin')->group(function (): void {
+            Route::post('/users/{user}/approve', [Admin\UserController::class, 'approve'])->middleware('throttle:20,1')->name('users.approve');
+            Route::post('/users/{user}/reject', [Admin\UserController::class, 'reject'])->middleware('throttle:20,1')->name('users.reject');
+            Route::resource('users', Admin\UserController::class)->except('show');
+            Route::resource('roles', Admin\RoleController::class)->except('show');
+            Route::get('/settings', [Admin\SettingController::class, 'index'])->name('settings.index');
+            Route::put('/settings', [Admin\SettingController::class, 'update'])->name('settings.update');
+        });
     });
 });

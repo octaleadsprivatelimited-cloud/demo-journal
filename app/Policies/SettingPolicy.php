@@ -11,26 +11,26 @@ class SettingPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole('super-admin', 'admin');
+        return $user->hasPermission('settings.manage');
     }
 
     public function view(User $user, Setting $setting): bool
     {
-        return $setting->is_public || $user->hasAnyRole('super-admin', 'admin');
+        return $setting->is_public || $user->hasPermission('settings.manage');
     }
 
     public function create(User $user): bool
     {
-        return $user->hasAnyRole('super-admin', 'admin');
+        return $user->hasPermission('settings.manage');
     }
 
     public function update(User $user, Setting $setting): bool
     {
-        return $user->hasAnyRole('super-admin', 'admin');
+        return $user->hasPermission('settings.manage');
     }
 
     public function delete(User $user, Setting $setting): bool
     {
-        return $user->hasRole('super-admin');
+        return $user->hasPermission('settings.manage');
     }
 }

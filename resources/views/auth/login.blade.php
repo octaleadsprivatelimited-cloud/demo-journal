@@ -1,13 +1,14 @@
 @extends('layouts.portal')
-@section('title', 'Sign in')
-@section('page-title', 'Welcome back')
-@section('page-description', 'Access your author, reviewer, or editorial workspace securely.')
+@section('title', 'Choose a workspace')
+@section('auth-eyebrow', 'Role-based access')
+@section('page-title', 'Choose your workspace')
+@section('page-description', 'Use the secure sign-in page assigned to your publication role.')
 @section('content')
-<form class="portal-form" method="post" action="{{ route('login.store') }}" data-loading>@csrf
-    <div class="portal-field"><label for="email">Email address</label><input class="portal-input" id="email" name="email" type="email" value="{{ old('email') }}" autocomplete="email" required autofocus aria-describedby="email-error"><x-portal.field-error name="email" /></div>
-    <div class="portal-field"><div style="display:flex;justify-content:space-between"><label for="password">Password</label><a href="{{ route('password.request') }}" style="font-size:.72rem;color:var(--portal-green-2);font-weight:700">Forgot password?</a></div><input class="portal-input" id="password" name="password" type="password" autocomplete="current-password" required aria-describedby="password-error"><x-portal.field-error name="password" /></div>
-    <div class="check-row"><input id="remember" name="remember" type="checkbox" value="1" @checked(old('remember'))><label for="remember">Keep me signed in on this trusted device</label></div>
-    <button class="portal-button primary" type="submit" data-loading-text="Signing in…">Sign in securely <x-portal.icon name="arrow" :size="17" /></button>
-    <div class="auth-links"><span>New contributor? <a href="{{ route('register') }}">Create an author account</a></span><a href="{{ route('home') }}">Browse the journal</a></div>
-</form>
+<div class="choice-grid">
+    <a class="choice-card" style="display:block" href="{{ route('author.login') }}"><strong>Author</strong><small style="display:block;color:var(--portal-muted);margin-top:.35rem">Write, submit, and track manuscripts.</small></a>
+    <a class="choice-card" style="display:block" href="{{ route('editor.login') }}"><strong>Editor</strong><small style="display:block;color:var(--portal-muted);margin-top:.35rem">Manage editorial review and publishing.</small></a>
+    <a class="choice-card" style="display:block" href="{{ route('reviewer.login') }}"><strong>Reviewer</strong><small style="display:block;color:var(--portal-muted);margin-top:.35rem">Open assigned peer reviews securely.</small></a>
+    <a class="choice-card" style="display:block" href="{{ route('admin.login') }}"><strong>Administrator</strong><small style="display:block;color:var(--portal-muted);margin-top:.35rem">Admin and super-admin access.</small></a>
+</div>
+<div class="auth-links" style="margin-top:1.2rem"><span>Need an account? <a href="{{ route('register') }}">View registration options</a></span><a href="{{ route('home') }}">Browse the journal</a></div>
 @endsection

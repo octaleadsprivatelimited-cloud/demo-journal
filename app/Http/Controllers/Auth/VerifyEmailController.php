@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Support\PortalDestination;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\RedirectResponse;
@@ -17,6 +18,7 @@ final class VerifyEmailController extends Controller
             event(new Verified($request->user()));
         }
 
-        return redirect()->route('author.dashboard')->with('success', 'Email verified. You can now submit manuscripts.');
+        return redirect()->route(PortalDestination::routeNameForUser($request->user()))
+            ->with('success', 'Email verified. Your workspace is ready.');
     }
 }

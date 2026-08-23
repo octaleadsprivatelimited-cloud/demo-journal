@@ -45,6 +45,8 @@ Create the first administrator interactively:
 docker compose exec app php artisan user:create-admin
 ```
 
+For local UI development only, `LOCAL_ADMIN_BYPASS_ENABLED=true` grants a dedicated, request-scoped identity access to `/admin`. The bypass is rejected unless `APP_ENV=local`, `APP_BIND_ADDRESS` is loopback-only, the request host is loopback, and the raw connection address appears in `LOCAL_ADMIN_ALLOWED_REMOTE_ADDRS`. Docker Desktop may present local traffic through its bridge gateway; add that one observed gateway address to the local `.env` when needed. The identity is inactive, unverified, roleless, and logged out between requests, so it cannot be reused through login or password reset. Leave the bypass disabled everywhere else.
+
 Default seeding installs only roles, permissions, and settings. To add the rich sample publication locally, set `SEED_DEMO_CONTENT=true` before running the seeder. The demo seeder refuses to run outside `local` and `testing`, and its accounts receive random, unrecoverable passwords.
 
 Never place a real production password in a seeder or committed environment file. Automated baseline seeding creates an admin only when both `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` are explicitly present at runtime; interactive `user:create-admin` remains the preferred production path.

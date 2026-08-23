@@ -7,6 +7,7 @@ namespace Tests\Feature\Portal;
 use App\Models\Article;
 use App\Models\Author;
 use App\Models\Category;
+use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -77,6 +78,11 @@ final class AuthorWorkflowTest extends TestCase
     private function authorUser(): array
     {
         $role = Role::query()->firstOrCreate(['slug' => 'author'], ['name' => 'Author', 'is_system' => true]);
+        $permissions = collect(['articles.create', 'articles.update', 'articles.submit'])->map(fn (string $slug) => Permission::query()->firstOrCreate(
+            ['slug' => $slug],
+            ['name' => str($slug)->replace('.', ' ')->headline(), 'group' => 'articles'],
+        ));
+        $role->permissions()->syncWithoutDetaching($permissions->pluck('id'));
         $user = User::factory()->create();
         $user->roles()->attach($role);
         $author = Author::factory()->create(['user_id' => $user->id, 'email' => $user->email]);

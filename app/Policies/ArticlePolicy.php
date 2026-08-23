@@ -23,34 +23,36 @@ class ArticlePolicy
     public function view(?User $user, Article $article): bool
     {
         return $article->status === ArticleStatus::Published
-            || ($user && ($article->isOwnedBy($user) || $user->hasAnyRole('admin', 'editor', 'reviewer')));
+            || ($user && ($article->isOwnedBy($user) || $user->hasPermission('articles.view-unpublished')));
     }
 
     public function create(User $user): bool
     {
-        return $user->isActive() && $user->hasAnyRole('admin', 'editor', 'author');
+        return $user->isActive() && $user->hasPermission('articles.create');
     }
 
     public function update(User $user, Article $article): bool
     {
-        if ($user->hasAnyRole('admin', 'editor')) {
+        if ($user->hasPermission('articles.update-any')) {
             return true;
         }
 
-        return $article->isOwnedBy($user)
+        return $user->hasPermission('articles.update')
+            && $article->isOwnedBy($user)
             && in_array($article->status, [ArticleStatus::Draft, ArticleStatus::RevisionRequired, ArticleStatus::Rejected], true);
     }
 
     public function delete(User $user, Article $article): bool
     {
-        return $user->hasRole('admin')
-            || ($article->isOwnedBy($user)
+        return $user->hasPermission('articles.delete')
+            || ($user->hasPermission('articles.update')
+                && $article->isOwnedBy($user)
                 && in_array($article->status, [ArticleStatus::Draft, ArticleStatus::Rejected], true));
     }
 
     public function restore(User $user, Article $article): bool
     {
-        return $user->hasRole('admin');
+        return $user->hasPermission('articles.delete');
     }
 
     public function forceDelete(User $user, Article $article): bool
@@ -60,22 +62,29 @@ class ArticlePolicy
 
     public function submit(User $user, Article $article): bool
     {
-        return $article->isOwnedBy($user)
+        return $user->hasPermission('articles.submit')
+            && $article->isOwnedBy($user)
             && in_array($article->status, [ArticleStatus::Draft, ArticleStatus::RevisionRequired, ArticleStatus::Rejected], true);
     }
 
     public function transition(User $user, Article $article): bool
     {
-        return $user->hasAnyRole('admin', 'editor');
+        return $user->hasPermission('articles.review');
+    }
+
+    public function publish(User $user, Article $article): bool
+    {
+        return $user->hasPermission('articles.publish');
     }
 
     public function review(User $user, Article $article): bool
     {
-        return $article->reviews()->where('reviewer_id', $user->getKey())->exists();
+        return $user->hasPermission('articles.review')
+            && $article->reviews()->where('reviewer_id', $user->getKey())->exists();
     }
 
     public function manageSeo(User $user, Article $article): bool
     {
-        return $user->hasAnyRole('admin', 'editor');
+        return $user->hasPermission('articles.update-any');
     }
 }

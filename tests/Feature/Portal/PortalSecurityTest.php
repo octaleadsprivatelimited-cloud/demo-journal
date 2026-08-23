@@ -31,7 +31,7 @@ final class PortalSecurityTest extends TestCase
         $superRole = Role::query()->firstOrCreate(['slug' => 'super-admin'], ['name' => 'Super Admin', 'is_system' => true]);
         $this->actingAs($admin)->put(route('admin.users.update', $managed), [
             'name' => $managed->name, 'email' => $managed->email, 'roles' => [$superRole->id], 'is_active' => '1', 'email_verified' => '1',
-        ])->assertSessionHasErrors('roles');
+        ])->assertForbidden();
         $this->assertFalse($managed->fresh()->roles()->where('slug', 'super-admin')->exists());
     }
 
@@ -50,7 +50,7 @@ final class PortalSecurityTest extends TestCase
     {
         $role = Role::query()->firstOrCreate(['slug' => $slug], ['name' => str($slug)->headline(), 'is_system' => true]);
         if ($slug === 'admin') {
-            $permission = Permission::query()->firstOrCreate(['slug' => 'users.manage'], ['name' => 'Manage users', 'group' => 'users']);
+            $permission = Permission::query()->firstOrCreate(['slug' => 'newsletter.manage'], ['name' => 'Manage newsletter', 'group' => 'newsletter']);
             $role->permissions()->syncWithoutDetaching([$permission->id]);
         }
         $user = User::factory()->create();

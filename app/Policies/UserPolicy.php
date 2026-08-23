@@ -15,26 +15,36 @@ class UserPolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->hasPermission('users.manage');
+        return false;
     }
 
     public function view(User $user, User $managedUser): bool
     {
-        return $user->is($managedUser) || $user->hasPermission('users.manage');
+        return false;
     }
 
     public function create(User $user): bool
     {
-        return $user->hasPermission('users.manage');
+        return false;
     }
 
     public function update(User $user, User $managedUser): bool
     {
-        return $user->is($managedUser) || ($user->hasPermission('users.manage') && ! $managedUser->hasRole('super-admin'));
+        return false;
     }
 
     public function delete(User $user, User $managedUser): bool
     {
-        return ! $user->is($managedUser) && $user->hasPermission('users.manage') && ! $managedUser->hasRole('super-admin');
+        return false;
+    }
+
+    public function approve(User $user, User $managedUser): bool
+    {
+        return false;
+    }
+
+    public function reject(User $user, User $managedUser): bool
+    {
+        return false;
     }
 }

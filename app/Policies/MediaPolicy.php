@@ -12,12 +12,16 @@ class MediaPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole('super-admin', 'admin', 'editor', 'author', 'reviewer');
+        return $user->hasPermission('media.manage');
     }
 
     public function view(User $user, Media $media): bool
     {
-        if ($user->hasAnyRole('super-admin', 'admin', 'editor') || $media->uploaded_by_id === $user->getKey()) {
+        if (! $user->hasPermission('media.manage')) {
+            return false;
+        }
+
+        if ($user->hasPermission('articles.update-any') || $media->uploaded_by_id === $user->getKey()) {
             return true;
         }
 
@@ -29,12 +33,13 @@ class MediaPolicy
 
     public function create(User $user): bool
     {
-        return $user->isActive() && $user->hasAnyRole('super-admin', 'admin', 'editor', 'author', 'reviewer');
+        return $user->isActive() && $user->hasPermission('media.manage');
     }
 
     public function update(User $user, Media $media): bool
     {
-        return $user->hasAnyRole('super-admin', 'admin', 'editor') || $media->uploaded_by_id === $user->getKey();
+        return $user->hasPermission('media.manage')
+            && ($user->hasPermission('articles.update-any') || $media->uploaded_by_id === $user->getKey());
     }
 
     public function delete(User $user, Media $media): bool

@@ -17,33 +17,43 @@ class ReviewPolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole('admin', 'editor', 'reviewer');
+        return $user->hasPermission('articles.review');
     }
 
     public function view(User $user, Review $review): bool
     {
-        return $user->hasAnyRole('admin', 'editor') || $review->reviewer_id === $user->getKey();
+        return $this->canManageEditorialReviews($user)
+            || ($user->hasPermission('articles.review') && $review->reviewer_id === $user->getKey());
     }
 
     public function create(User $user): bool
     {
-        return $user->hasAnyRole('admin', 'editor');
+        return $this->canManageEditorialReviews($user);
     }
 
     public function update(User $user, Review $review): bool
     {
-        return $user->hasAnyRole('admin', 'editor') || ($review->reviewer_id === $user->getKey()
-            && in_array($review->status, [ReviewStatus::Assigned, ReviewStatus::InProgress], true));
+        return $this->canManageEditorialReviews($user)
+            || ($user->hasPermission('articles.review')
+                && $review->reviewer_id === $user->getKey()
+                && in_array($review->status, [ReviewStatus::Assigned, ReviewStatus::InProgress], true));
     }
 
     public function complete(User $user, Review $review): bool
     {
-        return $review->reviewer_id === $user->getKey()
+        return $user->hasPermission('articles.review')
+            && $review->reviewer_id === $user->getKey()
             && in_array($review->status, [ReviewStatus::Assigned, ReviewStatus::InProgress], true);
     }
 
     public function delete(User $user, Review $review): bool
     {
-        return $user->hasAnyRole('admin', 'editor');
+        return $this->canManageEditorialReviews($user);
+    }
+
+    private function canManageEditorialReviews(User $user): bool
+    {
+        return $user->hasPermission('articles.review')
+            && $user->hasPermission('articles.update-any');
     }
 }

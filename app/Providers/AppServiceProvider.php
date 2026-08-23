@@ -64,7 +64,7 @@ class AppServiceProvider extends ServiceProvider
             return method_exists($user, 'hasRole') && $user->hasRole('super-admin') ? true : null;
         });
 
-        Gate::define('viewAdminDashboard', static fn (User $user): bool => $user->hasAnyRole('admin', 'editor')
+        Gate::define('viewAdminDashboard', static fn (User $user): bool => $user->hasRole('admin')
         );
         Gate::define('viewAuditLogs', static fn (User $user): bool => $user->hasPermission('audit.view')
         );

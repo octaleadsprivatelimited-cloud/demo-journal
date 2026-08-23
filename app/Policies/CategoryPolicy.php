@@ -16,26 +16,26 @@ class CategoryPolicy
 
     public function view(?User $user, Category $category): bool
     {
-        return $category->is_active || (bool) $user?->hasAnyRole('admin', 'editor');
+        return $category->is_active || (bool) $user?->hasPermission('categories.manage');
     }
 
     public function create(User $user): bool
     {
-        return $user->hasAnyRole('super-admin', 'admin', 'editor');
+        return $user->hasPermission('categories.manage');
     }
 
     public function update(User $user, Category $category): bool
     {
-        return $user->hasAnyRole('super-admin', 'admin', 'editor');
+        return $user->hasPermission('categories.manage');
     }
 
     public function delete(User $user, Category $category): bool
     {
-        return $user->hasAnyRole('super-admin', 'admin');
+        return $user->hasPermission('categories.delete');
     }
 
     public function restore(User $user, Category $category): bool
     {
-        return $user->hasAnyRole('super-admin', 'admin');
+        return $user->hasPermission('categories.delete');
     }
 }

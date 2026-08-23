@@ -111,7 +111,7 @@ final class AdminSettingsTest extends TestCase
         $this->get(route('articles.pdf', $article->slug))->assertNotFound();
 
         $this->post(route('logout'))->assertRedirect();
-        $this->get(route('register'))->assertNotFound();
+        $this->get(route('author.register'))->assertNotFound();
     }
 
     public function test_aliases_unimplemented_controls_and_unsafe_social_urls_are_rejected(): void

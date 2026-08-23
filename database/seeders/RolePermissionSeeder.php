@@ -30,10 +30,12 @@ class RolePermissionSeeder extends Seeder
         ]);
 
         $permissions = [
-            'dashboard.view', 'articles.view', 'articles.create', 'articles.update', 'articles.delete',
-            'articles.submit', 'articles.review', 'articles.publish', 'authors.manage', 'categories.manage',
-            'tags.manage', 'media.manage', 'comments.moderate', 'contacts.manage', 'newsletter.manage',
-            'users.manage', 'roles.manage', 'settings.manage', 'audit.view', 'analytics.view',
+            'dashboard.view', 'articles.view', 'articles.view-unpublished', 'articles.create',
+            'articles.update', 'articles.update-any', 'articles.delete', 'articles.submit',
+            'articles.review', 'articles.publish', 'authors.manage', 'categories.manage',
+            'categories.delete', 'tags.manage', 'tags.delete', 'media.manage', 'comments.moderate',
+            'contacts.manage', 'newsletter.manage', 'users.manage', 'roles.manage',
+            'settings.manage', 'audit.view', 'analytics.view',
         ];
 
         $permissionModels = collect($permissions)->mapWithKeys(function (string $slug): array {
@@ -46,13 +48,20 @@ class RolePermissionSeeder extends Seeder
         });
 
         $roles['super-admin']->permissions()->sync($permissionModels->pluck('id')->all());
-        $roles['admin']->permissions()->sync($permissionModels->pluck('id')->all());
+        $roles['admin']->permissions()->sync($permissionModels->only([
+            'dashboard.view', 'articles.view', 'articles.view-unpublished', 'articles.create',
+            'articles.update', 'articles.update-any', 'articles.delete', 'articles.review',
+            'articles.publish', 'authors.manage', 'categories.manage', 'categories.delete',
+            'tags.manage', 'tags.delete', 'media.manage', 'comments.moderate', 'contacts.manage',
+            'newsletter.manage', 'audit.view', 'analytics.view',
+        ])->pluck('id')->all());
         $roles['editor']->permissions()->sync($permissionModels->only([
-            'dashboard.view', 'articles.view', 'articles.create', 'articles.update', 'articles.review',
-            'articles.publish', 'authors.manage', 'categories.manage', 'tags.manage', 'media.manage',
+            'dashboard.view', 'articles.view', 'articles.view-unpublished', 'articles.create',
+            'articles.update', 'articles.update-any', 'articles.review', 'articles.publish',
+            'authors.manage', 'categories.manage', 'tags.manage', 'media.manage',
             'comments.moderate', 'analytics.view',
         ])->pluck('id')->all());
-        $roles['reviewer']->permissions()->sync($permissionModels->only(['dashboard.view', 'articles.view', 'articles.review', 'media.manage'])->pluck('id')->all());
+        $roles['reviewer']->permissions()->sync($permissionModels->only(['dashboard.view', 'articles.view', 'articles.view-unpublished', 'articles.review', 'media.manage'])->pluck('id')->all());
         $roles['author']->permissions()->sync($permissionModels->only(['dashboard.view', 'articles.view', 'articles.create', 'articles.update', 'articles.submit', 'media.manage'])->pluck('id')->all());
         $roles['user']->permissions()->sync($permissionModels->only(['articles.view'])->pluck('id')->all());
 

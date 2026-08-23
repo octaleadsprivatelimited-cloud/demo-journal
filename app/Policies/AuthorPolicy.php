@@ -26,21 +26,23 @@ class AuthorPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasAnyRole('admin', 'editor');
+        return $user->hasPermission('authors.manage');
     }
 
     public function update(User $user, Author $author): bool
     {
-        return $user->hasAnyRole('admin', 'editor') || $author->user_id === $user->getKey();
+        return $user->hasPermission('authors.manage') || $author->user_id === $user->getKey();
     }
 
     public function delete(User $user, Author $author): bool
     {
-        return $user->hasRole('admin');
+        return $user->hasPermission('authors.manage')
+            && $user->hasPermission('articles.delete');
     }
 
     public function restore(User $user, Author $author): bool
     {
-        return $user->hasRole('admin');
+        return $user->hasPermission('authors.manage')
+            && $user->hasPermission('articles.delete');
     }
 }

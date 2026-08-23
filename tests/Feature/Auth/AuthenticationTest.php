@@ -6,29 +6,35 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 final class AuthenticationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_an_author_can_register_with_a_profile_and_must_verify_email(): void
+    public function test_author_registration_creates_a_pending_inactive_application(): void
     {
         config()->set('publication.features.author_registration', true);
-        Notification::fake();
-        $response = $this->post(route('register.store'), [
+        $response = $this->post(route('author.register.store'), [
             'name' => 'Ada Researcher', 'email' => 'ada@example.com', 'phone' => '+1 555 123 4567',
             'organization' => 'Meridian Institute', 'designation' => 'Research Fellow', 'biography' => 'Studies public knowledge.',
             'password' => 'Strong!Author123', 'password_confirmation' => 'Strong!Author123', 'terms' => '1',
         ]);
 
-        $response->assertRedirect(route('verification.notice'));
+        $response->assertRedirect(route('registration.submitted'));
         $user = User::query()->where('email', 'ada@example.com')->firstOrFail();
-        $this->assertAuthenticatedAs($user);
+        $this->assertGuest();
         $this->assertFalse($user->hasVerifiedEmail());
-        $this->assertTrue($user->roles()->where('slug', 'author')->exists());
-        $this->assertDatabaseHas('authors', ['user_id' => $user->id, 'organization' => 'Meridian Institute']);
+        $this->assertSame('pending', $user->status);
+        $this->assertFalse($user->is_active);
+        $this->assertSame('author', $user->requested_role);
+        $this->assertFalse($user->roles()->exists());
+        $this->assertDatabaseHas('authors', [
+            'user_id' => $user->id,
+            'organization' => 'Meridian Institute',
+            'is_active' => false,
+            'is_verified' => false,
+        ]);
     }
 
     public function test_author_registration_routes_are_unavailable_when_registration_is_disabled(): void
@@ -43,9 +49,8 @@ final class AuthenticationTest extends TestCase
             'terms' => '1',
         ];
 
-        $this->get('/register')->assertNotFound();
         $this->get('/author/register')->assertNotFound();
-        $this->post('/register', $payload)->assertNotFound();
+        $this->post('/author/register', $payload)->assertNotFound();
 
         $this->assertDatabaseMissing('users', ['email' => 'blocked@example.com']);
     }
@@ -53,7 +58,7 @@ final class AuthenticationTest extends TestCase
     public function test_inactive_accounts_cannot_sign_in(): void
     {
         $user = User::factory()->create(['email' => 'inactive@example.com', 'password' => 'Strong!Author123', 'is_active' => false]);
-        $this->post(route('login.store'), ['email' => $user->email, 'password' => 'Strong!Author123'])->assertSessionHasErrors('email');
+        $this->post(route('author.login.store'), ['email' => $user->email, 'password' => 'Strong!Author123'])->assertSessionHasErrors('email');
         $this->assertGuest();
     }
 

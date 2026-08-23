@@ -16,17 +16,25 @@ class SubmissionPolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole('admin', 'editor', 'author');
+        return $this->canManageEditorialSubmissions($user)
+            || $user->hasPermission('articles.submit');
     }
 
     public function view(User $user, Submission $submission): bool
     {
-        return $user->hasAnyRole('admin', 'editor')
-            || $submission->article()->firstOrFail()->isOwnedBy($user);
+        return $this->canManageEditorialSubmissions($user)
+            || ($user->hasPermission('articles.submit')
+                && $submission->article()->firstOrFail()->isOwnedBy($user));
     }
 
     public function update(User $user, Submission $submission): bool
     {
-        return $user->hasAnyRole('admin', 'editor');
+        return $this->canManageEditorialSubmissions($user);
+    }
+
+    private function canManageEditorialSubmissions(User $user): bool
+    {
+        return $user->hasPermission('articles.review')
+            && $user->hasPermission('articles.update-any');
     }
 }

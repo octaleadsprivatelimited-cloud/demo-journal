@@ -13,15 +13,26 @@ use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function (): void {
-    Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
-    Route::get('/author/login', [AuthenticatedSessionController::class, 'create'])->name('author.login');
-    Route::post('/login', [AuthenticatedSessionController::class, 'store'])->middleware('throttle:login')->name('login.store');
+    Route::get('/login', [AuthenticatedSessionController::class, 'chooser'])->name('login');
+    Route::get('/author/login', [AuthenticatedSessionController::class, 'createAuthor'])->name('author.login');
+    Route::post('/author/login', [AuthenticatedSessionController::class, 'storeAuthor'])->middleware('throttle:login')->name('author.login.store');
+    Route::get('/editor/login', [AuthenticatedSessionController::class, 'createEditor'])->name('editor.login');
+    Route::post('/editor/login', [AuthenticatedSessionController::class, 'storeEditor'])->middleware('throttle:login')->name('editor.login.store');
+    Route::get('/reviewer/login', [AuthenticatedSessionController::class, 'createReviewer'])->name('reviewer.login');
+    Route::post('/reviewer/login', [AuthenticatedSessionController::class, 'storeReviewer'])->middleware('throttle:login')->name('reviewer.login.store');
+    Route::get('/admin/login', [AuthenticatedSessionController::class, 'createAdmin'])->name('admin.login');
+    Route::post('/admin/login', [AuthenticatedSessionController::class, 'storeAdmin'])->middleware('throttle:login')->name('admin.login.store');
 
+    Route::get('/register', [RegisteredUserController::class, 'chooser'])->name('register');
     Route::middleware('author-registration')->group(function (): void {
-        Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
-        Route::get('/author/register', [RegisteredUserController::class, 'create'])->name('author.register');
-        Route::post('/register', [RegisteredUserController::class, 'store'])->middleware('throttle:6,1')->name('register.store');
+        Route::get('/author/register', [RegisteredUserController::class, 'createAuthor'])->name('author.register');
+        Route::post('/author/register', [RegisteredUserController::class, 'storeAuthor'])->middleware('throttle:6,1')->name('author.register.store');
     });
+    Route::get('/editor/register', [RegisteredUserController::class, 'createEditor'])->name('editor.register');
+    Route::post('/editor/register', [RegisteredUserController::class, 'storeEditor'])->middleware('throttle:6,1')->name('editor.register.store');
+    Route::get('/admin/register', [RegisteredUserController::class, 'createAdmin'])->name('admin.register');
+    Route::post('/admin/register', [RegisteredUserController::class, 'storeAdmin'])->middleware('throttle:6,1')->name('admin.register.store');
+    Route::get('/registration/submitted', [RegisteredUserController::class, 'submitted'])->name('registration.submitted');
 
     Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
     Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->middleware('throttle:3,1')->name('password.email');

@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Support\PortalDestination;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,25 +14,58 @@ use Illuminate\View\View;
 
 final class AuthenticatedSessionController extends Controller
 {
-    public function create(): View
+    public function chooser(): View
     {
         return view('auth.login');
     }
 
-    public function store(LoginRequest $request): RedirectResponse
+    public function createAuthor(): View
     {
-        $request->authenticate();
+        return view('auth.author-login');
+    }
+
+    public function createEditor(): View
+    {
+        return view('auth.editor-login');
+    }
+
+    public function createReviewer(): View
+    {
+        return view('auth.reviewer-login');
+    }
+
+    public function createAdmin(): View
+    {
+        return view('auth.admin-login');
+    }
+
+    public function storeAuthor(LoginRequest $request): RedirectResponse
+    {
+        return $this->storeForPortal($request, 'author');
+    }
+
+    public function storeEditor(LoginRequest $request): RedirectResponse
+    {
+        return $this->storeForPortal($request, 'editor');
+    }
+
+    public function storeReviewer(LoginRequest $request): RedirectResponse
+    {
+        return $this->storeForPortal($request, 'reviewer');
+    }
+
+    public function storeAdmin(LoginRequest $request): RedirectResponse
+    {
+        return $this->storeForPortal($request, 'admin');
+    }
+
+    private function storeForPortal(LoginRequest $request, string $portal): RedirectResponse
+    {
+        $user = $request->authenticateFor($portal);
         $request->session()->regenerate();
 
-        $user = $request->user();
-        $destination = match (true) {
-            $user?->hasAnyRole('super-admin', 'admin', 'editor') => route('admin.dashboard'),
-            $user?->hasRole('reviewer') => route('reviewer.dashboard'),
-            $user?->hasRole('author') => route('author.dashboard'),
-            default => route('home'),
-        };
-
-        return redirect()->intended($destination)->with('success', 'Welcome back, '.$user?->name.'.');
+        return redirect()->route(PortalDestination::routeNameForPortal($portal))
+            ->with('success', 'Welcome back, '.$user->name.'.');
     }
 
     public function destroy(Request $request): RedirectResponse

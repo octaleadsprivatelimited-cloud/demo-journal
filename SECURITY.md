@@ -21,3 +21,5 @@ Only the currently deployed release and the latest main-branch release candidate
 ## Operator responsibilities
 
 Use TLS, a unique `APP_KEY`, least-privilege database and object-storage identities, encrypted backups, MFA for infrastructure, restricted administrator accounts, central logging, dependency monitoring, and tested incident and restore procedures. Rotate any credential immediately if it may have entered a log, browser asset, build artifact, or repository history.
+
+The optional local administrator bypass is a development convenience only. It requires `APP_ENV=local`, an explicit opt-in flag, a loopback-bound service, an `/admin` request, a loopback host, and an allow-listed raw connection address. Its marked identity receives in-memory privileges for one request only and is persistently inactive, unverified, roleless, and sessionless. Production, externally bound, and non-loopback requests always use normal authentication.
