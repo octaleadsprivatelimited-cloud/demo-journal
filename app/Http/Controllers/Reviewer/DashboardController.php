@@ -24,7 +24,7 @@ final class DashboardController extends Controller
                 'completed' => $counts[ReviewStatus::Completed->value] ?? 0,
                 'total' => $counts->sum(),
             ],
-            'reviews' => (clone $base)->with(['article:id,title,slug,status,submitted_at', 'submission:id,article_id,round'])
+            'reviews' => (clone $base)->with(['article:id,title,slug,status,submitted_at,deleted_at', 'submission:id,article_id,round'])
                 ->orderByRaw('completed_at IS NOT NULL')
                 ->orderBy('due_at')
                 ->paginate(15),

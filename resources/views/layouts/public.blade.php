@@ -64,8 +64,10 @@
                     <a href="{{ route('about') }}">Our mission</a>
                     <a href="{{ route('editorial-board') }}">Editorial board</a>
                     @auth
-                        @if (auth()->user()->hasAnyRole('admin', 'super-admin', 'editor') && Route::has('admin.dashboard'))
+                        @if (auth()->user()->hasAnyRole('admin', 'super-admin') && Route::has('admin.dashboard'))
                             <a href="{{ route('admin.dashboard') }}">Dashboard</a>
+                        @elseif (auth()->user()->hasRole('editor') && Route::has('editor.dashboard'))
+                            <a href="{{ route('editor.dashboard') }}">Dashboard</a>
                         @elseif (auth()->user()->hasRole('reviewer') && Route::has('reviewer.dashboard'))
                             <a href="{{ route('reviewer.dashboard') }}">Dashboard</a>
                         @elseif (auth()->user()->hasRole('author') && Route::has('author.dashboard'))
@@ -89,12 +91,31 @@
                     <small>Journal of ideas &amp; inquiry</small>
                 </span>
             </a>
-            <button class="search-trigger" type="button" aria-haspopup="dialog" data-search-open>
-                <x-public.icon name="search" />
-                <span>Search the journal</span>
-                <kbd>/</kbd>
-            </button>
+            <div class="masthead-actions">
+                <button class="icon-button mobile-account-button" type="button" aria-label="Open account options" aria-expanded="false" aria-controls="mobile-account-menu" data-account-toggle><x-public.icon name="user" /></button>
+                <button class="search-trigger" type="button" aria-label="Search the journal" aria-haspopup="dialog" data-search-open>
+                    <x-public.icon name="search" />
+                    <span>Search the journal</span>
+                    <kbd>/</kbd>
+                </button>
+            </div>
         </div>
+        <nav class="mobile-account-menu container" id="mobile-account-menu" aria-label="Account access" hidden data-account-menu>
+            @auth
+                @if (auth()->user()->hasAnyRole('admin', 'super-admin') && Route::has('admin.dashboard'))
+                    <a class="mobile-account-primary" href="{{ route('admin.dashboard') }}">Open dashboard <x-public.icon name="arrow-up-right" /></a>
+                @elseif (auth()->user()->hasRole('editor') && Route::has('editor.dashboard'))
+                    <a class="mobile-account-primary" href="{{ route('editor.dashboard') }}">Open dashboard <x-public.icon name="arrow-up-right" /></a>
+                @elseif (auth()->user()->hasRole('reviewer') && Route::has('reviewer.dashboard'))
+                    <a class="mobile-account-primary" href="{{ route('reviewer.dashboard') }}">Open dashboard <x-public.icon name="arrow-up-right" /></a>
+                @elseif (auth()->user()->hasRole('author') && Route::has('author.dashboard'))
+                    <a class="mobile-account-primary" href="{{ route('author.dashboard') }}">Open dashboard <x-public.icon name="arrow-up-right" /></a>
+                @endif
+            @else
+                @if (Route::has('login'))<a class="mobile-account-secondary" href="{{ route('login') }}">Sign in</a>@endif
+                @if (Route::has('register'))<a class="mobile-account-primary" href="{{ route('register') }}">Create account <x-public.icon name="arrow-up-right" /></a>@endif
+            @endauth
+        </nav>
         <nav class="primary-nav" aria-label="Primary navigation">
             <div class="container nav-inner">
                 <a href="{{ route('home') }}" @class(['is-active' => request()->routeIs('home')])>Home</a>
@@ -102,6 +123,7 @@
                 <a href="{{ route('articles.index') }}" @class(['is-active' => request()->routeIs('articles.*')])>Latest</a>
                 <a href="{{ route('categories.index') }}" @class(['is-active' => request()->routeIs('categories.*')])>Disciplines</a>
                 <a href="{{ route('authors.index') }}" @class(['is-active' => request()->routeIs('authors.*')])>Contributors</a>
+                @if (data_get($site, 'features.pdf_downloads', true))<a href="{{ route('downloads') }}" @class(['is-active' => request()->routeIs('downloads')])>Downloads</a>@endif
                 <a href="{{ route('about') }}" @class(['is-active' => request()->routeIs('about')])>About</a>
                 <a href="{{ route('contact') }}" @class(['is-active' => request()->routeIs('contact*')])>Contact</a>
                 @if (data_get($site, 'features.author_registration', true) && Route::has('author.register'))
@@ -114,6 +136,7 @@
             <a href="{{ route('articles.index') }}">Latest publications</a>
             <a href="{{ route('categories.index') }}">Disciplines</a>
             <a href="{{ route('authors.index') }}">Contributors</a>
+            @if (data_get($site, 'features.pdf_downloads', true))<a href="{{ route('downloads') }}">Downloads</a>@endif
             <a href="{{ route('about') }}">About the journal</a>
             <a href="{{ route('editorial-board') }}">Editorial board</a>
             <a href="{{ route('contact') }}">Contact</a>

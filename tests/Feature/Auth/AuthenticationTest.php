@@ -55,6 +55,22 @@ final class AuthenticationTest extends TestCase
         $this->assertDatabaseMissing('users', ['email' => 'blocked@example.com']);
     }
 
+    public function test_registration_chooser_does_not_link_to_disabled_author_registration(): void
+    {
+        config()->set('publication.features.author_registration', false);
+
+        $this->get(route('register'))
+            ->assertOk()
+            ->assertSeeText('Author applications are closed')
+            ->assertDontSee('href="'.route('author.register').'"', false)
+            ->assertSee('href="'.route('editor.register').'"', false)
+            ->assertSee('href="'.route('admin.register').'"', false);
+
+        $this->get(route('author.login'))
+            ->assertOk()
+            ->assertDontSee('href="'.route('author.register').'"', false);
+    }
+
     public function test_inactive_accounts_cannot_sign_in(): void
     {
         $user = User::factory()->create(['email' => 'inactive@example.com', 'password' => 'Strong!Author123', 'is_active' => false]);

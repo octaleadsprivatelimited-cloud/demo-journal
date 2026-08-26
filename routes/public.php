@@ -17,6 +17,8 @@ Route::get('/', HomeController::class)->name('home');
 
 Route::get('/journals', [ArticleController::class, 'journals'])->name('journals.index');
 Route::get('/articles', [ArticleController::class, 'index'])->name('articles.index');
+Route::get('/archive', [ArticleController::class, 'archive'])->name('archive.index');
+Route::get('/archive/{issue}', [ArticleController::class, 'issue'])->whereNumber('issue')->name('archive.issue');
 Route::get('/article/{slug}', [ArticleController::class, 'show'])
     ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*')
     ->name('articles.show');
@@ -43,7 +45,11 @@ Route::get('/category/{slug}', [CategoryController::class, 'show'])
 
 Route::get('/search', SearchController::class)->middleware('throttle:search')->name('search');
 Route::get('/about', [PageController::class, 'about'])->name('about');
+Route::get('/policies/{page}', [PageController::class, 'policy'])
+    ->whereIn('page', ['aims-scope', 'peer-review', 'publication-ethics', 'author-guidelines', 'copyright', 'open-access', 'fees', 'indexing', 'archiving', 'privacy', 'terms'])
+    ->name('policies.show');
 Route::get('/editorial-board', [PageController::class, 'editorialBoard'])->name('editorial-board');
+Route::get('/downloads', [PageController::class, 'downloads'])->name('downloads');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])
     ->middleware('throttle:contact')

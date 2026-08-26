@@ -26,11 +26,13 @@ class Article extends Model
     use HasAuditLogs, HasFactory, HasUniqueSlug, SoftDeletes;
 
     protected $fillable = [
-        'public_id', 'category_id', 'created_by_id', 'assigned_editor_id', 'title', 'slug',
+        'public_id', 'category_id', 'journal_issue_id', 'created_by_id', 'assigned_editor_id', 'title', 'slug',
         'subtitle', 'excerpt', 'abstract', 'content', 'keywords', 'references', 'publication_type',
         'doi', 'featured_image_path', 'pdf_path', 'status', 'is_featured', 'is_trending',
         'comments_enabled', 'pdf_download_enabled', 'reading_time_minutes', 'view_count',
         'submitted_at', 'approved_at', 'scheduled_for', 'published_at', 'rejected_at',
+        'volume', 'issue', 'article_number', 'received_date', 'revised_date', 'accepted_date',
+        'license', 'copyright_statement', 'publication_notice',
     ];
 
     protected $attributes = [
@@ -57,6 +59,7 @@ class Article extends Model
             'scheduled_for' => 'datetime',
             'published_at' => 'datetime',
             'rejected_at' => 'datetime',
+            'received_date' => 'date', 'revised_date' => 'date', 'accepted_date' => 'date',
         ];
     }
 
@@ -74,6 +77,7 @@ class Article extends Model
     {
         return $this->belongsTo(Category::class);
     }
+    public function journalIssue(): BelongsTo { return $this->belongsTo(JournalIssue::class, 'journal_issue_id'); }
 
     public function creator(): BelongsTo
     {
@@ -161,11 +165,12 @@ class Article extends Model
         if ($query->getConnection()->getDriverName() === 'pgsql') {
             return $query->where(function (Builder $query) use ($plainTerm): void {
                 $query->whereRaw(
-                    "to_tsvector('simple', coalesce(title, '') || ' ' || coalesce(subtitle, '') || ' ' || coalesce(abstract, '') || ' ' || coalesce(content, '')) @@ websearch_to_tsquery('simple', ?)",
+                    "to_tsvector('simple', coalesce(title, '') || ' ' || coalesce(subtitle, '') || ' ' || coalesce(abstract, '') || ' ' || coalesce(content, '') || ' ' || coalesce(doi, '') || ' ' || coalesce(public_id::text, '') || ' ' || coalesce(article_number, '')) @@ websearch_to_tsquery('simple', ?)",
                     [$plainTerm],
                 )
                     ->orWhereHas('authors', fn (Builder $authors) => $authors->where('name', 'ilike', '%'.$plainTerm.'%'))
-                    ->orWhereHas('tags', fn (Builder $tags) => $tags->where('name', 'ilike', '%'.$plainTerm.'%'));
+                    ->orWhereHas('tags', fn (Builder $tags) => $tags->where('name', 'ilike', '%'.$plainTerm.'%'))
+                    ->orWhereHas('category', fn (Builder $category) => $category->where('name', 'ilike', '%'.$plainTerm.'%'));
             });
         }
 
@@ -176,8 +181,10 @@ class Article extends Model
                 ->orWhere('subtitle', 'like', $term)
                 ->orWhere('abstract', 'like', $term)
                 ->orWhere('content', 'like', $term)
+                ->orWhere('doi', 'like', $term)->orWhere('public_id', 'like', $term)->orWhere('article_number', 'like', $term)
                 ->orWhereHas('authors', fn (Builder $authors) => $authors->where('name', 'like', $term))
-                ->orWhereHas('tags', fn (Builder $tags) => $tags->where('name', 'like', $term));
+                ->orWhereHas('tags', fn (Builder $tags) => $tags->where('name', 'like', $term))
+                ->orWhereHas('category', fn (Builder $category) => $category->where('name', 'like', $term));
         });
     }
 

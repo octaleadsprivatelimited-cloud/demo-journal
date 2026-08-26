@@ -8,6 +8,7 @@
     <a class="choice-card" style="display:block" href="{{ route('author.login') }}"><strong>Author</strong><small style="display:block;color:var(--portal-muted);margin-top:.35rem">Write, submit, and track manuscripts.</small></a>
     <a class="choice-card" style="display:block" href="{{ route('editor.login') }}"><strong>Editor</strong><small style="display:block;color:var(--portal-muted);margin-top:.35rem">Manage editorial review and publishing.</small></a>
     <a class="choice-card" style="display:block" href="{{ route('reviewer.login') }}"><strong>Reviewer</strong><small style="display:block;color:var(--portal-muted);margin-top:.35rem">Open assigned peer reviews securely.</small></a>
+    <a class="choice-card" style="display:block" href="{{ route('contributor.login') }}"><strong>Contributor</strong><small style="display:block;color:var(--portal-muted);margin-top:.35rem">Draft, submit, and track content.</small></a>
     <a class="choice-card" style="display:block" href="{{ route('admin.login') }}"><strong>Administrator</strong><small style="display:block;color:var(--portal-muted);margin-top:.35rem">Admin and super-admin access.</small></a>
 </div>
 <div class="auth-links" style="margin-top:1.2rem"><span>Need an account? <a href="{{ route('register') }}">View registration options</a></span><a href="{{ route('home') }}">Browse the journal</a></div>

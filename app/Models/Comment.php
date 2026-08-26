@@ -34,7 +34,7 @@ class Comment extends Model
 
     public function article(): BelongsTo
     {
-        return $this->belongsTo(Article::class);
+        return $this->belongsTo(Article::class)->withTrashed();
     }
 
     public function parent(): BelongsTo

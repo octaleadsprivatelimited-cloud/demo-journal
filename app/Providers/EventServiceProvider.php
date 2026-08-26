@@ -8,11 +8,14 @@ use App\Events\ArticleStatusChanged;
 use App\Events\ArticleSubmitted;
 use App\Events\ContactSubmissionReceived;
 use App\Events\ReviewAssigned;
+use App\Events\ReviewCompleted;
 use App\Listeners\AuthenticationAuditSubscriber;
 use App\Listeners\NotifyAdminsOfContactSubmission;
 use App\Listeners\NotifyAuthorOfArticleStatus;
+use App\Listeners\NotifyAuthorOfArticleSubmission;
 use App\Listeners\NotifyEditorsOfArticleSubmission;
 use App\Listeners\NotifyReviewerOfAssignment;
+use App\Listeners\NotifyStakeholdersOfCompletedReview;
 use App\Listeners\WriteArticleStatusAudit;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Event;
@@ -27,9 +30,13 @@ final class EventServiceProvider extends ServiceProvider
         ],
         ArticleSubmitted::class => [
             NotifyEditorsOfArticleSubmission::class,
+            NotifyAuthorOfArticleSubmission::class,
         ],
         ReviewAssigned::class => [
             NotifyReviewerOfAssignment::class,
+        ],
+        ReviewCompleted::class => [
+            NotifyStakeholdersOfCompletedReview::class,
         ],
         ContactSubmissionReceived::class => [
             NotifyAdminsOfContactSubmission::class,
@@ -39,5 +46,10 @@ final class EventServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Event::subscribe(AuthenticationAuditSubscriber::class);
+    }
+
+    public function shouldDiscoverEvents(): bool
+    {
+        return false;
     }
 }

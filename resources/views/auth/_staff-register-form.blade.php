@@ -9,7 +9,8 @@
         <div class="portal-field"><label for="password_confirmation">Confirm password</label><input class="portal-input" id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" required></div>
     </div>
     <div class="check-row"><input id="terms" name="terms" type="checkbox" value="1" required @checked(old('terms'))><label for="terms">I agree to the publication terms, security requirements, and privacy notice.</label></div><x-portal.field-error name="terms" />
-    <p class="portal-help">Submitting this form does not grant access. The website super-admin must review and approve your {{ strtolower($roleLabel) }} application.</p>
-    <button class="portal-button primary" type="submit" data-loading-text="Submitting application…">Submit {{ strtolower($roleLabel) }} application</button>
+    <p class="portal-help">Your account is activated after a quick review by the website super-admin.</p>
+    <button class="portal-button primary" type="submit" data-loading-text="Creating account…">Create {{ strtolower($roleLabel) }} account</button>
+    @include('auth._google-oauth', ['portal' => $portal])
     <div class="auth-links"><span>Already approved? <a href="{{ route($loginRoute) }}">Sign in</a></span><a href="{{ route('register') }}">Choose another account type</a></div>
 </form>

@@ -23,7 +23,7 @@ class Author extends Model
 
     protected $fillable = [
         'user_id', 'name', 'slug', 'email', 'biography', 'designation', 'organization',
-        'avatar_path', 'website_url', 'social_links', 'is_verified', 'is_active',
+        'avatar_path', 'website_url', 'affiliation', 'orcid', 'social_links', 'is_verified', 'is_active',
     ];
 
     protected function casts(): array

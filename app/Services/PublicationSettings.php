@@ -40,6 +40,13 @@ final class PublicationSettings
                 'phone' => $lookup('contact.phone'),
                 'address' => $lookup('contact.address'),
                 'logo' => $defaults['logo'],
+                'journal' => [
+                    'abbreviation' => $lookup('journal.abbreviation'), 'issn' => $lookup('journal.issn'),
+                    'eissn' => $lookup('journal.eissn'), 'publisher_name' => $lookup('journal.publisher_name'),
+                    'publisher_address' => $lookup('journal.publisher_address'), 'country' => $lookup('journal.country'),
+                    'subject_areas' => $lookup('journal.subject_areas'), 'frequency' => $lookup('journal.frequency'),
+                    'publication_history' => $lookup('journal.publication_history'),
+                ],
                 'social' => [
                     'facebook' => $lookup('social.facebook'),
                     'instagram' => $lookup('social.instagram'),
@@ -88,6 +95,7 @@ final class PublicationSettings
             'address' => null,
             'logo' => null,
             'social' => [],
+            'journal' => [],
             'features' => [
                 'comments' => (bool) config('publication.features.comments', true),
                 'author_registration' => (bool) config('publication.features.author_registration', true),

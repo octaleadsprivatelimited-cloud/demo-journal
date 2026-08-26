@@ -12,6 +12,7 @@
             'general' => 'Used throughout the public website and as the default search and social metadata.',
             'social' => 'Published in the website footer when a valid profile URL is present.',
             'publication' => 'Reader-facing switches enforced by both the interface and their public endpoints.',
+            'policies' => 'Public policy pages. Blank fields display a transparent client-input-required notice and never imply unverified credentials or policies.',
         ];
         $oldSettings = old('settings', []);
     @endphp
@@ -90,6 +91,8 @@
                 </div>
             </section>
         @endforeach
+
+        <section class="portal-card"><div class="portal-card-head"><div><h2>Readiness records</h2><p>Structured journal records used by archives, article metadata, public governance pages, and workflow communication.</p></div></div><div class="portal-card-body"><div class="form-actions">@foreach(['volumes','issues','editorial-members','indexing-services','email-templates'] as $resource)<a class="portal-button" href="{{ route('admin.readiness.index',$resource) }}">{{ str($resource)->headline() }}</a>@endforeach</div></div></section>
 
         <section class="portal-card">
             <div class="portal-card-head">

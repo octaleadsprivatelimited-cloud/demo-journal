@@ -5,6 +5,8 @@
     $imageUrl = $article->featured_image_path
         ? (Illuminate\Support\Str::startsWith($article->featured_image_path, ['http://', 'https://']) ? $article->featured_image_path : Illuminate\Support\Facades\Storage::disk(config('publication.uploads.disk', 'public'))->url($article->featured_image_path))
         : asset('assets/editorial-placeholder.svg');
+    $citationVolume = $article->journalIssue?->volume?->number ?: $article->volume;
+    $citationIssue = $article->journalIssue?->number ?: $article->issue;
     $structuredData = array_filter([
         '@context' => 'https://schema.org',
         '@type' => $seo?->schema_type ?: 'ScholarlyArticle',
@@ -19,6 +21,7 @@
         'articleSection' => $article->category?->name,
         'keywords' => collect($article->keywords)->merge($article->tags->pluck('name'))->filter()->join(', '),
         'identifier' => $article->doi ? 'https://doi.org/'.$article->doi : $article->public_id,
+        'isPartOf' => array_filter(['@type' => 'PublicationIssue', 'issueNumber' => $article->journalIssue?->number ?? $article->issue, 'isPartOf' => array_filter(['@type' => 'PublicationVolume', 'volumeNumber' => $article->journalIssue?->volume?->number ?? $article->volume])]),
     ]);
 @endphp
 @extends('layouts.public')
@@ -32,6 +35,19 @@
 @section('og_type', 'article')
 
 @push('head')
+    <meta name="citation_title" content="{{ $article->title }}">
+    @foreach($article->authors as $author)<meta name="citation_author" content="{{ $author->name }}">@if(filled($author->affiliation) || filled($author->organization))<meta name="citation_author_institution" content="{{ $author->affiliation ?: $author->organization }}">@endif @endforeach
+    <meta name="citation_publication_date" content="{{ optional($publishedAt)->format('Y/m/d') }}">
+    @if(data_get($site, 'journal.issn'))<meta name="citation_issn" content="{{ data_get($site, 'journal.issn') }}">@endif
+    @if(data_get($site, 'journal.eissn'))<meta name="citation_eissn" content="{{ data_get($site, 'journal.eissn') }}">@endif
+    @if($citationVolume)<meta name="citation_volume" content="{{ $citationVolume }}">@endif
+    @if($citationIssue)<meta name="citation_issue" content="{{ $citationIssue }}">@endif
+    @if($article->article_number)<meta name="citation_firstpage" content="{{ $article->article_number }}">@endif
+    @if($article->doi)<meta name="citation_doi" content="{{ $article->doi }}">@endif
+    @if($article->abstract)<meta name="citation_abstract_html_url" content="{{ route('articles.show', $article->slug) }}">@endif
+    @if($article->pdf_download_enabled)<meta name="citation_pdf_url" content="{{ route('articles.pdf', $article->slug) }}">@endif
+    <meta name="DC.title" content="{{ $article->title }}">
+    <meta name="DC.identifier" content="{{ $article->doi ?: $article->public_id }}">
     <meta property="article:published_time" content="{{ optional($publishedAt)->toIso8601String() }}">
     <meta property="article:modified_time" content="{{ optional($article->updated_at)->toIso8601String() }}">
     @if($article->category)<meta property="article:section" content="{{ $article->category->name }}">@endif
@@ -65,6 +81,7 @@
                                 </div>
                                 <div>
                                     <p>By {!! $article->authors->map(fn($author) => '<a href="'.e(route('authors.show', $author->slug)).'">'.e($author->name).'</a>')->implode(', ') !!}</p>
+                                    @if($article->authors->contains(fn($author) => filled($author->affiliation) || filled($author->orcid)))<p class="article-dates">{!! $article->authors->map(fn($author) => e($author->affiliation ?: $author->organization ?: '').($author->orcid ? ' · <a href="https://orcid.org/'.e($author->orcid).'" rel="external noopener">ORCID</a>' : ''))->filter()->implode('<br>') !!}</p>@endif
                                     <div class="article-dates">
                                         <time datetime="{{ optional($publishedAt)->toDateString() }}">Published {{ optional($publishedAt)->format('F j, Y') }}</time>
                                         @if($article->updated_at && $publishedAt && $article->updated_at->gt($publishedAt->copy()->addDay()))<time datetime="{{ $article->updated_at->toDateString() }}">Updated {{ $article->updated_at->format('F j, Y') }}</time>@endif
@@ -77,6 +94,10 @@
                         <dl>
                             <div><dt>Reading time</dt><dd>{{ $readingTime }} minutes</dd></div>
                             @if($article->doi)<div><dt>DOI</dt><dd><a href="https://doi.org/{{ $article->doi }}" rel="external noopener">{{ $article->doi }}</a></dd></div>@endif
+                            @if($article->volume)<div><dt>Volume</dt><dd>{{ $article->volume }}</dd></div>@endif
+                            @if($article->issue)<div><dt>Issue</dt><dd>{{ $article->issue }}</dd></div>@endif
+                            @if($article->article_number)<div><dt>Article</dt><dd>{{ $article->article_number }}</dd></div>@endif
+                            @if($article->publication_notice && $article->publication_notice !== 'none')<div><dt>Notice</dt><dd>{{ str($article->publication_notice)->headline() }}</dd></div>@endif
                             <div><dt>Article views</dt><dd>{{ number_format($article->view_count) }}</dd></div>
                         </dl>
                     </div>

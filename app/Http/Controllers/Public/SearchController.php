@@ -35,6 +35,10 @@ class SearchController extends PublicController
             ))
             ->when($filters['from'] ?? null, fn ($builder, $date) => $builder->whereDate('published_at', '>=', $date))
             ->when($filters['to'] ?? null, fn ($builder, $date) => $builder->whereDate('published_at', '<=', $date))
+            ->when($filters['year'] ?? null, fn ($builder, $year) => $builder->whereYear('published_at', $year))
+            ->when($filters['volume'] ?? null, fn ($builder, $volume) => $builder->where(fn ($q) => $q->where('volume', $volume)->orWhereHas('journalIssue.volume', fn ($v) => $v->where('number', $volume))))
+            ->when($filters['issue'] ?? null, fn ($builder, $issue) => $builder->where(fn ($q) => $q->where('issue', $issue)->orWhereHas('journalIssue', fn ($i) => $i->where('number', $issue))))
+            ->when($filters['publication_type'] ?? null, fn ($builder, $type) => $builder->where('publication_type', $type))
             ->orderByDesc('is_featured')
             ->latest('published_at');
 

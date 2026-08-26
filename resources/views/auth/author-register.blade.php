@@ -1,7 +1,7 @@
 @extends('layouts.portal')
-@section('title', 'Author application')
+@section('title', 'Create author account')
 @section('auth-eyebrow', 'Contributor registration')
-@section('page-title', 'Author application')
+@section('page-title', 'Create author account')
 @section('page-description', 'Create your contributor profile for review by the publication team.')
 @section('content')
 <style>.auth-card{width:min(100%,760px)}</style>
@@ -20,6 +20,7 @@
     <div class="check-row"><input id="terms" name="terms" type="checkbox" value="1" required @checked(old('terms'))><label for="terms">I agree to the publication terms, research integrity standards, and privacy notice.</label></div><x-portal.field-error name="terms" />
     <p class="portal-help">Your profile remains private and inactive until the website super-admin approves this application.</p>
     <button class="portal-button primary" type="submit" data-loading-text="Submitting application…">Submit author application</button>
+    @include('auth._google-oauth', ['portal' => 'author'])
     <div class="auth-links"><span>Already approved? <a href="{{ route('author.login') }}">Author sign in</a></span><a href="{{ route('register') }}">Choose another account type</a></div>
 </form>
 @endsection

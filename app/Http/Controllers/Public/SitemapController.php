@@ -27,8 +27,10 @@ class SitemapController extends PublicController
             ->latest('updated_at')
             ->get(['id', 'slug', 'updated_at']);
 
+        $sitemapBaseUrl = config('publication.sitemap_base_url');
+
         return response()
-            ->view('public.sitemap', compact('articles', 'authors', 'categories'))
+            ->view('public.sitemap', compact('articles', 'authors', 'categories', 'sitemapBaseUrl'))
             ->header('Content-Type', 'application/xml; charset=UTF-8');
     }
 }

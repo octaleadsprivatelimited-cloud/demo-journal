@@ -73,7 +73,8 @@ final class LoginRequest extends FormRequest
     private function canAccessPortal(User $user, string $portal): bool
     {
         return match ($portal) {
-            'author' => $user->hasRole('author'),
+            'author' => $user->hasAnyRole('author', 'contributor'),
+            'contributor' => $user->hasRole('contributor'),
             'editor' => $user->hasRole('editor'),
             'reviewer' => $user->hasRole('reviewer'),
             'admin' => $user->hasAnyRole('admin', 'super-admin'),

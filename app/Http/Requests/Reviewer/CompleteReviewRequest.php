@@ -26,6 +26,7 @@ final class CompleteReviewRequest extends FormRequest
             'comments.*.body' => ['required', 'string', 'max:5000'],
             'comments.*.location' => ['nullable', 'string', 'max:255'],
             'confirmation' => ['accepted'],
+            'review_file' => ['nullable', 'file', 'mimes:pdf,doc,docx,odt', 'max:20480'],
         ];
     }
 }

@@ -9,6 +9,8 @@ use App\Models\Author;
 use App\Models\Category;
 use App\Models\Comment;
 use App\Models\Tag;
+use App\Models\JournalIssue;
+use App\Models\JournalVolume;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,6 +22,20 @@ use Throwable;
 
 class ArticleController extends PublicController
 {
+    public function archive(Request $request): View
+    {
+        $year = $request->integer('year') ?: null;
+        $volumes = JournalVolume::query()->with(['issues' => fn ($query) => $query->withCount(['articles' => fn ($q) => $q->published()])])->when($year, fn ($query) => $query->where('year', $year))->orderByDesc('year')->paginate(12)->withQueryString();
+        $years = JournalVolume::query()->distinct()->orderByDesc('year')->pluck('year');
+        return view('public.articles.archive', $this->publicViewData(compact('volumes','years','year')));
+    }
+
+    public function issue(JournalIssue $issue): View
+    {
+        $issue->load('volume');
+        $articles = $issue->articles()->with(['authors','category','tags'])->paginate(20);
+        return view('public.articles.issue', $this->publicViewData(compact('issue','articles')));
+    }
     public function index(ArticleIndexRequest $request): View
     {
         return $this->listing($request, 'articles');
@@ -105,19 +121,59 @@ class ArticleController extends PublicController
     {
         $article = $this->findPublishedArticle($slug);
 
-        abort_unless($this->featureEnabled('pdf_downloads') && $article->pdf_download_enabled && filled($article->pdf_path), 404);
+        abort_unless($this->featureEnabled('pdf_downloads') && $article->pdf_download_enabled, 404);
 
-        if (Str::startsWith($article->pdf_path, ['https://', 'http://'])) {
+        if (filled($article->pdf_path) && Str::startsWith($article->pdf_path, ['https://', 'http://'])) {
             return redirect()->away($article->pdf_path);
         }
 
-        abort_unless(Storage::disk('local')->exists($article->pdf_path), 404);
+        if (filled($article->pdf_path) && Storage::disk('local')->exists($article->pdf_path)) {
+            return Storage::disk('local')->download(
+                $article->pdf_path,
+                Str::slug($article->title).'.pdf',
+                ['Content-Type' => 'application/pdf'],
+            );
+        }
 
-        return Storage::disk('local')->download(
-            $article->pdf_path,
-            Str::slug($article->title).'.pdf',
-            ['Content-Type' => 'application/pdf'],
-        );
+        return response($this->generatedReadingPdf($article), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.Str::slug($article->title).'.pdf"',
+        ]);
+    }
+
+    private function generatedReadingPdf(Article $article): string
+    {
+        $heading = [$article->title, $article->subtitle, 'Octaleads Journal · '.($article->published_at ?? $article->created_at)->format('F j, Y')];
+        $body = trim(preg_replace('/\s+/', ' ', strip_tags((string) $article->content)) ?? '');
+        $lines = array_filter(array_merge($heading, [''], explode("\n", wordwrap($body, 88, "\n", true))));
+        $pages = array_chunk(array_values($lines), 42) ?: [['Journal reading edition']];
+        $objects = [1 => '<< /Type /Catalog /Pages 2 0 R >>', 3 => '<< /Type /Font /Subtype /Type1 /BaseFont /Times-Roman >>'];
+        $pageRefs = [];
+
+        foreach ($pages as $index => $pageLines) {
+            $pageObject = 4 + ($index * 2);
+            $contentObject = $pageObject + 1;
+            $pageRefs[] = $pageObject.' 0 R';
+            $content = "BT\n/F1 12 Tf\n54 770 Td\n16 TL\n";
+            foreach ($pageLines as $line) {
+                $escaped = str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], mb_convert_encoding((string) $line, 'ISO-8859-1', 'UTF-8'));
+                $content .= '('.$escaped.") Tj\nT*\n";
+            }
+            $content .= "ET";
+            $objects[$pageObject] = '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents '.$contentObject.' 0 R >>';
+            $objects[$contentObject] = '<< /Length '.strlen($content)." >>\nstream\n".$content."\nendstream";
+        }
+
+        $objects[2] = '<< /Type /Pages /Kids ['.implode(' ', $pageRefs).'] /Count '.count($pages).' >>';
+        ksort($objects);
+        $pdf = "%PDF-1.4\n";
+        $offsets = [0];
+        foreach ($objects as $number => $object) { $offsets[$number] = strlen($pdf); $pdf .= $number." 0 obj\n".$object."\nendobj\n"; }
+        $xref = strlen($pdf);
+        $pdf .= 'xref'."\n0 ".(count($objects) + 1)."\n0000000000 65535 f \n";
+        foreach (array_keys($objects) as $number) { $pdf .= str_pad((string) $offsets[$number], 10, '0', STR_PAD_LEFT)." 00000 n \n"; }
+
+        return $pdf.'trailer << /Size '.(count($objects) + 1).' /Root 1 0 R >>' . "\nstartxref\n".$xref."\n%%EOF";
     }
 
     private function listing(ArticleIndexRequest $request, string $mode): View

@@ -19,7 +19,7 @@ final class SubmissionController extends Controller
     {
         Gate::authorize('viewAny', Submission::class);
 
-        return view('admin.submissions.index', ['submissions' => Submission::query()->with(['article:id,title,slug,status', 'submitter:id,name,email'])
+        return view('admin.submissions.index', ['submissions' => Submission::query()->with(['article:id,title,slug,status,deleted_at', 'submitter:id,name,email'])
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))->latest('submitted_at')->paginate(25)->withQueryString()]);
     }
 

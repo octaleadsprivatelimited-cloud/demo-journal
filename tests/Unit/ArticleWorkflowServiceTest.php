@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use App\Enums\ArticleStatus;
+use App\Enums\ReviewRecommendation;
 use App\Enums\SubmissionStatus;
 use App\Events\ArticleStatusChanged;
 use App\Events\ArticleSubmitted;
 use App\Events\ReviewAssigned;
+use App\Events\ReviewCompleted;
 use App\Jobs\PublishScheduledArticles;
 use App\Models\Article;
 use App\Models\Role;
@@ -75,5 +77,24 @@ class ArticleWorkflowServiceTest extends TestCase
 
         $this->assertSame(ArticleStatus::Published, $article->refresh()->status);
         $this->assertNotNull($article->published_at);
+    }
+
+    public function test_completing_a_review_dispatches_a_stakeholder_notification_event(): void
+    {
+        Event::fake([ReviewCompleted::class]);
+        $reviewer = User::factory()->create();
+        $role = Role::query()->create(['name' => 'Reviewer', 'slug' => 'reviewer']);
+        $reviewer->roles()->attach($role, ['assigned_at' => now()]);
+        $article = Article::factory()->create(['status' => ArticleStatus::UnderReview]);
+        $review = app(ArticleWorkflowService::class)->assignReviewer($article, $reviewer);
+
+        app(ArticleWorkflowService::class)->completeReview(
+            $review,
+            $reviewer,
+            ReviewRecommendation::Approve,
+            'Clear and constructive feedback.',
+        );
+
+        Event::assertDispatched(ReviewCompleted::class);
     }
 }

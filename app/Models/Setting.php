@@ -102,6 +102,15 @@ class Setting extends Model
             ],
         ],
         'publication' => [
+            'journal.abbreviation' => ['label' => 'Standard journal abbreviation', 'type' => 'text', 'rules' => ['nullable', 'string', 'max:80'], 'default' => null, 'public' => true],
+            'journal.issn' => ['label' => 'Print ISSN (CLIENT INPUT REQUIRED)', 'type' => 'text', 'rules' => ['nullable', 'regex:/^\d{4}-\d{3}[\dXx]$/'], 'default' => null, 'public' => true],
+            'journal.eissn' => ['label' => 'Electronic ISSN (CLIENT INPUT REQUIRED)', 'type' => 'text', 'rules' => ['nullable', 'regex:/^\d{4}-\d{3}[\dXx]$/'], 'default' => null, 'public' => true],
+            'journal.publisher_name' => ['label' => 'Publisher name (CLIENT INPUT REQUIRED)', 'type' => 'text', 'rules' => ['nullable', 'string', 'max:180'], 'default' => null, 'public' => true],
+            'journal.publisher_address' => ['label' => 'Publisher address (CLIENT INPUT REQUIRED)', 'type' => 'textarea', 'rules' => ['nullable', 'string', 'max:1000'], 'default' => null, 'public' => true],
+            'journal.country' => ['label' => 'Country (CLIENT INPUT REQUIRED)', 'type' => 'text', 'rules' => ['nullable', 'string', 'max:100'], 'default' => null, 'public' => true],
+            'journal.subject_areas' => ['label' => 'Subject areas', 'type' => 'textarea', 'rules' => ['nullable', 'string', 'max:1000'], 'default' => null, 'public' => true],
+            'journal.frequency' => ['label' => 'Publication frequency (CLIENT INPUT REQUIRED)', 'type' => 'text', 'rules' => ['nullable', 'string', 'max:120'], 'default' => null, 'public' => true],
+            'journal.publication_history' => ['label' => 'Publication history', 'type' => 'textarea', 'rules' => ['nullable', 'string', 'max:2000'], 'default' => null, 'public' => true],
             'publication.comments_enabled' => [
                 'label' => 'Enable reader comments',
                 'type' => 'boolean',
@@ -130,6 +139,19 @@ class Setting extends Model
                 'default' => true,
                 'public' => true,
             ],
+        ],
+        'policies' => [
+            'policy.aims_scope' => ['label' => 'Aims & Scope (CLIENT INPUT REQUIRED)', 'type' => 'textarea', 'rules' => ['nullable', 'string', 'max:50000'], 'default' => null, 'public' => true],
+            'policy.peer_review' => ['label' => 'Peer Review Policy (CLIENT INPUT REQUIRED)', 'type' => 'textarea', 'rules' => ['nullable', 'string', 'max:50000'], 'default' => null, 'public' => true],
+            'policy.publication_ethics' => ['label' => 'Publication Ethics (CLIENT INPUT REQUIRED)', 'type' => 'textarea', 'rules' => ['nullable', 'string', 'max:50000'], 'default' => null, 'public' => true],
+            'policy.author_guidelines' => ['label' => 'Author Guidelines (CLIENT INPUT REQUIRED)', 'type' => 'textarea', 'rules' => ['nullable', 'string', 'max:50000'], 'default' => null, 'public' => true],
+            'policy.copyright' => ['label' => 'Copyright Policy (CLIENT INPUT REQUIRED)', 'type' => 'textarea', 'rules' => ['nullable', 'string', 'max:50000'], 'default' => null, 'public' => true],
+            'policy.open_access' => ['label' => 'Open Access Policy (CLIENT INPUT REQUIRED)', 'type' => 'textarea', 'rules' => ['nullable', 'string', 'max:50000'], 'default' => null, 'public' => true],
+            'policy.fees' => ['label' => 'Fees / APC / Waivers (CLIENT INPUT REQUIRED)', 'type' => 'textarea', 'rules' => ['nullable', 'string', 'max:50000'], 'default' => null, 'public' => true],
+            'policy.indexing' => ['label' => 'Indexing & Abstracting (verified entries only)', 'type' => 'textarea', 'rules' => ['nullable', 'string', 'max:50000'], 'default' => null, 'public' => true],
+            'policy.archiving' => ['label' => 'Archiving Policy (CLIENT INPUT REQUIRED)', 'type' => 'textarea', 'rules' => ['nullable', 'string', 'max:50000'], 'default' => null, 'public' => true],
+            'policy.privacy' => ['label' => 'Privacy Policy (CLIENT INPUT REQUIRED)', 'type' => 'textarea', 'rules' => ['nullable', 'string', 'max:50000'], 'default' => null, 'public' => true],
+            'policy.terms' => ['label' => 'Terms (CLIENT INPUT REQUIRED)', 'type' => 'textarea', 'rules' => ['nullable', 'string', 'max:50000'], 'default' => null, 'public' => true],
         ],
     ];
 

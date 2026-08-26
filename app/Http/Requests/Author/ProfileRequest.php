@@ -21,6 +21,7 @@ final class ProfileRequest extends FormRequest
             'name' => ['required', 'string', 'max:120'], 'email' => ['required', 'email:rfc', 'max:255', Rule::unique('users', 'email')->ignore($this->user()->getKey())],
             'phone' => ['nullable', 'string', 'max:32'], 'organization' => ['nullable', 'string', 'max:160'], 'designation' => ['nullable', 'string', 'max:120'],
             'biography' => ['nullable', 'string', 'max:5000'], 'website_url' => ['nullable', 'url:http,https', 'max:2048'],
+            'affiliation' => ['nullable', 'string', 'max:255'], 'orcid' => ['nullable', 'regex:/^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$/', Rule::unique('authors', 'orcid')->ignore($this->user()->author?->id)],
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ];
     }

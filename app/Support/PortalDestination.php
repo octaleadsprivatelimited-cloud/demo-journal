@@ -13,6 +13,7 @@ final class PortalDestination
     {
         return match ($portal) {
             'author' => 'author.dashboard',
+            'contributor' => 'author.dashboard',
             'editor' => 'editor.dashboard',
             'reviewer' => 'reviewer.dashboard',
             'admin' => 'admin.dashboard',
@@ -26,7 +27,7 @@ final class PortalDestination
             $user->hasAnyRole('super-admin', 'admin') => self::routeNameForPortal('admin'),
             $user->hasRole('editor') => self::routeNameForPortal('editor'),
             $user->hasRole('reviewer') => self::routeNameForPortal('reviewer'),
-            $user->hasRole('author') => self::routeNameForPortal('author'),
+            $user->hasAnyRole('author', 'contributor') => self::routeNameForPortal('author'),
             default => 'home',
         };
     }

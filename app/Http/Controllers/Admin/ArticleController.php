@@ -14,6 +14,7 @@ use App\Models\Author;
 use App\Models\Category;
 use App\Models\Tag;
 use App\Models\User;
+use App\Models\JournalIssue;
 use App\Services\ArticleVersionService;
 use App\Services\ArticleWorkflowService;
 use Carbon\CarbonImmutable;
@@ -136,6 +137,8 @@ final class ArticleController extends Controller
                 'approve' => $workflow->transition($article, ArticleStatus::Approved, $request->user(), $request->input('note')),
                 'reject' => $workflow->transition($article, ArticleStatus::Rejected, $request->user(), $request->input('note')),
                 'revision' => $workflow->transition($article, ArticleStatus::RevisionRequired, $request->user(), $request->input('note')),
+                'production' => $workflow->transition($article, ArticleStatus::Production, $request->user(), $request->input('note')),
+                'withdraw' => $workflow->transition($article, ArticleStatus::Withdrawn, $request->user(), $request->input('note')),
                 'schedule' => $workflow->transition($article, ArticleStatus::Scheduled, $request->user(), $request->input('note'), CarbonImmutable::parse($request->input('scheduled_for'))),
                 'publish' => $workflow->transition($article, ArticleStatus::Published, $request->user(), $request->input('note')),
                 'unpublish' => $workflow->transition($article, ArticleStatus::Archived, $request->user(), $request->input('note')),
@@ -183,6 +186,7 @@ final class ArticleController extends Controller
             'categories' => Category::query()->orderBy('name')->get(['id', 'name']), 'tags' => Tag::query()->orderBy('name')->get(['id', 'name']),
             'authors' => Author::query()->active()->orderBy('name')->get(['id', 'name', 'organization']),
             'users' => User::query()->active()->with('roles:id,slug')->orderBy('name')->get(['id', 'name', 'email']),
+            'issues' => JournalIssue::query()->with('volume')->orderByDesc('publication_date')->get(),
         ];
     }
 

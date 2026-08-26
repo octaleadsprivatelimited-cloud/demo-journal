@@ -25,10 +25,6 @@ final class ReviewController extends Controller
     {
         Gate::authorize('view', $review);
 
-        if ($review->status === ReviewStatus::Assigned) {
-            $review->forceFill(['status' => ReviewStatus::InProgress, 'started_at' => now()])->save();
-        }
-
         $review->load(['article.category:id,name,slug', 'article.tags:id,name,slug', 'article.authors:id,name,slug,organization', 'submission.version', 'comments.user:id,name']);
 
         return view('reviewer.reviews.show', compact('review'));
@@ -56,12 +52,32 @@ final class ReviewController extends Controller
                         'is_confidential' => false,
                     ]);
                 }
+                if ($request->hasFile('review_file')) {
+                    $completed->forceFill(['review_file_path' => $request->file('review_file')->store('reviews', 'local')])->save();
+                }
             });
         } catch (DomainException $exception) {
             throw ValidationException::withMessages(['recommendation' => $exception->getMessage()]);
         }
 
         return redirect()->route('reviewer.reviews.show', $review)->with('success', 'Your recommendation is recorded and locked.');
+    }
+
+    public function accept(Review $review): RedirectResponse
+    {
+        Gate::authorize('complete', $review);
+        abort_unless($review->status === ReviewStatus::Assigned, 409);
+        $review->forceFill(['status' => ReviewStatus::InProgress, 'started_at' => now(), 'responded_at' => now(), 'conflict_declared' => false])->save();
+        return back()->with('success', 'Assignment accepted. You may now submit your report.');
+    }
+
+    public function decline(\Illuminate\Http\Request $request, Review $review): RedirectResponse
+    {
+        Gate::authorize('complete', $review);
+        abort_unless($review->status === ReviewStatus::Assigned, 409);
+        $data = $request->validate(['response_note' => ['required','string','max:2000'], 'conflict_declared' => ['sometimes','boolean']]);
+        $review->forceFill(['status' => ReviewStatus::Declined, 'responded_at' => now(), 'response_note' => $data['response_note'], 'conflict_declared' => $request->boolean('conflict_declared')])->save();
+        return redirect()->route('reviewer.dashboard')->with('success', 'Assignment declined; the editorial team has been informed.');
     }
 
     public function download(Review $review): StreamedResponse

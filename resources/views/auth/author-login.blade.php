@@ -4,5 +4,5 @@
 @section('page-title', 'Author sign in')
 @section('page-description', 'Access your manuscripts, submissions, and contributor profile.')
 @section('content')
-@include('auth._login-form', ['submitRoute' => 'author.login.store', 'registrationRoute' => 'author.register', 'portalLabel' => 'Author Studio'])
+@include('auth._login-form', ['submitRoute' => 'author.login.store', 'registrationRoute' => $authorRegistrationEnabled ? 'author.register' : null, 'portalLabel' => 'Author Studio', 'portal' => 'author'])
 @endsection

@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
+use App\Http\Controllers\Auth\GoogleAuthenticationController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
@@ -22,6 +23,12 @@ Route::middleware('guest')->group(function (): void {
     Route::post('/reviewer/login', [AuthenticatedSessionController::class, 'storeReviewer'])->middleware('throttle:login')->name('reviewer.login.store');
     Route::get('/admin/login', [AuthenticatedSessionController::class, 'createAdmin'])->name('admin.login');
     Route::post('/admin/login', [AuthenticatedSessionController::class, 'storeAdmin'])->middleware('throttle:login')->name('admin.login.store');
+    Route::get('/contributor/login', [AuthenticatedSessionController::class, 'createContributor'])->name('contributor.login');
+    Route::post('/contributor/login', [AuthenticatedSessionController::class, 'storeContributor'])->middleware('throttle:login')->name('contributor.login.store');
+    Route::get('/auth/google/{portal}', [GoogleAuthenticationController::class, 'redirect'])
+        ->whereIn('portal', ['author', 'editor', 'reviewer'])
+        ->name('google.redirect');
+    Route::get('/auth/google/callback', [GoogleAuthenticationController::class, 'callback'])->name('google.callback');
 
     Route::get('/register', [RegisteredUserController::class, 'chooser'])->name('register');
     Route::middleware('author-registration')->group(function (): void {
@@ -30,6 +37,10 @@ Route::middleware('guest')->group(function (): void {
     });
     Route::get('/editor/register', [RegisteredUserController::class, 'createEditor'])->name('editor.register');
     Route::post('/editor/register', [RegisteredUserController::class, 'storeEditor'])->middleware('throttle:6,1')->name('editor.register.store');
+    Route::get('/reviewer/register', [RegisteredUserController::class, 'createReviewer'])->name('reviewer.register');
+    Route::post('/reviewer/register', [RegisteredUserController::class, 'storeReviewer'])->middleware('throttle:6,1')->name('reviewer.register.store');
+    Route::get('/contributor/register', [RegisteredUserController::class, 'createContributor'])->name('contributor.register');
+    Route::post('/contributor/register', [RegisteredUserController::class, 'storeContributor'])->middleware('throttle:6,1')->name('contributor.register.store');
     Route::get('/admin/register', [RegisteredUserController::class, 'createAdmin'])->name('admin.register');
     Route::post('/admin/register', [RegisteredUserController::class, 'storeAdmin'])->middleware('throttle:6,1')->name('admin.register.store');
     Route::get('/registration/submitted', [RegisteredUserController::class, 'submitted'])->name('registration.submitted');

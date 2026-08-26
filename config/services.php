@@ -33,6 +33,15 @@ return [
         'key' => env('NEWSLETTER_API_KEY'),
     ],
 
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI', rtrim((string) env('APP_URL', 'http://localhost:8080'), '/').'/auth/google/callback'),
+        'enabled' => filter_var(env('GOOGLE_OAUTH_ENABLED', false), FILTER_VALIDATE_BOOL)
+            && filled(env('GOOGLE_CLIENT_ID'))
+            && filled(env('GOOGLE_CLIENT_SECRET')),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

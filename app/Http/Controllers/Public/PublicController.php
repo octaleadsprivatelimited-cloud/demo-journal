@@ -19,6 +19,7 @@ abstract class PublicController extends Controller
                 'category:id,name,slug',
                 'authors:id,name,slug,designation,organization,avatar_path,is_verified',
                 'tags:id,name,slug',
+                'journalIssue.volume',
             ]);
     }
 

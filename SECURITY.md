@@ -11,6 +11,11 @@ Only the currently deployed release and the latest main-branch release candidate
 ## Security properties
 
 - Every administrative, editorial, reviewer, and author mutation requires authentication plus server-side role and record authorization.
+- Public staff applications never assign privileges directly: the requested role is derived from the registration route, and each account remains inactive, unverified, roleless, and signed out until explicit Super Admin approval.
+- Super Admin is not publicly registrable. Only Super Admins may approve or reject staff applications and manage users, roles, permissions, or site-wide settings.
+- Role-specific login endpoints reject valid credentials belonging to another portal role, preventing cross-portal authentication and confused-deputy access.
+- Google OAuth verifies the returned state and Google-verified email, binds an identity only to that verified address, and preserves the same pending Super Admin approval boundary as password registration. Reviewer accounts remain invitation-only.
+- Workflow emails never include confidential reviewer comments; author-facing notices link back to the role-protected workspace.
 - Reviewers cannot alter manuscript content; authors cannot publish or assign reviewers; suspended accounts cannot use protected portals.
 - Uploaded content is validated by MIME type, extension, size, ownership, and storage visibility. Executable uploads are not served from the application origin.
 - Credentials and provider secrets are runtime-only. No private value may be exposed through a `VITE_` variable.

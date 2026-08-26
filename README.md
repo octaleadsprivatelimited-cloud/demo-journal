@@ -51,6 +51,22 @@ Default seeding installs only roles, permissions, and settings. To add the rich 
 
 Never place a real production password in a seeder or committed environment file. Automated baseline seeding creates an admin only when both `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` are explicitly present at runtime; interactive `user:create-admin` remains the preferred production path.
 
+## Role portals and account approval
+
+Each staff role has a dedicated sign-in and application page: `/author/login`, `/editor/login`, `/reviewer/login`, and `/admin/login`, with matching `/author/register`, `/editor/register`, `/reviewer/register`, and `/admin/register` application routes.
+
+New applications remain signed out, inactive, unverified, and without permissions until a Super Admin approves them. The requested role is taken from the server-owned registration route, not from editable form input. Approval activates the account, assigns only the requested role, and starts email verification. Rejection does not grant portal access.
+
+Super Admins control users, applications, roles, permissions, and site settings. Admins operate publication content, Editors manage the editorial workflow, Reviewers access only assigned manuscripts, and Authors manage only their own work. There is no public Super Admin registration path.
+
+## Workflow email and Google sign-in
+
+The application queues both database and email notifications for submission receipts, new editorial submissions, reviewer assignments (including reassignment or changed due dates), completed reviewer reports, and article status decisions. Authors never receive confidential reviewer notes by email.
+
+For local development, leave the SMTP settings pointed at Mailpit and inspect messages at `http://localhost:8025`. For a live mail provider, set `MAIL_MAILER=smtp` and provide the provider host, port, username, password, encryption scheme, and verified `MAIL_FROM_ADDRESS` in the deployment environment. The queue worker must remain running for delivery.
+
+Google sign-in is optional. Create a Google OAuth **Web application** client, register `${APP_URL}/auth/google/callback` as its redirect URI, then set `GOOGLE_OAUTH_ENABLED=true`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REDIRECT_URI`. Every role's first Google sign-in creates the same pending application as its registration page; a Super Admin must approve it before access is granted.
+
 ## Native development
 
 ```bash

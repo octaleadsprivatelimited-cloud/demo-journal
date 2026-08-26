@@ -28,13 +28,20 @@ final class UserController extends Controller
 
         return view('admin.users.index', [
             'applications' => (clone $baseQuery)->with('approver:id,name')->where('status', 'pending')->whereNotNull('requested_role')->oldest()->get(),
-            'users' => $baseQuery->where('status', '!=', 'pending')->with(['roles:id,name,slug', 'author:id,user_id,is_verified,is_active'])->when($request->filled('q'), function ($q) use ($request): void {
-            $term = '%'.addcslashes($request->string('q')->toString(), '%_').'%';
-            $q->where(fn ($sub) => $sub->where('name', 'like', $term)->orWhere('email', 'like', $term));
-        })->when($request->filled('role'), fn ($q) => $q->where(fn ($rolesOrRequest) => $rolesOrRequest
-            ->where('requested_role', $request->input('role'))
-            ->orWhereHas('roles', fn ($roles) => $roles->where('slug', $request->input('role')))
-        ))->latest()->paginate(25)->withQueryString(),
+            'users' => $baseQuery
+                ->where('status', '!=', 'pending')
+                ->with(['roles:id,name,slug', 'author:id,user_id,is_verified,is_active'])
+                ->when($request->filled('q'), function ($q) use ($request): void {
+                    $term = '%'.addcslashes($request->string('q')->toString(), '%_').'%';
+                    $q->where(fn ($sub) => $sub->where('name', 'like', $term)->orWhere('email', 'like', $term));
+                })
+                ->when($request->filled('role'), fn ($q) => $q->where(fn ($rolesOrRequest) => $rolesOrRequest
+                    ->where('requested_role', $request->input('role'))
+                    ->orWhereHas('roles', fn ($roles) => $roles->where('slug', $request->input('role')))
+                ))
+                ->latest()
+                ->paginate(25)
+                ->withQueryString(),
             'roles' => Role::query()->orderBy('name')->get(),
         ]);
     }

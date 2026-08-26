@@ -134,16 +134,4 @@
         </section>
     @endif
 
-    @if(data_get($site, 'features.newsletter', true))
-    <section class="newsletter-panel">
-        <div class="container newsletter-panel-inner">
-            <div>
-                <p class="eyebrow light">The monthly letter</p>
-                <h2>A quiet corner of your inbox for consequential ideas.</h2>
-                <p>New essays, editorial notes, and essential reading from across the journal.</p>
-            </div>
-            <x-public.newsletter source="home" />
-        </div>
-    </section>
-    @endif
 @endsection

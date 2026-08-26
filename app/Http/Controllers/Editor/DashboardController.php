@@ -23,7 +23,7 @@ final class DashboardController extends Controller
             ],
             'submissions' => Submission::query()
                 ->pending()
-                ->with(['article:id,title,slug,status,submitted_at', 'submitter:id,name'])
+                ->with(['article:id,title,slug,status,submitted_at,deleted_at', 'submitter:id,name'])
                 ->latest('submitted_at')
                 ->limit(8)
                 ->get(),

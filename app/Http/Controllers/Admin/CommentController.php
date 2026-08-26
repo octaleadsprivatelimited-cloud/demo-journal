@@ -20,7 +20,7 @@ final class CommentController extends Controller
         Gate::authorize('moderateComments');
 
         $comments = Comment::query()
-            ->with(['article:id,title,slug', 'user:id,name,email'])
+            ->with(['article:id,title,slug,deleted_at', 'user:id,name,email'])
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->input('status')))
             ->when($request->filled('q'), function ($query) use ($request): void {
                 $term = '%'.addcslashes($request->string('q')->toString(), '%_').'%';

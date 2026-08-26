@@ -24,6 +24,7 @@ class Review extends Model
         'article_id', 'submission_id', 'reviewer_id', 'assigned_by_id', 'status',
         'recommendation', 'comments_to_author', 'confidential_comments', 'due_at',
         'started_at', 'completed_at',
+        'conflict_declared', 'response_note', 'responded_at', 'review_file_path',
     ];
 
     protected function casts(): array
@@ -34,12 +35,13 @@ class Review extends Model
             'due_at' => 'datetime',
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
+            'conflict_declared' => 'boolean', 'responded_at' => 'datetime',
         ];
     }
 
     public function article(): BelongsTo
     {
-        return $this->belongsTo(Article::class);
+        return $this->belongsTo(Article::class)->withTrashed();
     }
 
     public function submission(): BelongsTo

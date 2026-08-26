@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\ReviewAssigned;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ReviewRequest;
 use App\Models\Review;
@@ -19,7 +20,7 @@ final class ReviewController extends Controller
     {
         Gate::authorize('viewAny', Review::class);
 
-        return view('admin.reviews.index', ['reviews' => Review::query()->with(['article:id,title,slug', 'reviewer:id,name,email'])
+        return view('admin.reviews.index', ['reviews' => Review::query()->with(['article:id,title,slug,deleted_at', 'reviewer:id,name,email'])
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))->latest()->paginate(25)->withQueryString()]);
     }
 
@@ -37,7 +38,13 @@ final class ReviewController extends Controller
         $data = $request->validated();
         if (! $request->filled('reviewer_id')) {
             unset($data['reviewer_id']);
-        } $review->update($data);
+        }
+
+        $review->update($data);
+
+        if ($review->wasChanged(['reviewer_id', 'due_at'])) {
+            ReviewAssigned::dispatch($review->refresh());
+        }
 
         return back()->with('success', 'Review assignment updated.');
     }

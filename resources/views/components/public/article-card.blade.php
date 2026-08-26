@@ -6,6 +6,8 @@
         : asset('assets/editorial-placeholder.svg');
     $publishedAt = $article->published_at ?? $article->created_at;
     $readingTime = $article->reading_time_minutes ?: max(1, (int) ceil(str_word_count(strip_tags((string) $article->content)) / 220));
+    $publicPdfEnabled = app(App\Services\PublicationSettings::class)->featureEnabled('pdf_downloads')
+        && $article->pdf_download_enabled;
 @endphp
 <article {{ $attributes->class(['article-card', 'article-card-'.$layout]) }}>
     <a class="article-card-image" href="{{ route('articles.show', $article->slug) }}" tabindex="-1" aria-hidden="true">
@@ -31,6 +33,7 @@
                 <span>By {!! $article->authors->take(2)->map(fn($author) => '<a href="'.e(route('authors.show', $author->slug)).'">'.e($author->name).'</a>')->implode(', ') !!}</span>
             @endif
             <span class="reading-time"><x-public.icon name="clock" /> {{ $readingTime }} min read</span>
+            @if($publicPdfEnabled)<a class="article-pdf-icon" href="{{ route('articles.pdf', $article->slug) }}" aria-label="Download {{ $article->title }} as PDF" title="Download PDF"><x-public.icon name="pdf" /></a>@endif
         </div>
     </div>
 </article>

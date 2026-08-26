@@ -11,6 +11,7 @@ use App\Enums\SubmissionStatus;
 use App\Events\ArticleStatusChanged;
 use App\Events\ArticleSubmitted;
 use App\Events\ReviewAssigned;
+use App\Events\ReviewCompleted;
 use App\Models\Article;
 use App\Models\Review;
 use App\Models\Submission;
@@ -154,7 +155,10 @@ class ArticleWorkflowService
                 'completed_at' => now(),
             ])->save();
 
-            return $review->refresh();
+            $review = $review->refresh();
+            ReviewCompleted::dispatch($review);
+
+            return $review;
         });
     }
 
@@ -176,7 +180,7 @@ class ArticleWorkflowService
         $submissionStatus = match ($status) {
             ArticleStatus::UnderReview => SubmissionStatus::InReview,
             ArticleStatus::RevisionRequired => SubmissionStatus::RevisionRequested,
-            ArticleStatus::Approved, ArticleStatus::Scheduled, ArticleStatus::Published => SubmissionStatus::Accepted,
+            ArticleStatus::Approved, ArticleStatus::Production, ArticleStatus::Scheduled, ArticleStatus::Published => SubmissionStatus::Accepted,
             ArticleStatus::Rejected => SubmissionStatus::Rejected,
             default => null,
         };

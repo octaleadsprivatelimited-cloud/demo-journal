@@ -16,7 +16,7 @@ class RobotsController extends PublicController
             'Disallow: /author/articles',
             'Disallow: /api/',
             '',
-            'Sitemap: '.route('sitemap'),
+            'Sitemap: '.config('publication.sitemap_base_url').'/sitemap.xml',
             '',
         ]);
 

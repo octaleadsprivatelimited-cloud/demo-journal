@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Services\PublicationSettings;
 use App\Support\PortalDestination;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,9 +20,11 @@ final class AuthenticatedSessionController extends Controller
         return view('auth.login');
     }
 
-    public function createAuthor(): View
+    public function createAuthor(PublicationSettings $publicationSettings): View
     {
-        return view('auth.author-login');
+        return view('auth.author-login', [
+            'authorRegistrationEnabled' => $publicationSettings->featureEnabled('author_registration'),
+        ]);
     }
 
     public function createEditor(): View
@@ -38,6 +41,7 @@ final class AuthenticatedSessionController extends Controller
     {
         return view('auth.admin-login');
     }
+    public function createContributor(): View { return view('auth.contributor-login'); }
 
     public function storeAuthor(LoginRequest $request): RedirectResponse
     {
@@ -58,6 +62,7 @@ final class AuthenticatedSessionController extends Controller
     {
         return $this->storeForPortal($request, 'admin');
     }
+    public function storeContributor(LoginRequest $request): RedirectResponse { return $this->storeForPortal($request, 'contributor'); }
 
     private function storeForPortal(LoginRequest $request, string $portal): RedirectResponse
     {

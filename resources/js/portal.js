@@ -6,6 +6,17 @@
     document.querySelectorAll('[data-sidebar-close]').forEach((node) => node.addEventListener('click', closeSidebar));
     document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeSidebar(); });
 
+    const accountToggle = document.querySelector('[data-account-toggle]');
+    const accountMenu = document.querySelector('[data-account-menu]');
+    const closeAccountMenu = () => { accountMenu?.setAttribute('hidden', ''); accountToggle?.setAttribute('aria-expanded', 'false'); };
+    accountToggle?.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const isOpen = !accountMenu?.hasAttribute('hidden');
+        if (isOpen) closeAccountMenu(); else { accountMenu?.removeAttribute('hidden'); accountToggle.setAttribute('aria-expanded', 'true'); }
+    });
+    document.addEventListener('click', (event) => { if (accountMenu && !accountMenu.contains(event.target) && !accountToggle?.contains(event.target)) closeAccountMenu(); });
+    document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeAccountMenu(); });
+
     document.querySelectorAll('[data-toast-close]').forEach((button) => button.addEventListener('click', () => button.closest('[data-toast]')?.remove()));
     const toast = document.querySelector('[data-toast]'); if (toast) window.setTimeout(() => toast.remove(), 6500);
 

@@ -24,7 +24,7 @@
         @else
             <div class="portal-table-wrap"><table class="portal-table"><thead><tr><th>Article</th><th>Author</th><th>Submitted</th><th></th></tr></thead><tbody>
             @foreach($submissions as $submission)
-                <tr><td><span class="row-title">{{ $submission->article->title }}</span></td><td>{{ $submission->submitter->name }}</td><td>{{ $submission->submitted_at?->diffForHumans() }}</td><td><a class="portal-button small" href="{{ route('admin.submissions.show', $submission) }}">Review</a></td></tr>
+                <tr><td><span class="row-title">{{ $submission->article->title }}</span><small>{{ $submission->article->trashed() ? 'Archived manuscript' : '' }}</small></td><td>{{ $submission->submitter?->name ?? 'System' }}</td><td>{{ $submission->submitted_at?->diffForHumans() }}</td><td><a class="portal-button small" href="{{ route('admin.submissions.show', $submission) }}">Review</a></td></tr>
             @endforeach
             </tbody></table></div>
         @endif

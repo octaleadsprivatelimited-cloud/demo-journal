@@ -13,13 +13,13 @@
     <section class="section editorial-board">
         <div class="container">
             @if($chief)
-                <div class="board-chief"><div><p class="eyebrow">Editor-in-Chief</p><x-public.author-card :author="$chief" /></div>@if($chief->biography)<p>{{ $chief->biography }}</p>@endif</div>
+                <div class="board-chief"><div><p class="eyebrow">Editor-in-Chief</p><h2>{{ $chief->name }}</h2><p>{{ $chief->credentials }}{{ $chief->institution ? ' · '.$chief->institution : '' }}</p>@if($chief->orcid)<a href="https://orcid.org/{{ $chief->orcid }}" rel="external noopener">ORCID</a>@endif</div>@if($chief->biography)<p>{{ $chief->biography }}</p>@endif</div>
             @endif
             @if($editors->isNotEmpty())
-                <div class="board-group"><div class="minor-heading"><h2>Editors</h2><span>{{ $editors->count() }} members</span></div><div class="author-directory">@foreach($editors as $member)<x-public.author-card :author="$member" />@endforeach</div></div>
+                <div class="board-group"><div class="minor-heading"><h2>Editors</h2><span>{{ $editors->count() }} members</span></div><div class="author-directory">@foreach($editors as $member)<article class="author-card"><h3>{{ $member->name }}</h3><p>{{ $member->role }}</p><small>{{ collect([$member->credentials,$member->institution,$member->country])->filter()->join(' · ') }}</small>@if($member->orcid)<a href="https://orcid.org/{{ $member->orcid }}" rel="external noopener">ORCID</a>@endif</article>@endforeach</div></div>
             @endif
             @if($reviewers->isNotEmpty())
-                <div class="board-group"><div class="minor-heading"><h2>Reviewers &amp; advisory members</h2><span>{{ $reviewers->count() }} members</span></div><div class="author-directory">@foreach($reviewers as $member)<x-public.author-card :author="$member" />@endforeach</div></div>
+                <div class="board-group"><div class="minor-heading"><h2>Reviewers, advisors &amp; staff</h2><span>{{ $reviewers->count() }} members</span></div><div class="author-directory">@foreach($reviewers as $member)<article class="author-card"><h3>{{ $member->name }}</h3><p>{{ $member->role }}</p><small>{{ collect([$member->credentials,$member->institution,$member->country])->filter()->join(' · ') }}</small>@if($member->orcid)<a href="https://orcid.org/{{ $member->orcid }}" rel="external noopener">ORCID</a>@endif</article>@endforeach</div></div>
             @endif
             @unless($chief || $editors->isNotEmpty() || $reviewers->isNotEmpty())
                 <x-public.empty-state title="Profiles are being prepared" message="Editorial appointments are managed in the publication workspace and will appear here once published." :action="route('about')" action-label="Read our editorial principles" />

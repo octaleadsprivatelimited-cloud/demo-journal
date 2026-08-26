@@ -22,7 +22,7 @@ final class SubmissionController extends Controller
     public function index(Request $request): View
     {
         $submissions = Submission::query()->whereHas('article', fn ($query) => $query->where('created_by_id', $request->user()->getKey()))
-            ->with(['article:id,title,slug,status', 'version:id,article_id,version_number', 'reviews:id,submission_id,status,recommendation,completed_at'])
+            ->with(['article:id,title,slug,status,deleted_at', 'version:id,article_id,version_number', 'reviews:id,submission_id,status,recommendation,completed_at'])
             ->latest('submitted_at')->paginate(15);
 
         return view('author.submissions.index', compact('submissions'));

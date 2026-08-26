@@ -36,7 +36,14 @@
                         <tr>
                             <td><span class="row-title">{{ $comment->user?->name ?? $comment->guest_name ?? 'Anonymous' }}</span><small>{{ $comment->user?->email ?? $comment->guest_email }}</small></td>
                             <td style="min-width:260px">{{ str($comment->body)->limit(180) }}</td>
-                            <td><a class="row-title" href="{{ route('articles.show', $comment->article->slug) }}" target="_blank" rel="noopener">{{ str($comment->article->title)->limit(60) }}</a></td>
+                            <td>
+                                @if ($comment->article->trashed())
+                                    <span class="row-title">{{ str($comment->article->title)->limit(60) }}</span>
+                                    <small>Archived article</small>
+                                @else
+                                    <a class="row-title" href="{{ route('articles.show', $comment->article->slug) }}" target="_blank" rel="noopener">{{ str($comment->article->title)->limit(60) }}</a>
+                                @endif
+                            </td>
                             <td><x-portal.status :value="$comment->status" /></td>
                             <td>{{ $comment->created_at->format('d M Y, H:i') }}</td>
                             <td>

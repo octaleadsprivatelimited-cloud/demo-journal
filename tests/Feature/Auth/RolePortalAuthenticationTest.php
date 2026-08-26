@@ -7,6 +7,7 @@ namespace Tests\Feature\Auth;
 use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
@@ -142,19 +143,52 @@ final class RolePortalAuthenticationTest extends TestCase
         }
     }
 
-    public function test_only_a_super_administrator_can_approve_a_pending_registration(): void
+    public function test_pending_application_cannot_sign_in_before_super_admin_approval(): void
+    {
+        $applicant = $this->pendingApplicant('editor');
+
+        $this->from(route('editor.login'))
+            ->post(route('editor.login.store'), [
+                'email' => $applicant->email,
+                'password' => self::PASSWORD,
+            ])
+            ->assertRedirect(route('editor.login'))
+            ->assertSessionHasErrors([
+                'email' => 'Your application is awaiting Super Admin approval.',
+            ]);
+
+        $this->assertGuest();
+    }
+
+    public function test_super_administrator_signs_in_through_the_admin_portal(): void
+    {
+        $superAdmin = $this->approvedUser('super-admin');
+
+        $this->post(route('admin.login.store'), [
+            'email' => $superAdmin->email,
+            'password' => self::PASSWORD,
+        ])->assertRedirect(route('admin.dashboard'));
+
+        $this->assertAuthenticatedAs($superAdmin);
+    }
+
+    public function test_only_a_super_administrator_can_decide_a_pending_registration(): void
     {
         $this->seed(RolePermissionSeeder::class);
 
         $applicant = $this->pendingApplicant('editor');
 
-        $this->post(route('admin.users.approve', $applicant))
-            ->assertRedirect();
+        foreach (['approve', 'reject'] as $decision) {
+            $this->post(route("admin.users.{$decision}", $applicant))
+                ->assertRedirect(route('admin.login'));
+        }
 
         foreach (['author', 'editor', 'admin'] as $role) {
-            $this->actingAs($this->roleUser($role))
-                ->post(route('admin.users.approve', $applicant))
-                ->assertForbidden();
+            foreach (['approve', 'reject'] as $decision) {
+                $this->actingAs($this->roleUser($role))
+                    ->post(route("admin.users.{$decision}", $applicant))
+                    ->assertForbidden();
+            }
 
             $applicant->refresh();
             $this->assertSame('pending', $applicant->status);
@@ -183,6 +217,40 @@ final class RolePortalAuthenticationTest extends TestCase
         $this->assertNotNull($applicant->approved_at);
         $this->assertNull($applicant->rejected_at);
         $this->assertSame(['editor'], $applicant->roles()->pluck('slug')->all());
+        $this->assertDatabaseHas('audit_logs', [
+            'actor_id' => $superAdmin->getKey(),
+            'auditable_type' => $applicant->getMorphClass(),
+            'auditable_id' => $applicant->getKey(),
+            'event' => 'account_application_approved',
+        ]);
+        Notification::assertSentTo($applicant, VerifyEmail::class);
+    }
+
+    public function test_super_administrator_can_reject_a_pending_application_with_an_audit_record(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+
+        $superAdmin = $this->roleUser('super-admin');
+        $applicant = $this->pendingApplicant('admin');
+
+        $this->actingAs($superAdmin)
+            ->post(route('admin.users.reject', $applicant))
+            ->assertRedirect();
+
+        $applicant->refresh();
+
+        $this->assertSame('rejected', $applicant->status);
+        $this->assertFalse($applicant->is_active);
+        $this->assertSame($superAdmin->getKey(), $applicant->approved_by_id);
+        $this->assertNull($applicant->approved_at);
+        $this->assertNotNull($applicant->rejected_at);
+        $this->assertFalse($applicant->roles()->exists());
+        $this->assertDatabaseHas('audit_logs', [
+            'actor_id' => $superAdmin->getKey(),
+            'auditable_type' => $applicant->getMorphClass(),
+            'auditable_id' => $applicant->getKey(),
+            'event' => 'account_application_rejected',
+        ]);
     }
 
     public function test_admin_and_editor_cannot_manage_users_roles_or_website_settings(): void
@@ -233,6 +301,7 @@ final class RolePortalAuthenticationTest extends TestCase
     private function pendingApplicant(string $requestedRole): User
     {
         return User::factory()->create([
+            'password' => self::PASSWORD,
             'email_verified_at' => null,
             'status' => 'pending',
             'is_active' => false,

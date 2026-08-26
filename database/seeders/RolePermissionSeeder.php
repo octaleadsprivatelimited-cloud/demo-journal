@@ -21,6 +21,7 @@ class RolePermissionSeeder extends Seeder
             'editor' => 'Editor',
             'reviewer' => 'Reviewer',
             'author' => 'Author',
+            'contributor' => 'Contributor',
             'user' => 'User',
         ])->mapWithKeys(fn (string $name, string $slug) => [
             $slug => Role::query()->updateOrCreate(
@@ -63,10 +64,11 @@ class RolePermissionSeeder extends Seeder
         ])->pluck('id')->all());
         $roles['reviewer']->permissions()->sync($permissionModels->only(['dashboard.view', 'articles.view', 'articles.view-unpublished', 'articles.review', 'media.manage'])->pluck('id')->all());
         $roles['author']->permissions()->sync($permissionModels->only(['dashboard.view', 'articles.view', 'articles.create', 'articles.update', 'articles.submit', 'media.manage'])->pluck('id')->all());
+        $roles['contributor']->permissions()->sync($permissionModels->only(['dashboard.view', 'articles.view', 'articles.create', 'articles.update', 'articles.submit', 'media.manage'])->pluck('id')->all());
         $roles['user']->permissions()->sync($permissionModels->only(['articles.view'])->pluck('id')->all());
 
-        $email = trim((string) env('SEED_ADMIN_EMAIL'));
-        $password = (string) env('SEED_ADMIN_PASSWORD');
+        $email = trim((string) (getenv('SEED_ADMIN_EMAIL') ?: env('SEED_ADMIN_EMAIL')));
+        $password = (string) (getenv('SEED_ADMIN_PASSWORD') ?: env('SEED_ADMIN_PASSWORD'));
 
         if ($email === '' && $password === '') {
             $this->command?->info('Admin seeding skipped; set both SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD to opt in.');
@@ -85,7 +87,7 @@ class RolePermissionSeeder extends Seeder
         $admin = User::query()->updateOrCreate(
             ['email' => mb_strtolower($email)],
             [
-                'name' => (string) (env('SEED_ADMIN_NAME') ?: 'Platform Administrator'),
+                'name' => (string) (getenv('SEED_ADMIN_NAME') ?: env('SEED_ADMIN_NAME') ?: 'Platform Administrator'),
                 'password' => Hash::make($password),
                 'email_verified_at' => now(),
                 'status' => 'active',

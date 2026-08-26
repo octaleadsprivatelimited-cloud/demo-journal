@@ -27,7 +27,7 @@ final class ProfileController extends Controller
                 'designation' => $data['designation'] ?? null, 'profile_image_path' => $avatar ?: $request->user()->profile_image_path, 'email_verified_at' => $emailChanged ? null : $request->user()->email_verified_at]);
             $existingAuthor = $request->user()->author()->first();
             $request->user()->author()->updateOrCreate([], ['name' => $data['name'], 'email' => $data['email'], 'organization' => $data['organization'] ?? null,
-                'designation' => $data['designation'] ?? null, 'biography' => $data['biography'] ?? null, 'website_url' => $data['website_url'] ?? null,
+                'designation' => $data['designation'] ?? null, 'biography' => $data['biography'] ?? null, 'website_url' => $data['website_url'] ?? null, 'affiliation' => $data['affiliation'] ?? null, 'orcid' => $data['orcid'] ?? null,
                 'avatar_path' => $avatar ?: $existingAuthor?->avatar_path, 'is_active' => true]);
         });
         if (! $request->user()->hasVerifiedEmail()) {

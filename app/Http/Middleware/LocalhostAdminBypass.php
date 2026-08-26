@@ -72,7 +72,8 @@ final class LocalhostAdminBypass
                 'status' => 'inactive',
                 'is_active' => false,
                 'is_local_admin_bypass' => true,
-            ])->save();
+            ]);
+            $user->save();
         }
 
         $this->deactivatePersistentIdentity($user);

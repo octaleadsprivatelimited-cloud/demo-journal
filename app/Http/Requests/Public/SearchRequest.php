@@ -22,6 +22,9 @@ class SearchRequest extends FormRequest
             'tag' => ['nullable', 'string', 'max:160'],
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
+            'year' => ['nullable', 'integer', 'min:1800', 'max:2200'],
+            'volume' => ['nullable', 'string', 'max:40'], 'issue' => ['nullable', 'string', 'max:40'],
+            'publication_type' => ['nullable', 'in:article,research,review,essay,case-study,editorial'],
         ];
     }
 

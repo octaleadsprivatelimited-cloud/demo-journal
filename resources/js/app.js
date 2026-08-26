@@ -7,6 +7,8 @@ ready(() => {
     const header = document.querySelector('[data-site-header]');
     const menuButton = document.querySelector('[data-menu-toggle]');
     const mobileMenu = document.querySelector('[data-mobile-menu]');
+    const accountButton = document.querySelector('[data-account-toggle]');
+    const accountMenu = document.querySelector('[data-account-menu]');
     const searchDialog = document.querySelector('[data-search-dialog]');
     const searchInput = document.querySelector('[data-search-input]');
 
@@ -15,28 +17,49 @@ ready(() => {
         menuButton.setAttribute('aria-expanded', 'false');
         mobileMenu.hidden = true;
     };
+    const closeAccountMenu = () => {
+        if (!accountButton || !accountMenu) return;
+        accountButton.setAttribute('aria-expanded', 'false');
+        accountMenu.hidden = true;
+    };
     menuButton?.addEventListener('click', () => {
         const opening = menuButton.getAttribute('aria-expanded') !== 'true';
+        closeAccountMenu();
         menuButton.setAttribute('aria-expanded', String(opening));
         mobileMenu.hidden = !opening;
     });
-    window.addEventListener('resize', () => { if (window.innerWidth > 860) closeMobileMenu(); }, { passive: true });
+    accountButton?.addEventListener('click', () => {
+        const opening = accountButton.getAttribute('aria-expanded') !== 'true';
+        closeMobileMenu();
+        accountButton.setAttribute('aria-expanded', String(opening));
+        accountMenu.hidden = !opening;
+    });
+    window.addEventListener('resize', () => { if (window.innerWidth > 860) { closeMobileMenu(); closeAccountMenu(); } }, { passive: true });
 
+    let searchCloseTimer;
     const openSearch = () => {
         closeMobileMenu();
+        closeAccountMenu();
         if (!searchDialog) return;
-        if (typeof searchDialog.showModal === 'function') searchDialog.showModal();
+        window.clearTimeout(searchCloseTimer);
+        searchDialog.classList.remove('is-closing');
+        if (!searchDialog.open && typeof searchDialog.showModal === 'function') searchDialog.showModal();
         else searchDialog.setAttribute('open', '');
         window.setTimeout(() => searchInput?.focus(), 30);
     };
     const closeSearch = () => {
         if (!searchDialog?.open) return;
-        if (typeof searchDialog.close === 'function') searchDialog.close();
-        else searchDialog.removeAttribute('open');
+        searchDialog.classList.add('is-closing');
+        searchCloseTimer = window.setTimeout(() => {
+            if (typeof searchDialog.close === 'function') searchDialog.close();
+            else searchDialog.removeAttribute('open');
+            searchDialog.classList.remove('is-closing');
+        }, 220);
     };
     document.querySelectorAll('[data-search-open]').forEach((button) => button.addEventListener('click', openSearch));
     document.querySelectorAll('[data-search-close]').forEach((button) => button.addEventListener('click', closeSearch));
     searchDialog?.addEventListener('click', (event) => { if (event.target === searchDialog) closeSearch(); });
+    searchDialog?.addEventListener('cancel', (event) => { event.preventDefault(); closeSearch(); });
     document.addEventListener('keydown', (event) => {
         const target = event.target;
         const typing = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement || target?.isContentEditable;

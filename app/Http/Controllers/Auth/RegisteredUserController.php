@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\Author;
 use App\Models\User;
+use App\Services\PublicationSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -15,9 +16,11 @@ use Illuminate\View\View;
 
 final class RegisteredUserController extends Controller
 {
-    public function chooser(): View
+    public function chooser(PublicationSettings $publicationSettings): View
     {
-        return view('auth.register');
+        return view('auth.register', [
+            'authorRegistrationEnabled' => $publicationSettings->featureEnabled('author_registration'),
+        ]);
     }
 
     public function createAuthor(): View
@@ -30,10 +33,12 @@ final class RegisteredUserController extends Controller
         return view('auth.editor-register');
     }
 
-    public function createAdmin(): View
+    public function createReviewer(): View
     {
-        return view('auth.admin-register');
+        return view('auth.reviewer-register');
     }
+    public function createContributor(): View { return view('auth.contributor-register'); }
+    public function createAdmin(): View { return view('auth.admin-register'); }
 
     public function submitted(): View
     {
@@ -50,15 +55,17 @@ final class RegisteredUserController extends Controller
         return $this->storeForRole($request, 'editor');
     }
 
-    public function storeAdmin(RegisterRequest $request): RedirectResponse
+    public function storeReviewer(RegisterRequest $request): RedirectResponse
     {
-        return $this->storeForRole($request, 'admin');
+        return $this->storeForRole($request, 'reviewer');
     }
+    public function storeContributor(RegisterRequest $request): RedirectResponse { return $this->storeForRole($request, 'contributor'); }
+    public function storeAdmin(RegisterRequest $request): RedirectResponse { return $this->storeForRole($request, 'admin'); }
 
     private function storeForRole(RegisterRequest $request, string $requestedRole): RedirectResponse
     {
         $data = $request->validated();
-        $avatarPath = $requestedRole === 'author'
+        $avatarPath = in_array($requestedRole, ['author','contributor'], true)
             ? $request->file('profile_image')?->store('authors/avatars', 'public')
             : null;
 
@@ -76,7 +83,7 @@ final class RegisteredUserController extends Controller
                 'requested_role' => $requestedRole,
             ]);
 
-            if ($requestedRole === 'author') {
+            if (in_array($requestedRole, ['author','contributor'], true)) {
                 Author::query()->create([
                     'user_id' => $user->getKey(),
                     'name' => $user->name,

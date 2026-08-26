@@ -1,6 +1,6 @@
 {
     "$schema": "https://www.schemastore.org/package.json",
-    "name": "meridian-journal",
+    "name": "octaleads-journal",
     "version": "1.0.0",
     "private": true,
     "type": "module",

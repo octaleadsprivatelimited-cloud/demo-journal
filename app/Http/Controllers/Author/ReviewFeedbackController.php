@@ -14,7 +14,7 @@ final class ReviewFeedbackController extends Controller
     public function __invoke(Request $request): View
     {
         $reviews = Review::query()->whereHas('article', fn ($query) => $query->where('created_by_id', $request->user()->getKey()))->whereNotNull('completed_at')
-            ->with(['article:id,title,slug,status', 'submission:id,article_id,round', 'comments' => fn ($query) => $query->where('is_confidential', false)])->latest('completed_at')->paginate(15);
+            ->with(['article:id,title,slug,status,deleted_at', 'submission:id,article_id,round', 'comments' => fn ($query) => $query->where('is_confidential', false)])->latest('completed_at')->paginate(15);
 
         return view('author.reviews.index', compact('reviews'));
     }
