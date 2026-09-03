@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" role="img" aria-labelledby="title desc">
+  <title id="title">Editorial geometric illustration</title>
+  <desc id="desc">Abstract composition in forest green, parchment, ochre and terracotta.</desc>
+  <rect width="1200" height="750" fill="#e7e3d8"/>
+  <path d="M0 0h460v750H0z" fill="#173b35"/>
+  <circle cx="460" cy="375" r="245" fill="#f4c66e"/>
+  <path d="M460 130h300v490H460z" fill="#a85532"/>
+  <path d="m760 130 440 245-440 245z" fill="#294f49"/>
+  <circle cx="760" cy="375" r="94" fill="#f8f6f0"/>
+  <path d="M65 80h280v8H65zm0 38h190v8H65zm0 514h260v8H65zm0 38h140v8H65z" fill="#f8f6f0" opacity=".72"/>
+</svg>

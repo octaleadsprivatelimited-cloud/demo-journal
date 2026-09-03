@@ -1,0 +1,1 @@
+@extends('layouts.portal') @section('title','Edit '.$role->name) @section('section','Audience & system') @section('eyebrow','Granular access') @section('page-title','Edit role') @section('content')@include('admin.roles._form')@endsection

@@ -1,0 +1,1 @@
+@extends('layouts.portal') @section('title','New tag') @section('section','Publishing') @section('eyebrow','Topic vocabulary') @section('page-title','New tag') @section('content')<div class="portal-card"><div class="portal-card-body">@include('admin.tags._form')</div></div>@endsection
