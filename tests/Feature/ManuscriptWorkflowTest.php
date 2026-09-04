@@ -255,4 +255,25 @@ class ManuscriptWorkflowTest extends TestCase
         $this->post(route('reviewer.reviews.accept', $review))->assertRedirect()->assertSessionHasNoErrors();
         $this->assertSame('under_review', $this->article->fresh()->workflow->stage);
     }
+    public function test_storage_outage_rolls_back_workflow_stage_and_file_records(): void
+    {
+        $this->article->workflow()->create(['stage' => 'plagiarism_check']);
+        $root = tempnam(sys_get_temp_dir(), 'failed-storage-');
+        config(['filesystems.disks.local.root' => $root]);
+        Storage::forgetDisk('local');
+        try {
+            $this->service->execute($this->article, $this->editor, 'pass_similarity', [
+                'similarity' => 5, 'comments' => 'Similarity is within the accepted threshold.',
+                'report' => UploadedFile::fake()->createWithContent('paper.pdf', "%PDF-1.4\npaper"),
+            ]);
+            $this->fail('A failed upload must not complete the workflow action.');
+        } catch (\League\Flysystem\FilesystemException $exception) {
+            $this->assertSame('plagiarism_check', $this->article->workflow()->first()->stage);
+            $this->assertSame(0, WorkflowFile::where('article_id', $this->article->id)->count());
+            $this->assertSame(0, WorkflowActivity::where('article_id', $this->article->id)->count());
+        } finally {
+            unlink($root);
+            Storage::forgetDisk('local');
+        }
+    }
 }

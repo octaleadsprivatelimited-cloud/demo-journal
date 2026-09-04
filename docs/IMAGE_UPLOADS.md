@@ -9,6 +9,6 @@ All web and API multipart image uploads pass through `OptimizeImageUploads` befo
 - Every accepted image is at most **1,000,000 bytes**. Files that cannot satisfy this limit losslessly produce a field validation error rather than an automatically degraded image.
 - PDFs and Word documents remain unchanged and retain their existing document limits. Manuscripts and proofs still require their prescribed document formats; supplementary uploads also accept images.
 
-Processing is bounded by the existing request limits, a 25 MB input-image ceiling, 40 megapixels, and a 15-second timeout per optimizer process. Optimizers run without shell interpolation, on upload-temporary files. Failed validation creates no stored media record.
+Processing is bounded by the existing request limits, a 5 MB input-image ceiling, 40 megapixels, and a 15-second timeout per optimizer process. Optimizers run without shell interpolation, on upload-temporary files. Failed validation creates no stored media record.
 
 Docker installs `jpegoptim` and `optipng`. Non-Docker hosts need these executables available to PHP. No external image processing API receives uploaded data. Existing stored images are not rewritten.

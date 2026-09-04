@@ -56,6 +56,46 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prependToPriorityList(AuthenticatesRequests::class, LocalhostAdminBypass::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (\Illuminate\Http\Exceptions\PostTooLargeException $error, Request $request) {
+            $message = 'The upload is too large. Keep the complete submission below 32 MB and each document below 20 MB. Submit supplementary files in smaller batches.';
+            return $request->is('api/*') || $request->expectsJson()
+                ? response()->json(['message' => $message, 'code' => 'upload_too_large'], 413)
+                : response()->view('errors.413', [], 413);
+        });
+        $exceptions->render(function (\League\Flysystem\FilesystemException $error, Request $request) {
+            $message = 'File storage is temporarily unavailable. Keep your original files and retry when storage is available.';
+            return $request->is('api/*') || $request->expectsJson()
+                ? response()->json(['message' => $message, 'code' => 'storage_unavailable'], 503)
+                : response()->view('errors.storage', [], 503)->header('X-Error-Code', 'storage_unavailable');
+        });
+
+        $exceptions->respond(function (\Symfony\Component\HttpFoundation\Response $response, \Throwable $exception, Request $request) {
+            $status = $response->getStatusCode();
+            if ($status < 400) {
+                return $response;
+            }
+            $code = $response->headers->get('X-Error-Code') ?: \App\Support\ErrorCodes::forStatus($status);
+            if ($response instanceof \Illuminate\Http\JsonResponse) {
+                $data = $response->getData(true);
+                $data = is_array($data) ? $data : [];
+                $code = $data['code'] ?? $code;
+                if ($status >= 500 && ! isset($data['code'])) {
+                    $data = ['message' => 'The service could not complete this request. Please try again shortly. If it continues, contact the journal administrator.'];
+                }
+                $data['code'] = $code;
+                if (isset($data['errors']) && is_array($data['errors'])) {
+                    $data['error_codes'] = collect($data['errors'])->map(fn ($messages) => array_map(
+                        fn ($message) => \App\Support\ErrorCodes::fromMessage($message), (array) $messages,
+                    ))->all();
+                }
+                $response->setData($data);
+            } elseif ($status >= 500 && $code !== 'storage_unavailable') {
+                $response = response()->view($status === 503 ? 'errors.503' : 'errors.500', [], $status);
+            }
+            $response->headers->set('X-Error-Code', $code);
+            return $response;
+        });
+
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );

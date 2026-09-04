@@ -5,6 +5,7 @@
 @section('content')
     <section class="home-intro">
         <div class="container">
+            <h1 class="sr-only">Featured and latest journal articles</h1>
             <div class="issue-line">
                 <span>Current edition</span>
                 <strong>{{ now()->format('F Y') }}</strong>
@@ -12,18 +13,20 @@
                 <a href="{{ route('articles.index') }}">Browse the archive <x-public.icon name="arrow-right" /></a>
             </div>
 
-            @if($featured)
+            @if($heroArticles->isNotEmpty())
+                <div class="hero-slider" data-hero-slider role="region" aria-roledescription="carousel" aria-label="Featured and latest articles">
+                @foreach($heroArticles as $featured)
                 @php
                     $featuredImage = $featured->featured_image_path
                         ? (Illuminate\Support\Str::startsWith($featured->featured_image_path, ['http://', 'https://']) ? $featured->featured_image_path : Illuminate\Support\Facades\Storage::disk(config('publication.uploads.disk', 'public'))->url($featured->featured_image_path))
                         : asset('assets/editorial-placeholder.svg');
                     $featuredDate = $featured->published_at ?? $featured->created_at;
                 @endphp
-                <article class="lead-story">
+                <article class="lead-story" data-hero-slide role="group" aria-roledescription="slide" aria-label="{{ $loop->iteration }} of {{ $loop->count }}" @if(!$loop->first) hidden @endif>
                     <div class="lead-story-copy">
-                        <p class="eyebrow">Featured inquiry</p>
+                        <p class="eyebrow">{{ $featured->is_featured ? 'Featured article' : 'Latest article' }}</p>
                         @if($featured->category)<a class="category-link" href="{{ route('categories.show', $featured->category->slug) }}">{{ $featured->category->name }}</a>@endif
-                        <h1><a href="{{ route('articles.show', $featured->slug) }}">{{ $featured->title }}</a></h1>
+                        <h2><a href="{{ route('articles.show', $featured->slug) }}">{{ $featured->title }}</a></h2>
                         @if($featured->subtitle || $featured->excerpt)<p class="lead-dek">{{ $featured->subtitle ?: $featured->excerpt }}</p>@endif
                         <div class="lead-meta">
                             @if($featured->authors->isNotEmpty())
@@ -31,17 +34,27 @@
                             @endif
                             <time datetime="{{ optional($featuredDate)->toDateString() }}">{{ optional($featuredDate)->format('F j, Y') }}</time>
                         </div>
-                        <a class="text-link" href="{{ route('articles.show', $featured->slug) }}">Read the full essay <x-public.icon name="arrow-right" /></a>
+                        <a class="text-link" href="{{ route('articles.show', $featured->slug) }}">Read article <x-public.icon name="arrow-right" /></a>
                     </div>
                     <a class="lead-story-image" href="{{ route('articles.show', $featured->slug) }}" tabindex="-1" aria-hidden="true">
-                        <img src="{{ $featuredImage }}" alt="{{ $featured->title }}" width="900" height="720" fetchpriority="high">
-                        <span class="image-index">01 / Featured</span>
+                        <img data-image-fallback="{{ asset('assets/editorial-placeholder.svg') }}" src="{{ $featuredImage }}" alt="{{ $featured->title }}" width="900" height="720" loading="{{ $loop->first ? 'eager' : 'lazy' }}">
+                        <span class="image-index">{{ str_pad((string) $loop->iteration, 2, '0', STR_PAD_LEFT) }} / {{ $featured->is_featured ? 'Featured' : 'Latest' }}</span>
                     </a>
                 </article>
+                @endforeach
+                @if($heroArticles->count() > 1)
+                    <div class="hero-controls" data-hero-controls hidden>
+                        <button type="button" data-hero-prev aria-label="Previous article">←</button>
+                        <span data-hero-count aria-live="off">1 / {{ $heroArticles->count() }}</span>
+                        <button type="button" data-hero-next aria-label="Next article">→</button>
+                        <button type="button" data-hero-pause>Pause slideshow</button>
+                    </div>
+                @endif
+                </div>
             @else
                 <div class="editorial-welcome">
                     <p class="eyebrow">A journal of ideas &amp; inquiry</p>
-                    <h1>Serious thinking for a world in motion.</h1>
+                    <h2>Serious thinking for a world in motion.</h2>
                     <p>We publish rigorous, accessible work across research, culture, technology, and public life—made for readers who value depth over velocity.</p>
                     <div><a class="button button-primary" href="{{ route('articles.index') }}">Explore the journal</a><a class="button button-ghost" href="{{ route('about') }}">Our editorial mission</a></div>
                 </div>

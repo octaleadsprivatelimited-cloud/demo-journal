@@ -29,7 +29,7 @@ class Article extends Model
     protected $fillable = [
         'public_id', 'category_id', 'journal_issue_id', 'created_by_id', 'assigned_editor_id', 'title', 'slug',
         'subtitle', 'excerpt', 'abstract', 'content', 'keywords', 'references', 'publication_type',
-        'doi', 'featured_image_path', 'pdf_path', 'status', 'is_featured', 'is_trending',
+        'doi', 'featured_image_path', 'pdf_path', 'status', 'is_featured', 'is_trending', 'is_homepage_latest',
         'comments_enabled', 'pdf_download_enabled', 'reading_time_minutes', 'view_count',
         'submitted_at', 'approved_at', 'scheduled_for', 'published_at', 'rejected_at',
         'volume', 'issue', 'article_number', 'received_date', 'revised_date', 'accepted_date',
@@ -50,6 +50,7 @@ class Article extends Model
             'keywords' => 'array',
             'references' => 'array',
             'is_featured' => 'boolean',
+            'is_homepage_latest' => 'boolean',
             'is_trending' => 'boolean',
             'comments_enabled' => 'boolean',
             'pdf_download_enabled' => 'boolean',

@@ -11,7 +11,7 @@
 @endphp
 <article {{ $attributes->class(['article-card', 'article-card-'.$layout]) }}>
     <a class="article-card-image" href="{{ route('articles.show', $article->slug) }}" tabindex="-1" aria-hidden="true">
-        <img src="{{ $imageUrl }}" alt="{{ $article->title }}" width="720" height="450" @unless($priority)loading="lazy"@endunless @if($priority)fetchpriority="high"@endif>
+        <img data-image-fallback="{{ asset('assets/editorial-placeholder.svg') }}" src="{{ $imageUrl }}" alt="{{ $article->title }}" width="720" height="450" @unless($priority)loading="lazy"@endunless @if($priority)fetchpriority="high"@endif>
         @if($article->is_featured)<span class="image-badge">Editor's selection</span>@endif
     </a>
     <div class="article-card-body">

@@ -10,13 +10,14 @@ class HomeController extends PublicController
 {
     public function __invoke(): View
     {
-        $featured = $this->publishedArticles()
-            ->featured()
+        $heroArticles = $this->publishedArticles()
+            ->where(fn ($query) => $query->where('is_featured', true)->orWhere('is_homepage_latest', true))
+            ->orderByDesc('is_featured')
             ->latest('published_at')
-            ->first();
+            ->orderByDesc('id')
+            ->get();
 
         $latest = $this->publishedArticles()
-            ->when($featured, fn ($query) => $query->whereKeyNot($featured->getKey()))
             ->latest('published_at')
             ->limit(7)
             ->get();
@@ -56,7 +57,7 @@ class HomeController extends PublicController
             ->get();
 
         return view('public.home', $this->publicViewData(compact(
-            'featured',
+            'heroArticles',
             'latest',
             'trending',
             'authors',

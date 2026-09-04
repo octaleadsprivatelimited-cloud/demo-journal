@@ -103,6 +103,11 @@ class ArticlePolicy
             && $article->reviews()->where('reviewer_id', $user->getKey())->exists();
     }
 
+    public function manageHomepage(User $user, Article $article): bool
+    {
+        return $user->isActive() && $user->hasAnyRole('admin', 'super-admin');
+    }
+
     public function manageSeo(User $user, Article $article): bool
     {
         return $user->hasPermission('articles.update-any');

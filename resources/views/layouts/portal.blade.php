@@ -95,4 +95,6 @@
 <main class="auth-shell @if(request()->routeIs('login')) auth-login @endif"><a class="auth-brand" href="{{ route('home') }}"><img class="portal-publisher-logo" src="{{ asset('assets/larix-logo-transparent.png') }}" alt="Larix International" width="110" height="44"><span><small>Journal of ideas &amp; inquiry</small></span></a><section class="auth-card"><div class="auth-card-head"><p class="portal-eyebrow">@yield('auth-eyebrow', 'Secure journal access')</p><h1>@yield('page-title', 'Welcome')</h1><p>@yield('page-description')</p></div><x-portal.flash />@yield('content')</section><p class="auth-foot"><a href="{{ route('home') }}">← Return to the journal</a></p></main>
 @endauth
 <script>{!! file_get_contents(resource_path('js/portal.js')) !!}</script>@stack('scripts')
+@include('components.error-popup')
+<script>{!! file_get_contents(resource_path('js/upload-guards.js')) !!}</script>
 </body></html>

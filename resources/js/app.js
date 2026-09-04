@@ -169,3 +169,53 @@ ready(() => {
         });
     });
 });
+
+ready(() => {
+    document.querySelectorAll('[data-hero-slider]').forEach((slider) => {
+        const slides = [...slider.querySelectorAll('[data-hero-slide]')];
+        if (slides.length < 2) return;
+        const controls = slider.querySelector('[data-hero-controls]');
+        const pause = slider.querySelector('[data-hero-pause]');
+        const count = slider.querySelector('[data-hero-count]');
+        const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+        let current = 0;
+        let paused = motion.matches;
+        let hovering = false;
+        let timer;
+        const show = (index) => {
+            current = (index + slides.length) % slides.length;
+            slides.forEach((slide, i) => { slide.hidden = i !== current; });
+            count.textContent = `${current + 1} / ${slides.length}`;
+        };
+        const schedule = () => {
+            window.clearInterval(timer);
+            pause.textContent = paused ? 'Play slideshow' : 'Pause slideshow';
+            if (!paused && !hovering && !document.hidden) timer = window.setInterval(() => show(current + 1), 7000);
+        };
+        controls.hidden = false;
+        slider.querySelector('[data-hero-prev]').addEventListener('click', () => { show(current - 1); schedule(); });
+        slider.querySelector('[data-hero-next]').addEventListener('click', () => { show(current + 1); schedule(); });
+        pause.addEventListener('click', () => { paused = !paused; schedule(); });
+        slider.addEventListener('mouseenter', () => { hovering = true; schedule(); });
+        slider.addEventListener('mouseleave', () => { hovering = false; schedule(); });
+        // Keyboard focus stops rotation until the reader explicitly restarts it.
+        slider.addEventListener('focusin', () => { paused = true; schedule(); });
+        document.addEventListener('visibilitychange', schedule);
+        motion.addEventListener('change', () => { if (motion.matches) paused = true; schedule(); });
+        schedule();
+    });
+});
+
+ready(() => {
+    const fallback = (image) => {
+        const src = image.dataset.imageFallback;
+        if (!src) return;
+        delete image.dataset.imageFallback;
+        image.removeAttribute('srcset');
+        image.src = src;
+    };
+    document.querySelectorAll('img[data-image-fallback]').forEach((image) => {
+        image.addEventListener('error', () => fallback(image));
+        if (image.complete && image.naturalWidth === 0) fallback(image);
+    });
+});

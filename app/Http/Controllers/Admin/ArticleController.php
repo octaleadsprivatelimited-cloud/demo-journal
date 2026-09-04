@@ -126,8 +126,9 @@ final class ArticleController extends Controller
     public function action(ArticleActionRequest $request, Article $article, ArticleWorkflowService $workflow): RedirectResponse
     {
         $action = $request->string('action')->toString();
-        abort_if($article->workflow && ! in_array($action, ['feature', 'unfeature', 'trend', 'untrend']), 409, 'Use the manuscript workflow actions.');
+        abort_if($article->workflow && ! in_array($action, ['homepage', 'feature', 'unfeature', 'trend', 'untrend']), 409, 'Use the manuscript workflow actions.');
         Gate::authorize(match ($action) {
+            'homepage', 'feature', 'unfeature' => 'manageHomepage',
             'publish', 'unpublish', 'schedule' => 'publish',
             'approve', 'reject', 'revision', 'assign_reviewer' => 'transition',
             default => 'update',
@@ -135,7 +136,11 @@ final class ArticleController extends Controller
 
         try {
             match ($action) {
-                'feature' => $article->update(['is_featured' => true]), 'unfeature' => $article->update(['is_featured' => false]),
+                'homepage' => $article->update([
+                    'is_featured' => $request->input('placement') === 'featured',
+                    'is_homepage_latest' => $request->input('placement') === 'latest',
+                ]),
+                'feature' => $article->update(['is_featured' => true, 'is_homepage_latest' => false]), 'unfeature' => $article->update(['is_featured' => false]),
                 'trend' => $article->update(['is_trending' => true]), 'untrend' => $article->update(['is_trending' => false]),
                 'assign_editor' => $this->assignEditor($article, $request->integer('user_id')),
                 'assign_reviewer' => $workflow->assignReviewer($article, User::query()->findOrFail($request->integer('user_id')), $request->user(), $request->filled('due_at') ? CarbonImmutable::parse($request->input('due_at')) : null),
@@ -160,6 +165,7 @@ final class ArticleController extends Controller
         $articles = Article::query()->whereKey($request->input('article_ids'))->get();
         foreach ($articles as $article) {
             Gate::authorize(match ($request->input('action')) {
+                'feature', 'unfeature' => 'manageHomepage',
                 'delete' => 'delete',
                 'publish' => 'publish',
                 default => 'update',
@@ -170,7 +176,7 @@ final class ArticleController extends Controller
         foreach ($articles as $article) {
             try {
                 match ($request->input('action')) {
-                    'delete' => $article->delete(), 'feature' => $article->update(['is_featured' => true]),
+                    'delete' => $article->delete(), 'feature' => $article->update(['is_featured' => true, 'is_homepage_latest' => false]),
                     'unfeature' => $article->update(['is_featured' => false]), 'trend' => $article->update(['is_trending' => true]),
                     'untrend' => $article->update(['is_trending' => false]), 'category' => $article->update(['category_id' => $request->integer('category_id')]),
                     'publish' => $workflow->transition($article, ArticleStatus::Published, $request->user(), 'Bulk publication action'),

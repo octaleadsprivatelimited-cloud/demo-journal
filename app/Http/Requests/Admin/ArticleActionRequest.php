@@ -18,7 +18,8 @@ final class ArticleActionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'action' => ['required', Rule::in(['publish', 'unpublish', 'schedule', 'production', 'withdraw', 'feature', 'unfeature', 'trend', 'untrend', 'approve', 'reject', 'revision', 'assign_editor', 'assign_reviewer'])],
+            'action' => ['required', Rule::in(['homepage', 'publish', 'unpublish', 'schedule', 'production', 'withdraw', 'feature', 'unfeature', 'trend', 'untrend', 'approve', 'reject', 'revision', 'assign_editor', 'assign_reviewer'])],
+            'placement' => ['required_if:action,homepage', Rule::in(['featured', 'latest', 'hidden'])],
             'note' => ['nullable', 'string', 'max:5000'],
             'scheduled_for' => ['required_if:action,schedule', 'nullable', 'date', 'after:now'],
             'user_id' => ['required_if:action,assign_editor,assign_reviewer', 'nullable', 'integer', 'exists:users,id'],

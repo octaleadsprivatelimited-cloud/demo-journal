@@ -200,7 +200,7 @@
         <div class="container footer-bottom">
             <p>&copy; {{ now()->year }} {{ $siteName }}. All rights reserved.</p>
             <div>
-                <a href="https://www.octaleads.com" target="_blank" rel="noopener noreferrer">Developed by octaleads (www.octaleads.com)</a>
+                <a href="https://www.octaleads.com" target="_blank" rel="noopener noreferrer">Developed by octaleads</a>
                 <a href="{{ route('sitemap') }}">Sitemap</a>
                 <a href="{{ route('robots') }}">Robots</a>
             </div>
@@ -231,5 +231,7 @@
         </div>
     </dialog>
     @stack('scripts')
+@include('components.error-popup')
+<script>{!! file_get_contents(resource_path('js/upload-guards.js')) !!}</script>
 </body>
 </html>

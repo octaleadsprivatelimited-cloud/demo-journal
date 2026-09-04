@@ -24,3 +24,8 @@
 
 .portal-publisher-logo{width:110px;height:auto;object-fit:contain;flex-shrink:0}.portal-brand a{flex-wrap:wrap}
 .workflow-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px}.workflow-metrics a{padding:16px;text-decoration:none;color:inherit}.workflow-metrics strong{display:block;font-size:28px}.workflow-filters,.workflow-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}.workflow-tracker{display:flex;gap:8px;overflow-x:auto;padding:16px 0;list-style:none}.workflow-tracker li{flex:0 0 120px;padding:10px;border:1px solid var(--portal-line);border-radius:8px;color:var(--portal-muted);font-size:12px}.workflow-tracker .is-current{background:var(--portal-green);color:white}.workflow-tracker .is-complete{border-color:var(--portal-green);color:var(--portal-green)}.workflow-tabs{display:flex;gap:8px;overflow-x:auto;margin:20px 0;padding-bottom:6px}.workflow-tabs a{white-space:nowrap}.workflow-action{border-bottom:1px solid var(--portal-line);padding:12px 0}.workflow-action summary{cursor:pointer;font-weight:700;margin-bottom:12px}.workflow-alert{padding:16px;border-left:4px solid #c89024;background:#fff5dd}.workflow-action label{display:grid;gap:6px}.workflow-action .check-row{display:flex}.workflow-action textarea,.workflow-action input,.workflow-action select{max-width:100%}
+
+/* Center the logo across mobile role sign-in and registration pages. */
+@media(max-width:860px){
+ .auth-shell .auth-brand{flex-direction:column;justify-content:center;text-align:center;gap:.35rem}
+}
