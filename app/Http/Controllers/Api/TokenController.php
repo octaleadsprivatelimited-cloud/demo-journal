@@ -16,6 +16,9 @@ final class TokenController extends Controller
 {
     public function store(IssueTokenRequest $request): JsonResponse
     {
+        if (config('services.google.enabled') && config('services.google.only')) {
+            throw ValidationException::withMessages(['google' => '[google_sign_in_required] Use Google sign-in. Password token issuance is disabled.']);
+        }
         $user = User::query()->where('email', mb_strtolower($request->string('email')->toString()))->first();
 
         if (! $user || ! Hash::check($request->string('password')->toString(), $user->password)) {

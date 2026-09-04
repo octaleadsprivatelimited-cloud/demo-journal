@@ -53,7 +53,7 @@
                 </div>
             @else
                 <div class="editorial-welcome">
-                    <p class="eyebrow">A journal of ideas &amp; inquiry</p>
+                    <p class="eyebrow">Singapore Journal of Cardiology</p>
                     <h2>Serious thinking for a world in motion.</h2>
                     <p>We publish rigorous, accessible work across research, culture, technology, and public life—made for readers who value depth over velocity.</p>
                     <div><a class="button button-primary" href="{{ route('articles.index') }}">Explore the journal</a><a class="button button-ghost" href="{{ route('about') }}">Our editorial mission</a></div>

@@ -47,6 +47,7 @@ final class AuthorWorkflowTest extends TestCase
         preg_match_all('/\sdata-autosave(?:\s|=)/', $response->getContent(), $matches);
 
         $this->assertCount(1, $matches[0]);
+        $response->assertSee('data-autosave-status', false)->assertSee('Use Save draft for authors and files; confirm declarations when submitting.');
         $response->assertSee('data-autosave="'.route('author.articles.autosave', $article).'"', false);
     }
 

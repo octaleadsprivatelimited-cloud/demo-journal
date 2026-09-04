@@ -1,3 +1,8 @@
+@if(config('services.google.enabled') && config('services.google.only'))
+@include('auth._google-oauth', ['portal' => $portal])
+<p class="portal-help">Use your Google account to sign in or create an application. No website password is needed.</p>
+<a href="{{ route('login') }}">Choose another workspace</a>
+@else
 <form class="portal-form" method="post" action="{{ route($submitRoute) }}" data-loading>@csrf
     <div class="form-grid">
         <div class="portal-field"><label for="name">Full name</label><input class="portal-input" id="name" name="name" value="{{ old('name') }}" autocomplete="name" required><x-portal.field-error name="name" /></div>
@@ -14,3 +19,5 @@
     @include('auth._google-oauth', ['portal' => $portal])
     <div class="auth-links"><span>Already approved? <a href="{{ route($loginRoute) }}">Sign in</a></span><a href="{{ route('register') }}">Choose another account type</a></div>
 </form>
+
+@endif

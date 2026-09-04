@@ -2,7 +2,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">
 @php
     $site = $site ?? [];
-    $siteName = data_get($site, 'name', config('app.name', 'octaleads Journal'));
+    $siteName = data_get($site, 'name', config('app.name', 'Singapore Journal of Cardiology'));
     $pageTitle = trim($__env->yieldContent('title'));
     $pageDescription = trim($__env->yieldContent('description')) ?: data_get($site ?? [], 'description');
     $canonicalUrl = trim($__env->yieldContent('canonical')) ?: url()->current();
@@ -114,6 +114,9 @@
         </nav>
         <nav class="primary-nav" aria-label="Primary navigation">
             <div class="container nav-inner">
+                <a class="nav-brand" href="{{ route('home') }}" aria-label="{{ $siteName }} home" tabindex="-1" aria-hidden="true" data-nav-brand>
+                    <img src="{{ asset('assets/larix-logo-transparent.png') }}" alt="Larix International" width="110" height="44">
+                </a>
                 <a href="{{ route('home') }}" @class(['is-active' => request()->routeIs('home')])>Home</a>
                 <a href="{{ route('journals.index') }}" @class(['is-active' => request()->routeIs('journals.*')])>Journal</a>
                 <a href="{{ route('articles.index') }}" @class(['is-active' => request()->routeIs('articles.*')])>Latest</a>

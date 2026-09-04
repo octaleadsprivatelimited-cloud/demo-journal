@@ -5,6 +5,9 @@
 @section('page-description', 'Create your contributor profile for review by the publication team.')
 @section('content')
 <style>.auth-card{width:min(100%,760px)}</style>
+@if(config('services.google.enabled') && config('services.google.only'))
+@include('auth._google-oauth', ['portal' => 'author'])
+@else
 <form class="portal-form" method="post" action="{{ route('author.register.store') }}" enctype="multipart/form-data" data-loading>@csrf
     <div class="form-grid">
         <div class="portal-field"><label for="name">Full name</label><input class="portal-input" id="name" name="name" value="{{ old('name') }}" autocomplete="name" required><x-portal.field-error name="name" /></div>
@@ -23,4 +26,5 @@
     @include('auth._google-oauth', ['portal' => 'author'])
     <div class="auth-links"><span>Already approved? <a href="{{ route('author.login') }}">Author sign in</a></span><a href="{{ route('register') }}">Choose another account type</a></div>
 </form>
+@endif
 @endsection

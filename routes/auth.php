@@ -25,8 +25,9 @@ Route::middleware('guest')->group(function (): void {
     Route::post('/admin/login', [AuthenticatedSessionController::class, 'storeAdmin'])->middleware('throttle:login')->name('admin.login.store');
     Route::get('/contributor/login', [AuthenticatedSessionController::class, 'createContributor'])->name('contributor.login');
     Route::post('/contributor/login', [AuthenticatedSessionController::class, 'storeContributor'])->middleware('throttle:login')->name('contributor.login.store');
+    Route::post('/auth/google/{portal}/one-tap', [GoogleAuthenticationController::class, 'oneTap'])->whereIn('portal', ['author', 'editor', 'reviewer', 'contributor', 'admin'])->middleware('throttle:login')->name('google.one-tap');
     Route::get('/auth/google/{portal}', [GoogleAuthenticationController::class, 'redirect'])
-        ->whereIn('portal', ['author', 'editor', 'reviewer'])
+        ->whereIn('portal', ['author', 'editor', 'reviewer', 'contributor', 'admin'])
         ->name('google.redirect');
     Route::get('/auth/google/callback', [GoogleAuthenticationController::class, 'callback'])->name('google.callback');
 

@@ -68,6 +68,7 @@ final class GoogleAuthenticationTest extends TestCase
             'openidconnect.googleapis.com/*' => Http::response([
                 'sub' => 'google-reviewer-id',
                 'email' => 'reviewer@example.test',
+                'hd' => 'example.test',
                 'email_verified' => true,
                 'name' => 'Reviewer',
             ]),

@@ -272,7 +272,7 @@ final class RolePortalAuthenticationTest extends TestCase
         return [
             'name' => str($role)->headline()->append(' Applicant')->toString(),
             'email' => $email,
-            'organization' => 'Octaleads Journal',
+            'organization' => 'Singapore Journal of Cardiology',
             'designation' => str($role)->headline()->toString(),
             'biography' => 'A prospective member of the journal team.',
             'password' => self::PASSWORD,

@@ -69,9 +69,25 @@ ready(() => {
         if (event.key === 'Escape') closeMobileMenu();
     });
 
-    const updateHeader = () => header?.classList.toggle('is-scrolled', window.scrollY > 8);
+    const desktopHeader = window.matchMedia('(min-width: 861px)');
+    const navBrand = header?.querySelector('[data-nav-brand]');
+    const upperHeader = header ? [...header.querySelectorAll('.utility-bar, .masthead')] : [];
+    const updateHeader = () => {
+        if (!header) return;
+        const upperHeight = upperHeader.reduce((height, element) => height + element.offsetHeight, 0);
+        header.style.setProperty('--masthead-height', `${upperHeight}px`);
+        const compact = desktopHeader.matches && window.scrollY > upperHeight;
+        header.classList.toggle('is-scrolled', window.scrollY > 8);
+        header.classList.toggle('is-compact', compact);
+        if (navBrand) {
+            navBrand.tabIndex = compact ? 0 : -1;
+            navBrand.setAttribute('aria-hidden', String(!compact));
+        }
+    };
     updateHeader();
     window.addEventListener('scroll', updateHeader, { passive: true });
+    window.addEventListener('resize', updateHeader, { passive: true });
+    if (header && 'ResizeObserver' in window) new ResizeObserver(updateHeader).observe(header);
 
     const toast = document.querySelector('[data-toast]');
     const dismissToast = () => toast?.remove();

@@ -2,7 +2,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="robots" content="noindex,nofollow"><title>@yield('title', 'Workspace')</title>
+    <meta name="robots" content="noindex,nofollow"><title>@yield('title', 'Workspace') · {{ config('app.name') }}</title>
     @if(file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot'))) @vite(['resources/css/app.css', 'resources/js/app.js']) @endif
     <style>{!! file_get_contents(resource_path('css/portal.css')) !!}</style>
     @stack('head')
@@ -92,7 +92,7 @@
     </div>
 </div>
 @else
-<main class="auth-shell @if(request()->routeIs('login')) auth-login @endif"><a class="auth-brand" href="{{ route('home') }}"><img class="portal-publisher-logo" src="{{ asset('assets/larix-logo-transparent.png') }}" alt="Larix International" width="110" height="44"><span><small>Journal of ideas &amp; inquiry</small></span></a><section class="auth-card"><div class="auth-card-head"><p class="portal-eyebrow">@yield('auth-eyebrow', 'Secure journal access')</p><h1>@yield('page-title', 'Welcome')</h1><p>@yield('page-description')</p></div><x-portal.flash />@yield('content')</section><p class="auth-foot"><a href="{{ route('home') }}">← Return to the journal</a></p></main>
+<main class="auth-shell @if(request()->routeIs('login')) auth-login @endif"><a class="auth-brand" href="{{ route('home') }}"><img class="portal-publisher-logo" src="{{ asset('assets/larix-logo-transparent.png') }}" alt="Larix International" width="110" height="44"><span><small>Singapore Journal of Cardiology</small></span></a><section class="auth-card"><div class="auth-card-head"><p class="portal-eyebrow">@yield('auth-eyebrow', 'Secure journal access')</p><h1>@yield('page-title', 'Welcome')</h1><p>@yield('page-description')</p></div><x-portal.flash />@yield('content')</section><p class="auth-foot"><a href="{{ route('home') }}">← Return to the journal</a></p></main>
 @endauth
 <script>{!! file_get_contents(resource_path('js/portal.js')) !!}</script>@stack('scripts')
 @include('components.error-popup')

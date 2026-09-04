@@ -29,8 +29,22 @@ final class SecurityHeaders
         $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-        $response->headers->set('Cross-Origin-Opener-Policy', 'same-origin');
-        $response->headers->set('Content-Security-Policy', (string) config('security.content_security_policy'));
+        $policy = (string) config('security.content_security_policy');
+        if (config('services.google.enabled')) {
+            $directives = [];
+            foreach (explode(';', $policy) as $directive) {
+                $parts = preg_split('/\s+/', trim($directive));
+                $name = array_shift($parts);
+                if ($name) $directives[$name] = $parts;
+            }
+            foreach (['script-src', 'style-src', 'frame-src', 'connect-src'] as $name) {
+                $sources = $directives[$name] ?? $directives['default-src'] ?? ["'self'"];
+                $directives[$name] = array_unique(array_merge(array_diff($sources, ["'none'"]), ['https://accounts.google.com/gsi/']));
+            }
+            $policy = implode('; ', array_map(fn ($name, $sources) => $name.' '.implode(' ', $sources), array_keys($directives), $directives));
+        }
+        $response->headers->set('Cross-Origin-Opener-Policy', config('services.google.enabled') ? 'same-origin-allow-popups' : 'same-origin');
+        $response->headers->set('Content-Security-Policy', $policy);
 
         if ($request->isSecure()) {
             $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');

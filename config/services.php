@@ -34,6 +34,7 @@ return [
     ],
 
     'google' => [
+        'only' => filter_var(env('GOOGLE_ONLY_AUTH', true), FILTER_VALIDATE_BOOL),
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI', rtrim((string) env('APP_URL', 'http://localhost:8080'), '/').'/auth/google/callback'),

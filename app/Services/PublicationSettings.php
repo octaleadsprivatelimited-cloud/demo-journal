@@ -89,7 +89,7 @@ final class PublicationSettings
     private function defaults(): array
     {
         return [
-            'name' => config('publication.name', config('app.name', 'octaleads Journal')),
+            'name' => config('publication.name', config('app.name', 'Singapore Journal of Cardiology')),
             'tagline' => config('publication.tagline', 'Independent ideas. Enduring perspective.'),
             'description' => 'A journal of research, culture, public life, and the ideas shaping our shared future.',
             'contact_email' => config('publication.contact_email', config('mail.from.address')),

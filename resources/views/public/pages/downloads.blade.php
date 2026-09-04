@@ -1,7 +1,7 @@
 @extends('layouts.public')
 
 @section('title', 'Downloads')
-@section('description', 'Download available journal articles and reading editions from Octaleads Journal.')
+@section('description', 'Download available journal articles and reading editions from Singapore Journal of Cardiology.')
 
 @section('content')
     <section class="downloads-hero">

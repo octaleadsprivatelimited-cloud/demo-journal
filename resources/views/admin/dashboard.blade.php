@@ -1,5 +1,5 @@
 @extends('layouts.portal')
-@section('title','Editorial dashboard') @section('section','Editorial command centre') @section('eyebrow','Publication pulse') @section('page-title','Today at octaleads Journal')
+@section('title','Editorial dashboard') @section('section','Editorial command centre') @section('eyebrow','Publication pulse') @section('page-title','Today at Singapore Journal of Cardiology')
 @section('page-description','A live view of submissions, publication output, audience activity, and operational work.')
 @section('page-actions')<a class="portal-button" href="{{ route('admin.submissions.index') }}">Review queue</a><a class="portal-button primary" href="{{ route('admin.articles.create') }}"><x-portal.icon name="plus" :size="17" />New article</a>@endsection
 @section('content')

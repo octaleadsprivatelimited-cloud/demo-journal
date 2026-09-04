@@ -29,6 +29,8 @@ class ManuscriptWorkflowTest extends TestCase
 {
     use RefreshDatabase;
 
+    private bool $throughHttp = false;
+
     private User $author;
 
     private User $editor;
@@ -77,6 +79,12 @@ class ManuscriptWorkflowTest extends TestCase
 
     private function act(string $action, array $data = [], ?User $actor = null)
     {
+        if ($this->throughHttp) {
+            $this->actingAs($actor ?? $this->editor)->post(route('workflow.action', $this->article), ['action' => $action] + $data)
+                ->assertRedirect(route('workflow.show', $this->article))->assertSessionHasNoErrors();
+            return $this->article->workflow()->firstOrFail();
+        }
+
         return $this->service->execute($this->article, $actor ?? $this->editor, $action, $data);
     }
 
@@ -102,6 +110,7 @@ class ManuscriptWorkflowTest extends TestCase
 
     public function test_end_to_end_publication_preserves_existing_article_and_archive()
     {
+        $this->throughHttp = true;
         $review = $this->reachReview();
         $this->assertSame(ReviewStatus::Completed, $review->status);
         $id = $this->article->fresh()->workflow->manuscript_id;

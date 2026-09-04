@@ -1,6 +1,6 @@
-# octaleads Journal
+# Singapore Journal of Cardiology
 
-octaleads Journal is a production-oriented scholarly and professional publication platform built with Laravel 13, PHP 8.4, PostgreSQL, Redis, Blade, Tailwind CSS, and Laravel Sanctum. It supports public discovery, long-form reading, author submissions, editorial review, reviewer feedback, scheduled publishing, media, newsletters, contact management, SEO, analytics, and auditable role-based administration.
+Singapore Journal of Cardiology is a production-oriented scholarly and professional publication platform built with Laravel 13, PHP 8.4, PostgreSQL, Redis, Blade, Tailwind CSS, and Laravel Sanctum. It supports public discovery, long-form reading, author submissions, editorial review, reviewer feedback, scheduled publishing, media, newsletters, contact management, SEO, analytics, and auditable role-based administration.
 
 ## What is included
 

@@ -33,7 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
         }
 
         $middleware->statefulApi();
-        $middleware->web(append: [\App\Http\Middleware\OptimizeImageUploads::class]);
+        $middleware->web(append: [\App\Http\Middleware\OptimizeImageUploads::class, \App\Http\Middleware\GoogleOnlyAuthentication::class]);
         $middleware->api(append: [\App\Http\Middleware\OptimizeImageUploads::class]);
         $middleware->append(SecurityHeaders::class);
         $middleware->redirectGuestsTo(static function (Request $request): string {

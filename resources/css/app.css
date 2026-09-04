@@ -160,3 +160,30 @@ label,legend{display:block;font-size:.75rem;font-weight:800;letter-spacing:.04em
 }
 @media(max-width:480px){.hero-slider .lead-story-image{height:180px}.hero-slider .lead-story-copy{padding:1.25rem}.hero-controls{gap:.4rem}}
 .home-intro + .section-latest{padding-top:2rem}
+
+/* Compact footer signup on phones and small tablets. */
+@media(max-width:860px){
+ .site-footer{padding-top:2rem}
+ .footer-lead{gap:1.25rem;padding-bottom:1.5rem}
+ .footer-lead .eyebrow{font-size:.62rem;margin-bottom:.6rem}
+ .footer-lead h2{font-size:clamp(1.4rem,3.6vw,1.75rem);line-height:1.15;margin-bottom:0}
+ .footer-lead .newsletter-form label{font-size:.75rem;margin-bottom:.25rem}
+ .footer-lead .newsletter-form input{min-width:0;min-height:44px;padding:.6rem .75rem;font-size:16px}
+ .footer-lead .newsletter-form>input{margin-bottom:.6rem}
+ .footer-lead .newsletter-row{grid-template-columns:minmax(0,1fr) auto;gap:.5rem}
+ .footer-lead .newsletter-row .button{min-height:44px;padding:.6rem .85rem;font-size:.68rem;white-space:nowrap}
+ .footer-lead .newsletter-form>p{font-size:.65rem;margin-top:.5rem}
+ .site-footer .footer-grid{padding-block:2rem;gap:1.5rem}
+}
+
+/* Keep desktop navigation visible as the main masthead scrolls away. */
+.nav-inner > .nav-brand{display:none}
+@media(min-width:861px){
+    .site-header.is-compact{top:calc(-1 * var(--masthead-height, 128px))}
+    .site-header.is-compact:has(.utility-bar :focus-visible),
+    .site-header.is-compact:has(.masthead :focus-visible){top:0}
+    .site-header.is-compact .nav-inner{gap:clamp(.65rem,1.6vw,1.5rem)}
+    .site-header.is-compact .nav-brand{display:flex;flex-shrink:0}
+    .nav-brand img{display:block;width:110px;height:44px;object-fit:contain}
+    .nav-inner > .nav-brand::after{display:none}
+}

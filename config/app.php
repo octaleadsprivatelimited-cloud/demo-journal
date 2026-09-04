@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'octaleads Journal'),
+    'name' => env('APP_NAME', 'Singapore Journal of Cardiology'),
 
     /*
     |--------------------------------------------------------------------------

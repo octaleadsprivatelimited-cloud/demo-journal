@@ -25,7 +25,7 @@ class Setting extends Model
                 'label' => 'Website name',
                 'type' => 'text',
                 'rules' => ['required', 'string', 'max:120'],
-                'default' => 'octaleads Journal',
+                'default' => 'Singapore Journal of Cardiology',
                 'public' => true,
             ],
             'site.tagline' => [
