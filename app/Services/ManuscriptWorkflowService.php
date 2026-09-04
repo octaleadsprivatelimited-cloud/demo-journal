@@ -139,7 +139,7 @@ class ManuscriptWorkflowService
                 $rules[$file] ??= ['nullable', 'file', 'mimes:pdf,doc,docx', 'extensions:pdf,doc,docx', 'max:20480'];
             }
             $rules['supplementary'] = ['nullable', 'array', 'max:10'];
-            $rules['supplementary.*'] = ['file', 'mimes:pdf,doc,docx', 'extensions:pdf,doc,docx', 'max:20480'];
+            $rules['supplementary.*'] = ['file', 'mimes:pdf,doc,docx,jpg,jpeg,png,webp,svg', 'extensions:pdf,doc,docx,jpg,jpeg,png,webp,svg', 'max:20480'];
             if ($action === 'save_copyediting') {
                 $rules['edited_manuscript'][0] = 'required';
             }

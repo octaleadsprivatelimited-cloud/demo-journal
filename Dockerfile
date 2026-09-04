@@ -34,6 +34,8 @@ WORKDIR /var/www/html
 
 RUN apk add --no-cache \
         fcgi \
+        jpegoptim \
+        optipng \
         freetype \
         icu-libs \
         libjpeg-turbo \

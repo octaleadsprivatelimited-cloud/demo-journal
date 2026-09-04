@@ -229,4 +229,30 @@ class ManuscriptWorkflowTest extends TestCase
         $this->postJson(route('api.author.articles.submit', $this->article))->assertUnprocessable();
         $this->assertDatabaseCount('manuscript_workflows',0);
     }
+    public function test_admin_assigns_editor_then_reviewer_after_author_submission(): void
+    {
+        $this->article->update(['assigned_editor_id' => null]);
+        $this->submit();
+        Notification::assertSentTo($this->admin, \App\Notifications\ArticleSubmittedNotification::class);
+        $this->actingAs($this->admin)->get(route('workflow.index'))->assertOk()->assertSee($this->article->title);
+        $this->actingAs($this->editor)->get(route('workflow.show', $this->article))->assertForbidden();
+        $this->actingAs($this->author)->post(route('workflow.assignment', $this->article), ['editor_id' => $this->editor->id, 'comments' => 'Attempted self assignment'])->assertForbidden();
+        $this->actingAs($this->admin)->post(route('workflow.assignment', $this->article), ['editor_id' => $this->editor->id, 'comments' => 'Assign the handling editor'])->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertSame($this->editor->id, $this->article->fresh()->assigned_editor_id);
+        Notification::assertSentTo($this->editor, WorkflowNotification::class);
+        $this->actingAs($this->editor)->get(route('workflow.show', $this->article))->assertOk();
+        $invite = ['action' => 'assign_reviewer', 'reviewer_id' => $this->reviewer->id, 'deadline' => now()->addDays(21)->toDateString(), 'invitation_deadline' => now()->addDays(7)->toDateString(), 'editor_message' => 'Please assess the submitted manuscript.'];
+        $this->actingAs($this->admin)->post(route('workflow.action', $this->article), $invite)->assertSessionHasErrors('workflow');
+        $this->act('start_check');
+        $this->act('approve_check', ['checklist' => array_fill_keys(['manuscript', 'cover_letter', 'authors', 'abstract', 'keywords', 'references', 'documents', 'format'], '1')]);
+        $this->act('pass_similarity', ['similarity' => 5, 'comments' => 'Similarity assessment passed', 'report' => $this->pdf('report.pdf')]);
+        $this->act('send_review');
+        $this->actingAs($this->admin)->post(route('workflow.action', $this->article), $invite)->assertRedirect()->assertSessionHasNoErrors();
+        $review = $this->article->reviews()->firstOrFail();
+        $this->assertSame($this->admin->id, $review->assigned_by_id);
+        Notification::assertSentTo($this->reviewer, \App\Notifications\ReviewAssignedNotification::class);
+        $this->actingAs($this->reviewer)->get(route('reviewer.reviews.show', $review))->assertOk();
+        $this->post(route('reviewer.reviews.accept', $review))->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertSame('under_review', $this->article->fresh()->workflow->stage);
+    }
 }

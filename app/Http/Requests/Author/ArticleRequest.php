@@ -44,7 +44,7 @@ final class ArticleRequest extends FormRequest
             'manuscript' => ['nullable', 'file', 'mimes:pdf,doc,docx', 'extensions:pdf,doc,docx', 'max:20480'],
             'cover_letter' => ['nullable', 'file', 'mimes:pdf,doc,docx', 'extensions:pdf,doc,docx', 'max:20480'],
             'supplementary' => ['nullable', 'array', 'max:10'],
-            'supplementary.*' => ['file', 'mimes:pdf,doc,docx', 'extensions:pdf,doc,docx', 'max:20480'],
+            'supplementary.*' => ['file', 'mimes:pdf,doc,docx,jpg,jpeg,png,webp,svg', 'extensions:pdf,doc,docx,jpg,jpeg,png,webp,svg', 'max:20480'],
             'response' => ['nullable', 'file', 'mimes:pdf,doc,docx', 'extensions:pdf,doc,docx', 'max:20480'],
             'title' => ['required', 'string', 'max:240'],
             'subtitle' => ['nullable', 'string', 'max:300'],
@@ -62,10 +62,10 @@ final class ArticleRequest extends FormRequest
             'references.*' => ['string', 'max:2000'],
             'doi' => ['nullable', 'string', 'max:255'],
             'publication_type' => ['required', 'in:article,research,review,essay,case-study,editorial'],
-            'featured_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
+            'featured_image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,svg', 'max:8192'],
             'manuscript_pdf' => ['nullable', 'file', 'mimes:pdf', 'max:20480'],
             'supporting_documents' => ['nullable', 'array', 'max:6'],
-            'supporting_documents.*' => ['file', 'mimes:pdf,doc,docx', 'max:20480'],
+            'supporting_documents.*' => ['file', 'mimes:pdf,doc,docx,jpg,jpeg,png,webp,svg', 'max:20480'],
             'change_summary' => ['nullable', 'string', 'max:2000'],
         ];
     }

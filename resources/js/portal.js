@@ -75,3 +75,12 @@ document.querySelectorAll('[data-manuscript-wizard]').forEach(form=>{
  form.addEventListener('click',event=>{if(!event.target.closest('[data-remove-author]'))return;const list=form.querySelector('[data-author-list]');if(list.children.length===1)return;event.target.closest('[data-author-row]').remove();[...list.children].forEach((row,i)=>{row.querySelector('legend').textContent='Author '+(i+1);row.querySelectorAll('input').forEach(input=>{if(input.type==='radio')input.value=i;else input.name=input.name.replace(/\[\d+\]/,'['+i+']');});});if(!list.querySelector('input[type=radio]:checked'))list.querySelector('input[type=radio]').checked=true;});
  form.querySelector('[data-add-author]').addEventListener('click',()=>{const list=form.querySelector('[data-author-list]');const i=list.children.length;if(i>=20)return;const row=list.firstElementChild.cloneNode(true);row.querySelector('legend').textContent='Author '+(i+1);row.querySelectorAll('input').forEach(input=>{if(input.type==='radio'){input.value=i;input.checked=false;}else{input.name=input.name.replace(/\[\d+\]/,'['+i+']');input.value='';}});list.appendChild(row);});show(0);
 });
+
+// Explain the same image policy wherever images can be selected.
+document.querySelectorAll('input[type="file"]').forEach(input => {
+ if (!/image|\.jpg|\.png|\.svg/i.test(input.accept)) return;
+ const help=document.createElement('small');
+ help.className='portal-help';
+ help.textContent='Images are optimized losslessly and must fit within 1 MB. Dimensions, transparency and quality are preserved. Plain, self-contained SVG is supported. PDFs and Word documents keep their existing limits.';
+ input.insertAdjacentElement('afterend',help);
+});

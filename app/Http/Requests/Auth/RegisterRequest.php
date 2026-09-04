@@ -24,7 +24,7 @@ final class RegisterRequest extends FormRequest
             'organization' => ['nullable', 'string', 'max:160'],
             'designation' => ['nullable', 'string', 'max:120'],
             'biography' => ['nullable', 'string', 'max:3000'],
-            'profile_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'profile_image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,svg', 'max:4096'],
             'password' => ['required', 'confirmed', Password::min(10)->mixedCase()->numbers()->symbols()->uncompromised()],
             'terms' => ['accepted'],
         ];

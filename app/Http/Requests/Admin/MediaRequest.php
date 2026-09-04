@@ -17,7 +17,7 @@ final class MediaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'file' => [$this->isMethod('post') ? 'required' : 'nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf,doc,docx', 'max:25600'],
+            'file' => [$this->isMethod('post') ? 'required' : 'nullable', 'file', 'mimes:jpg,jpeg,png,webp,svg,pdf,doc,docx', 'max:25600'],
             'alt_text' => ['nullable', 'string', 'max:255'], 'caption' => ['nullable', 'string', 'max:2000'],
             'collection' => ['nullable', 'alpha_dash:ascii', 'max:64'],
         ];

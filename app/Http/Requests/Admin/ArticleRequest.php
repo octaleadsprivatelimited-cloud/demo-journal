@@ -41,7 +41,7 @@ final class ArticleRequest extends FormRequest
             'received_date' => ['nullable', 'date'], 'revised_date' => ['nullable', 'date'], 'accepted_date' => ['nullable', 'date'],
             'license' => ['nullable', 'string', 'max:255'], 'copyright_statement' => ['nullable', 'string', 'max:2000'],
             'publication_notice' => ['nullable', 'in:none,correction,retraction,expression_of_concern'],
-            'featured_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
+            'featured_image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,svg', 'max:8192'],
             'manuscript_pdf' => ['nullable', 'file', 'mimes:pdf', 'max:20480'],
             'comments_enabled' => ['sometimes', 'boolean'], 'pdf_download_enabled' => ['sometimes', 'boolean'],
             'seo_title' => ['nullable', 'string', 'max:255'], 'meta_description' => ['nullable', 'string', 'max:1000'],

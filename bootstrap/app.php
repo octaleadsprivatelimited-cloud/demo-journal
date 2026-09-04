@@ -33,6 +33,8 @@ return Application::configure(basePath: dirname(__DIR__))
         }
 
         $middleware->statefulApi();
+        $middleware->web(append: [\App\Http\Middleware\OptimizeImageUploads::class]);
+        $middleware->api(append: [\App\Http\Middleware\OptimizeImageUploads::class]);
         $middleware->append(SecurityHeaders::class);
         $middleware->redirectGuestsTo(static function (Request $request): string {
             return match (true) {
