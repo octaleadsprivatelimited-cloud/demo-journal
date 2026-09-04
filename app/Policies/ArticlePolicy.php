@@ -64,15 +64,12 @@ class ArticlePolicy
 
     public function delete(User $user, Article $article): bool
     {
-        return $user->hasPermission('articles.delete')
-            || ($user->hasPermission('articles.update')
-                && $article->isOwnedBy($user)
-                && in_array($article->status, [ArticleStatus::Draft, ArticleStatus::Rejected], true));
+        return $user->isActive() && $user->hasAnyRole('admin', 'super-admin');
     }
 
     public function restore(User $user, Article $article): bool
     {
-        return $user->hasPermission('articles.delete');
+        return $user->isActive() && $user->hasAnyRole('admin', 'super-admin');
     }
 
     public function forceDelete(User $user, Article $article): bool

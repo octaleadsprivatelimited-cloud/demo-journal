@@ -19,7 +19,7 @@ Route::middleware(['auth', 'active', 'verified'])->group(function (): void {
         Route::put('/profile', [Author\ProfileController::class, 'update'])->name('profile.update');
         Route::get('/settings', [Author\AccountSettingsController::class, 'edit'])->name('settings.edit');
         Route::put('/settings', [Author\AccountSettingsController::class, 'update'])->middleware('throttle:6,1')->name('settings.update');
-        Route::resource('articles', Author\ArticleController::class);
+        Route::resource('articles', Author\ArticleController::class)->except('destroy');
         Route::patch('/articles/{article}/autosave', Author\AutosaveController::class)->middleware('throttle:30,1')->name('articles.autosave');
         Route::post('/articles/{article}/submit', [Author\SubmissionController::class, 'store'])->middleware('throttle:5,1')->name('articles.submit');
         Route::get('/articles/{article}/manuscript', Author\ManuscriptController::class)->name('articles.manuscript');

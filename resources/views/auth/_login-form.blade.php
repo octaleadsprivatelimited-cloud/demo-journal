@@ -1,6 +1,7 @@
 @if(config('services.google.enabled') && config('services.google.only'))
 @include('auth._google-oauth', ['portal' => $portal])
 <p class="portal-help">Use your Google account to sign in or create an application. No website password is needed.</p>
+<p class="portal-help"><a href="{{ route('password.request') }}">Reset your website password</a></p>
 <a href="{{ route('login') }}">Choose another workspace</a>
 @else
 <form class="portal-form" method="post" action="{{ route($submitRoute) }}" data-loading>@csrf

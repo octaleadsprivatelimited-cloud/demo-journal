@@ -105,10 +105,9 @@ class GoogleOneTapTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_password_reset_is_replaced_by_google_access(): void
+    public function test_password_reset_remains_available_with_google_access(): void
     {
-        $this->get('/forgot-password')->assertRedirect(route('login'));
-        $this->post('/forgot-password', ['email' => 'person@gmail.com'])->assertSessionHasErrors('google');
+        $this->get('/forgot-password')->assertOk();
     }
 
     public function test_forged_signature_and_missing_session_are_rejected(): void

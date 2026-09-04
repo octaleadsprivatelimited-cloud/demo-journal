@@ -12,6 +12,28 @@ final class AuthenticationTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_registration_password_requires_case_number_and_symbol(): void
+    {
+        foreach (['Aa1!bcde', 'lowercaseonly!', 'UPPERCASEONLY1!', 'NoNumberSymbol!', 'NoSymbolNumber1'] as $password) {
+            $this->post(route('author.register.store'), [
+                'name' => 'Password Test',
+                'email' => uniqid().'@example.test',
+                'password' => $password,
+                'password_confirmation' => $password,
+                'terms' => '1',
+            ])->assertSessionHasErrors('password');
+        }
+
+        $password = 'Aa1!bcdef';
+        $this->post(route('author.register.store'), [
+            'name' => 'Nine Character Password',
+            'email' => 'nine-character@example.test',
+            'password' => $password,
+            'password_confirmation' => $password,
+            'terms' => '1',
+        ])->assertSessionDoesntHaveErrors('password');
+    }
+
     public function test_author_registration_creates_a_pending_inactive_application(): void
     {
         config()->set('publication.features.author_registration', true);

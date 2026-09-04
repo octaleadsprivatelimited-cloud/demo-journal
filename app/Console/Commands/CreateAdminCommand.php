@@ -26,7 +26,7 @@ class CreateAdminCommand extends Command
         $validator = Validator::make(compact('email', 'name', 'password'), [
             'email' => ['required', 'email:rfc', 'max:255'],
             'name' => ['required', 'string', 'max:255'],
-            'password' => ['required', Password::min(12)->mixedCase()->numbers()->symbols()],
+            'password' => ['required', Password::min(9)->mixedCase()->numbers()->symbols()],
         ]);
 
         if ($validator->fails()) {

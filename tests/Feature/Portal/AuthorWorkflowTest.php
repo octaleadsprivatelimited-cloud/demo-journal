@@ -51,20 +51,15 @@ final class AuthorWorkflowTest extends TestCase
         $response->assertSee('data-autosave="'.route('author.articles.autosave', $article).'"', false);
     }
 
-    public function test_author_can_archive_their_rejected_manuscript(): void
+    public function test_author_cannot_delete_their_own_articles_at_any_stage(): void
     {
         [$user] = $this->authorUser();
-        $article = Article::factory()->create([
-            'created_by_id' => $user->id,
-            'status' => 'rejected',
-            'rejected_at' => now(),
-        ]);
+        foreach (['draft', 'rejected', 'approved', 'published'] as $status) {
+            $article = Article::factory()->create(['created_by_id' => $user->id, 'status' => $status]);
+            $this->assertFalse($user->can('delete', $article));
+        }
 
-        $this->actingAs($user)
-            ->delete(route('author.articles.destroy', $article))
-            ->assertRedirect(route('author.articles.index'));
-
-        $this->assertSoftDeleted($article);
+        $this->assertFalse(\Illuminate\Support\Facades\Route::has('author.articles.destroy'));
     }
 
     public function test_author_cannot_edit_another_authors_manuscript(): void
