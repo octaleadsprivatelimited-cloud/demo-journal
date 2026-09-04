@@ -19,7 +19,7 @@ final class SubmissionController extends Controller
     {
         Gate::authorize('viewAny', Submission::class);
 
-        return view('admin.submissions.index', ['submissions' => Submission::query()->with(['article:id,title,slug,status,deleted_at', 'submitter:id,name,email'])
+        return view('admin.submissions.index', ['submissions' => Submission::query()->when($request->user()->hasRole('editor') && ! $request->user()->hasAnyRole('admin', 'super-admin'), fn ($q) => $q->whereHas('article', fn ($a) => $a->where('assigned_editor_id', $request->user()->id)))->with(['article:id,title,slug,status,deleted_at', 'submitter:id,name,email'])
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))->latest('submitted_at')->paginate(25)->withQueryString()]);
     }
 
@@ -33,6 +33,7 @@ final class SubmissionController extends Controller
     public function update(SubmissionRequest $request, Submission $submission): RedirectResponse
     {
         Gate::authorize('update', $submission);
+        abort_if($submission->article->workflow, 409, 'Use the manuscript workflow to record decisions.');
         $status = $request->enum('status', SubmissionStatus::class);
         $submission->update(['status' => $status,
             'decision_at' => in_array($status, [SubmissionStatus::Accepted, SubmissionStatus::Rejected, SubmissionStatus::Withdrawn], true) ? now() : null]);

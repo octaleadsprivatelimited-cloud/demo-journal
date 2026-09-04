@@ -23,8 +23,9 @@ final class DashboardController extends Controller
                 'in_progress' => $counts[ReviewStatus::InProgress->value] ?? 0,
                 'completed' => $counts[ReviewStatus::Completed->value] ?? 0,
                 'total' => $counts->sum(),
+                'overdue' => (clone $base)->whereIn('status', ['assigned', 'in_progress'])->where('due_at', '<', now())->count(),
             ],
-            'reviews' => (clone $base)->with(['article:id,title,slug,status,submitted_at,deleted_at', 'submission:id,article_id,round'])
+            'reviews' => (clone $base)->with(['article:id,title,slug,status,submitted_at,deleted_at', 'article.workflow', 'submission:id,article_id,round'])
                 ->orderByRaw('completed_at IS NOT NULL')
                 ->orderBy('due_at')
                 ->paginate(15),

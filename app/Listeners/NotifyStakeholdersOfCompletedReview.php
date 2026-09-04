@@ -7,6 +7,7 @@ namespace App\Listeners;
 use App\Events\ReviewCompleted;
 use App\Models\User;
 use App\Notifications\ReviewCompletedNotification;
+use App\Services\ManuscriptWorkflowService;
 use Illuminate\Support\Facades\Notification;
 
 class NotifyStakeholdersOfCompletedReview
@@ -16,11 +17,11 @@ class NotifyStakeholdersOfCompletedReview
         $event->review->loadMissing(['article.creator', 'assignedBy']);
 
         $editors = User::query()->active()
-            ->whereHas('roles', fn ($query) => $query->whereIn('slug', ['super-admin', 'admin', 'editor']))
+            ->where(fn ($query) => $query->whereHas('roles', fn ($roles) => $roles->whereIn('slug', ['super-admin', 'admin']))->orWhere('id', $event->review->article->assigned_editor_id))
             ->get();
 
         $assignedBy = $event->review->assignedBy;
-        if ($assignedBy?->isActive()) {
+        if ($assignedBy?->isActive() && (! $event->review->article->workflow || app(ManuscriptWorkflowService::class)->canEdit($assignedBy, $event->review->article))) {
             $editors->push($assignedBy);
         }
 

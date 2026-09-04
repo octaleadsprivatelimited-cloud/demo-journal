@@ -22,6 +22,10 @@ class SubmissionPolicy
 
     public function view(User $user, Submission $submission): bool
     {
+        if ($user->hasRole('editor') && ! $user->hasRole('admin') && $submission->article->assigned_editor_id !== $user->id) {
+            return false;
+        }
+
         return $this->canManageEditorialSubmissions($user)
             || ($user->hasPermission('articles.submit')
                 && $submission->article()->firstOrFail()->isOwnedBy($user));
@@ -29,6 +33,10 @@ class SubmissionPolicy
 
     public function update(User $user, Submission $submission): bool
     {
+        if ($user->hasRole('editor') && ! $user->hasRole('admin') && $submission->article->assigned_editor_id !== $user->id) {
+            return false;
+        }
+
         return $this->canManageEditorialSubmissions($user);
     }
 

@@ -15,3 +15,5 @@ Schedule::command('sanctum:prune-expired --hours=24')->daily();
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+Schedule::command('workflow:remind')->hourly()->withoutOverlapping()->onOneServer();

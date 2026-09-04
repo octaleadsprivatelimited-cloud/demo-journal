@@ -21,7 +21,7 @@ class Review extends Model
     use HasAuditLogs, HasFactory;
 
     protected $fillable = [
-        'article_id', 'submission_id', 'reviewer_id', 'assigned_by_id', 'status',
+        'editor_message', 'invitation_deadline', 'article_id', 'submission_id', 'reviewer_id', 'assigned_by_id', 'status',
         'recommendation', 'comments_to_author', 'confidential_comments', 'due_at',
         'started_at', 'completed_at',
         'conflict_declared', 'response_note', 'responded_at', 'review_file_path',
@@ -32,7 +32,7 @@ class Review extends Model
         return [
             'status' => ReviewStatus::class,
             'recommendation' => ReviewRecommendation::class,
-            'due_at' => 'datetime',
+            'due_at' => 'datetime', 'invitation_deadline' => 'datetime',
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
             'conflict_declared' => 'boolean', 'responded_at' => 'datetime',

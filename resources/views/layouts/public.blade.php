@@ -85,11 +85,7 @@
                 <x-public.icon name="menu" />
             </button>
             <a class="brand" href="{{ route('home') }}" aria-label="{{ $siteName }} home">
-                <img src="{{ asset('assets/journal-mark.svg') }}" alt="" width="48" height="48">
-                <span>
-                    <strong>{{ $siteName }}</strong>
-                    <small>Journal of ideas &amp; inquiry</small>
-                </span>
+                <img class="larix-logo" src="{{ asset('assets/larix-logo-transparent.png') }}" alt="Larix International — Your Global Research Partner" width="200" height="80">
             </a>
             <div class="masthead-actions">
                 <button class="icon-button mobile-account-button" type="button" aria-label="Open account options" aria-expanded="false" aria-controls="mobile-account-menu" data-account-toggle><x-public.icon name="user" /></button>
@@ -171,8 +167,7 @@
         <div class="container footer-grid">
             <div class="footer-brand">
                 <a class="brand brand-inverse" href="{{ route('home') }}">
-                    <img src="{{ asset('assets/journal-mark-light.svg') }}" alt="" width="44" height="44">
-                    <strong>{{ $siteName }}</strong>
+                    <img class="larix-logo" src="{{ asset('assets/larix-logo-transparent.png') }}" alt="Larix International — Your Global Research Partner" width="200" height="80">
                 </a>
                 <p>{{ data_get($site ?? [], 'description') }}</p>
             </div>
@@ -192,9 +187,10 @@
             </div>
             <div>
                 <h3>Contact &amp; follow</h3>
-                @if (data_get($site ?? [], 'contact_email'))
-                    <a href="mailto:{{ data_get($site, 'contact_email') }}">{{ data_get($site, 'contact_email') }}</a>
-                @endif
+                @foreach(data_get($site, 'contact_emails', array_filter([data_get($site, 'contact_email')])) as $email)
+                    <a href="mailto:{{ $email }}">{{ $email }}</a>
+                @endforeach
+                @if(data_get($site, 'whatsapp'))<a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', data_get($site, 'whatsapp')) }}" target="_blank" rel="noopener noreferrer">WhatsApp: {{ data_get($site, 'whatsapp') }}</a>@endif
                 @if (data_get($site ?? [], 'address'))<p>{{ data_get($site, 'address') }}</p>@endif
                 @foreach (collect(data_get($site ?? [], 'social', []))->filter() as $network => $url)
                     <a href="{{ $url }}" target="_blank" rel="noopener noreferrer">{{ str($network)->headline() }}</a>

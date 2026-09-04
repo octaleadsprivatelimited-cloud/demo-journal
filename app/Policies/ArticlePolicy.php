@@ -12,7 +12,15 @@ class ArticlePolicy
 {
     public function before(User $user, string $ability): ?bool
     {
-        return $user->hasRole('super-admin') ? true : null;
+        if ($user->hasRole('super-admin')) {
+            return true;
+        }
+        $article = request()->route('article');
+        if ($article instanceof Article && $user->hasRole('editor') && ! $user->hasRole('admin') && $article->assigned_editor_id !== $user->id) {
+            return false;
+        }
+
+        return null;
     }
 
     public function viewAny(?User $user): bool
@@ -22,8 +30,14 @@ class ArticlePolicy
 
     public function view(?User $user, Article $article): bool
     {
-        return $article->status === ArticleStatus::Published
-            || ($user && ($article->isOwnedBy($user) || $user->hasPermission('articles.view-unpublished')));
+        if ($user && $user->hasAnyRole('admin', 'super-admin')) {
+            return true;
+        }
+        if ($user && $user->hasRole('editor')) {
+            return $article->assigned_editor_id === $user->id;
+        }
+
+        return $article->status === ArticleStatus::Published || ($user && $article->created_by_id === $user->id);
     }
 
     public function create(User $user): bool
@@ -33,6 +47,12 @@ class ArticlePolicy
 
     public function update(User $user, Article $article): bool
     {
+        if ($article->workflow && ! in_array($article->workflow->stage, ['draft', 'returned', 'minor_revision', 'major_revision'], true)) {
+            return false;
+        }
+        if ($user->hasRole('editor') && ! $user->hasRole('admin') && $article->assigned_editor_id !== $user->id) {
+            return false;
+        }
         if ($user->hasPermission('articles.update-any')) {
             return true;
         }

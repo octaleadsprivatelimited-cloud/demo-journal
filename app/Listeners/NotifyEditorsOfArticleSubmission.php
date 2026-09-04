@@ -14,7 +14,7 @@ class NotifyEditorsOfArticleSubmission
     public function handle(ArticleSubmitted $event): void
     {
         $recipients = User::query()->active()
-            ->whereHas('roles', fn ($query) => $query->whereIn('slug', ['super-admin', 'admin', 'editor']))
+            ->where(fn ($query) => $query->whereHas('roles', fn ($roles) => $roles->whereIn('slug', ['super-admin', 'admin']))->orWhere('id', $event->article->assigned_editor_id))
             ->get();
 
         Notification::send($recipients, new ArticleSubmittedNotification($event->article, $event->submission));

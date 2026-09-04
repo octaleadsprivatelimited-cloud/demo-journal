@@ -12,9 +12,9 @@ use App\Http\Requests\Admin\BulkArticleRequest;
 use App\Models\Article;
 use App\Models\Author;
 use App\Models\Category;
+use App\Models\JournalIssue;
 use App\Models\Tag;
 use App\Models\User;
-use App\Models\JournalIssue;
 use App\Services\ArticleVersionService;
 use App\Services\ArticleWorkflowService;
 use Carbon\CarbonImmutable;
@@ -32,7 +32,7 @@ final class ArticleController extends Controller
     public function index(Request $request): View
     {
         Gate::authorize('viewAny', Article::class);
-        $articles = Article::query()->withTrashed()->with(['category:id,name,slug', 'creator:id,name', 'assignedEditor:id,name'])
+        $articles = Article::query()->when($request->user()->hasRole('editor') && ! $request->user()->hasAnyRole('admin', 'super-admin'), fn ($q) => $q->where('assigned_editor_id', $request->user()->id))->withTrashed()->with(['category:id,name,slug', 'creator:id,name', 'assignedEditor:id,name'])
             ->when($request->string('trashed')->toString() === 'only', fn ($q) => $q->onlyTrashed())
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')->toString()))
             ->when($request->filled('category'), fn ($q) => $q->where('category_id', $request->integer('category')))
@@ -71,9 +71,12 @@ final class ArticleController extends Controller
         return redirect()->route('admin.articles.edit', $article)->with('success', 'Editorial draft created.');
     }
 
-    public function show(Article $article): View
+    public function show(Article $article)
     {
         Gate::authorize('view', $article);
+        if ($article->workflow) {
+            return redirect()->route('workflow.show', $article);
+        }
         $article->load(['category', 'creator:id,name,email', 'assignedEditor:id,name,email', 'authors', 'tags', 'seoMetadata', 'versions.creator:id,name', 'submissions.version', 'submissions.reviews.reviewer:id,name']);
 
         return view('admin.articles.show', ['article' => $article,
@@ -91,6 +94,7 @@ final class ArticleController extends Controller
     public function update(ArticleRequest $request, Article $article, ArticleVersionService $versions): RedirectResponse
     {
         Gate::authorize('update', $article);
+        abort_if($article->workflow && ! in_array($article->workflow->stage, ['draft', 'returned', 'minor_revision', 'major_revision']), 409, 'Manuscript metadata is locked; use workflow actions.');
         DB::transaction(function () use ($request, $article, $versions): void {
             $article->fill($this->articleData($request) + ['reading_time_minutes' => $this->readingTime($request->string('content')->toString())])->save();
             $article->authors()->sync($request->input('authors', []));
@@ -122,6 +126,7 @@ final class ArticleController extends Controller
     public function action(ArticleActionRequest $request, Article $article, ArticleWorkflowService $workflow): RedirectResponse
     {
         $action = $request->string('action')->toString();
+        abort_if($article->workflow && ! in_array($action, ['feature', 'unfeature', 'trend', 'untrend']), 409, 'Use the manuscript workflow actions.');
         Gate::authorize(match ($action) {
             'publish', 'unpublish', 'schedule' => 'publish',
             'approve', 'reject', 'revision', 'assign_reviewer' => 'transition',

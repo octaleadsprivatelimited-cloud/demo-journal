@@ -16,12 +16,12 @@ final class DashboardController extends Controller
     {
         return view('editor.dashboard', [
             'stats' => [
-                'pending' => Submission::pending()->count(),
-                'underReview' => Article::status(ArticleStatus::UnderReview)->count(),
+                'pending' => Submission::whereHas('article', fn ($q) => $q->where('assigned_editor_id', auth()->id()))->pending()->count(),
+                'underReview' => Article::where('assigned_editor_id', auth()->id())->status(ArticleStatus::UnderReview)->count(),
                 'approved' => Article::status(ArticleStatus::Approved)->count(),
                 'scheduled' => Article::status(ArticleStatus::Scheduled)->count(),
             ],
-            'submissions' => Submission::query()
+            'submissions' => Submission::query()->whereHas('article', fn ($q) => $q->where('assigned_editor_id', auth()->id()))
                 ->pending()
                 ->with(['article:id,title,slug,status,submitted_at,deleted_at', 'submitter:id,name'])
                 ->latest('submitted_at')

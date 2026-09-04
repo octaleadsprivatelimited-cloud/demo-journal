@@ -17,7 +17,8 @@
                 <h2>We read every message.</h2>
                 <p>Choose the closest enquiry type so your message reaches the right editor. Please do not send sensitive personal or confidential research data through this form.</p>
                 <dl>
-                    @if(data_get($site, 'contact_email'))<div><dt>Email</dt><dd><a href="mailto:{{ data_get($site, 'contact_email') }}">{{ data_get($site, 'contact_email') }}</a></dd></div>@endif
+                    @foreach(data_get($site, 'contact_emails', array_filter([data_get($site, 'contact_email')])) as $email)<div><dt>Email</dt><dd><a href="mailto:{{ $email }}">{{ $email }}</a></dd></div>@endforeach
+                    @if(data_get($site, 'whatsapp'))<div><dt>WhatsApp</dt><dd><a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', data_get($site, 'whatsapp')) }}" target="_blank" rel="noopener noreferrer">{{ data_get($site, 'whatsapp') }}</a></dd></div>@endif
                     @if(data_get($site, 'phone'))<div><dt>Telephone</dt><dd><a href="tel:{{ preg_replace('/[^+0-9]/', '', data_get($site, 'phone')) }}">{{ data_get($site, 'phone') }}</a></dd></div>@endif
                     @if(data_get($site, 'address'))<div><dt>Correspondence</dt><dd>{{ data_get($site, 'address') }}</dd></div>@endif
                     <div><dt>Response window</dt><dd>Usually within three working days</dd></div>

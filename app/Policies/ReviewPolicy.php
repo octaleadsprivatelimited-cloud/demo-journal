@@ -22,6 +22,10 @@ class ReviewPolicy
 
     public function view(User $user, Review $review): bool
     {
+        if ($user->hasRole('editor') && ! $user->hasRole('admin') && $review->article->assigned_editor_id !== $user->id && $review->reviewer_id !== $user->id) {
+            return false;
+        }
+
         return $this->canManageEditorialReviews($user)
             || ($user->hasPermission('articles.review') && $review->reviewer_id === $user->getKey());
     }
@@ -33,6 +37,10 @@ class ReviewPolicy
 
     public function update(User $user, Review $review): bool
     {
+        if ($user->hasRole('editor') && ! $user->hasRole('admin') && $review->article->assigned_editor_id !== $user->id && $review->reviewer_id !== $user->id) {
+            return false;
+        }
+
         return $this->canManageEditorialReviews($user)
             || ($user->hasPermission('articles.review')
                 && $review->reviewer_id === $user->getKey()

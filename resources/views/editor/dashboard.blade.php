@@ -10,6 +10,8 @@
 @endsection
 
 @section('content')
+@include('workflow.dashboard-cards')
+<div class="portal-card" style="margin-bottom:20px"><div class="portal-card-body"><h2>Manuscript workflow</h2><p>Track checks, reviews, revisions, proofs and publication.</p><a class="portal-button primary" href="{{ route('workflow.index') }}">Open manuscript workflow</a></div></div>
     <div class="metric-grid">
         <x-portal.metric label="Pending submissions" :value="$stats['pending']" tone="gold" hint="Awaiting editorial review" />
         <x-portal.metric label="Under review" :value="$stats['underReview']" tone="blue" hint="Currently being assessed" />

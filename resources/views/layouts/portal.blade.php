@@ -2,7 +2,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="robots" content="noindex,nofollow"><title>@yield('title', 'Workspace') — {{ config('app.name', 'octaleads Journal') }}</title>
+    <meta name="robots" content="noindex,nofollow"><title>@yield('title', 'Workspace')</title>
     @if(file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot'))) @vite(['resources/css/app.css', 'resources/js/app.js']) @endif
     <style>{!! file_get_contents(resource_path('css/portal.css')) !!}</style>
     @stack('head')
@@ -12,7 +12,7 @@
 @auth
 <div class="portal-shell" data-portal-shell>
     <aside class="portal-sidebar" id="portal-sidebar" data-portal-sidebar>
-        <div class="portal-brand"><a href="{{ route('home') }}"><span class="portal-brand-mark">O</span><span><strong>{{ config('app.name', 'octaleads Journal') }}</strong><small>Editorial workspace</small></span></a><button type="button" data-sidebar-close aria-label="Close navigation"><x-portal.icon name="close" /></button></div>
+        <div class="portal-brand"><a href="{{ route('home') }}"><img class="portal-publisher-logo" src="{{ asset('assets/larix-logo-transparent.png') }}" alt="Larix International" width="110" height="44"><span><small>Editorial workspace</small></span></a><button type="button" data-sidebar-close aria-label="Close navigation"><x-portal.icon name="close" /></button></div>
         <nav aria-label="Workspace navigation">
             @if(auth()->user()->hasAnyRole('admin','super-admin','editor'))
                 @php
@@ -83,7 +83,7 @@
                 <a class="portal-button sidebar-action" href="{{ route('author.articles.create') }}"><x-portal.icon name="plus" :size="17" />New manuscript</a>
             @endif
         </nav>
-        <div class="portal-sidebar-foot"><a href="{{ route('home') }}"><x-portal.icon name="arrow" :size="17" />View journal</a><form method="post" action="{{ route('logout') }}">@csrf<button><x-portal.icon name="logout" :size="17" />Sign out</button></form></div>
+        <a class="portal-nav-link" href="{{ route('workflow.index') }}"><x-portal.icon name="file" />Manuscript workflow</a><div class="portal-sidebar-foot"><a href="{{ route('home') }}"><x-portal.icon name="arrow" :size="17" />View journal</a><form method="post" action="{{ route('logout') }}">@csrf<button><x-portal.icon name="logout" :size="17" />Sign out</button></form></div>
     </aside>
     <div class="portal-overlay" data-sidebar-close hidden></div>
     <div class="portal-page">
@@ -92,7 +92,7 @@
     </div>
 </div>
 @else
-<main class="auth-shell @if(request()->routeIs('login')) auth-login @endif"><a class="auth-brand" href="{{ route('home') }}"><span class="portal-brand-mark">O</span><span><strong>{{ config('app.name', 'octaleads Journal') }}</strong><small>Journal of ideas &amp; inquiry</small></span></a><section class="auth-card"><div class="auth-card-head"><p class="portal-eyebrow">@yield('auth-eyebrow', 'Secure journal access')</p><h1>@yield('page-title', 'Welcome')</h1><p>@yield('page-description')</p></div><x-portal.flash />@yield('content')</section><p class="auth-foot"><a href="{{ route('home') }}">← Return to the journal</a></p></main>
+<main class="auth-shell @if(request()->routeIs('login')) auth-login @endif"><a class="auth-brand" href="{{ route('home') }}"><img class="portal-publisher-logo" src="{{ asset('assets/larix-logo-transparent.png') }}" alt="Larix International" width="110" height="44"><span><small>Journal of ideas &amp; inquiry</small></span></a><section class="auth-card"><div class="auth-card-head"><p class="portal-eyebrow">@yield('auth-eyebrow', 'Secure journal access')</p><h1>@yield('page-title', 'Welcome')</h1><p>@yield('page-description')</p></div><x-portal.flash />@yield('content')</section><p class="auth-foot"><a href="{{ route('home') }}">← Return to the journal</a></p></main>
 @endauth
 <script>{!! file_get_contents(resource_path('js/portal.js')) !!}</script>@stack('scripts')
 </body></html>

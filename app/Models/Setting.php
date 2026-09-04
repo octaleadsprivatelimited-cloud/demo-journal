@@ -49,6 +49,27 @@ class Setting extends Model
                 'default' => null,
                 'public' => true,
             ],
+            'contact.additional_email' => [
+                'label' => 'Additional contact email',
+                'type' => 'email',
+                'rules' => ['nullable', 'email:rfc', 'max:254'],
+                'default' => null,
+                'public' => true,
+            ],
+            'contact.editorial_email' => [
+                'label' => 'Editorial contact email',
+                'type' => 'email',
+                'rules' => ['nullable', 'email:rfc', 'max:254'],
+                'default' => null,
+                'public' => true,
+            ],
+            'contact.whatsapp' => [
+                'label' => 'WhatsApp number',
+                'type' => 'text',
+                'rules' => ['nullable', 'string', 'max:50', 'regex:/^\+?[0-9 ()-]+$/'],
+                'default' => null,
+                'public' => true,
+            ],
             'contact.phone' => [
                 'label' => 'Public phone number',
                 'type' => 'text',

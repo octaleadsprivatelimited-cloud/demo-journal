@@ -20,7 +20,7 @@ class User extends Authenticatable implements MustVerifyEmail
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
-        'name', 'email', 'google_id', 'phone', 'profile_image_path', 'google_avatar_url', 'organization', 'designation',
+        'reviewer_profile', 'name', 'email', 'google_id', 'phone', 'profile_image_path', 'google_avatar_url', 'organization', 'designation',
         'password', 'email_verified_at', 'status', 'is_active', 'requested_role',
         'approved_by_id', 'approved_at', 'rejected_at',
     ];
@@ -35,6 +35,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected function casts(): array
     {
         return [
+            'reviewer_profile' => 'array',
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',

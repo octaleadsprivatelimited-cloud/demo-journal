@@ -28,6 +28,9 @@ class ArticleWorkflowService
     {
         return DB::transaction(function () use ($article, $actor, $coverLetter): Submission {
             $article = Article::query()->lockForUpdate()->findOrFail($article->getKey());
+            if ($article->workflow) {
+                throw new DomainException('Use the manuscript workflow actions for this record.');
+            }
             $from = $article->status;
             $this->assertTransition($from, ArticleStatus::Submitted);
 
@@ -98,6 +101,9 @@ class ArticleWorkflowService
         return DB::transaction(function () use ($article, $reviewer, $assignedBy, $dueAt): Review {
             $article = Article::query()->lockForUpdate()->findOrFail($article->getKey());
 
+            if ($article->workflow) {
+                throw new DomainException('Use workflow reviewer invitations.');
+            }
             if (! in_array($article->status, [ArticleStatus::Submitted, ArticleStatus::UnderReview], true)) {
                 throw new DomainException('A reviewer can only be assigned to a submitted article.');
             }
@@ -136,8 +142,14 @@ class ArticleWorkflowService
         ?string $confidentialComments = null,
     ): Review {
         return DB::transaction(function () use ($review, $reviewer, $recommendation, $commentsToAuthor, $confidentialComments): Review {
+            Article::whereKey($review->article_id)->lockForUpdate()->firstOrFail();
             $review = Review::query()->lockForUpdate()->findOrFail($review->getKey());
 
+            if ($review->article->workflow) {
+                if ($review->status !== ReviewStatus::InProgress || ! in_array($review->article->workflow->stage, ['under_review', 'reviewer_recheck'], true) || $review->submission_id != data_get($review->article->workflow->data, 'current_submission_id')) {
+                    throw new DomainException('Accept the current invitation before submitting a review.');
+                }
+            }
             if ($review->reviewer_id !== $reviewer->getKey()) {
                 throw new DomainException('Only the assigned reviewer may complete this review.');
             }
@@ -157,6 +169,10 @@ class ArticleWorkflowService
 
             $review = $review->refresh();
             ReviewCompleted::dispatch($review);
+            if ($review->article->workflow) {
+                $w = $review->article->workflow;
+                app(ManuscriptWorkflowService::class)->log($review->article, $reviewer, 'review_submitted', $w->stage, $w->stage, $commentsToAuthor, [], true);
+            }
 
             return $review;
         });

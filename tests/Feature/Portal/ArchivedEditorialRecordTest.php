@@ -36,6 +36,7 @@ final class ArchivedEditorialRecordTest extends TestCase
         $reviewer = $this->roleUser('reviewer', ['articles.review']);
         $editor = $this->roleUser('editor', ['articles.review', 'articles.update-any', 'comments.moderate']);
         [$article, $submission, $review] = $this->archivedEditorialRecord($author, $reviewer);
+        $article->update(['assigned_editor_id' => $editor->id]);
         $submission->update(['submitted_by_id' => null]);
         $comment = Comment::query()->create([
             'article_id' => $article->getKey(),

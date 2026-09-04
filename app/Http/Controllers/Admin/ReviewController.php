@@ -20,7 +20,7 @@ final class ReviewController extends Controller
     {
         Gate::authorize('viewAny', Review::class);
 
-        return view('admin.reviews.index', ['reviews' => Review::query()->with(['article:id,title,slug,deleted_at', 'reviewer:id,name,email'])
+        return view('admin.reviews.index', ['reviews' => Review::query()->when($request->user()->hasRole('editor') && ! $request->user()->hasAnyRole('admin', 'super-admin'), fn ($q) => $q->whereHas('article', fn ($a) => $a->where('assigned_editor_id', $request->user()->id)))->with(['article:id,title,slug,deleted_at', 'reviewer:id,name,email'])
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))->latest()->paginate(25)->withQueryString()]);
     }
 
@@ -35,6 +35,7 @@ final class ReviewController extends Controller
     public function update(ReviewRequest $request, Review $review): RedirectResponse
     {
         Gate::authorize('update', $review);
+        abort_if($review->article->workflow, 409, 'Use the manuscript workflow review actions.');
         $data = $request->validated();
         if (! $request->filled('reviewer_id')) {
             unset($data['reviewer_id']);

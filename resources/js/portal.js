@@ -63,3 +63,15 @@
         canvas.addEventListener('input', sync); canvas.addEventListener('blur', sync); root.closest('form')?.addEventListener('submit', sync);
     });
 })();
+
+// Progressive enhancement: without JavaScript, every submission section remains accessible.
+document.querySelectorAll('[data-manuscript-wizard]').forEach(form=>{
+ const steps=[...form.querySelectorAll('[data-wizard-step]')];let current=0;
+ function show(n){current=Math.max(0,Math.min(n,steps.length-1));steps.forEach((s,i)=>s.hidden=i!==current);form.querySelectorAll('[data-wizard-goto]').forEach((b,i)=>b.classList.toggle('primary',i===current));form.querySelector('[data-wizard-prev]').hidden=current===0;form.querySelector('[data-wizard-next]').hidden=current===steps.length-1;
+ if(current===4){const summary=form.querySelector('[data-submission-summary]');summary.replaceChildren();for(const [name,value] of new FormData(form)){if(name.startsWith('_')||name==='intent'||name==='content'||(!name.startsWith('author_details')&&!['title','abstract','publication_type','keywords','manuscript','cover_letter','supplementary[]','response','references','corresponding_index'].includes(name)))continue;const p=document.createElement('p');p.textContent=name.replace(/author_details\[(\d+)\]/,(_,i)=>'Author '+(Number(i)+1)).replace(/\[|\]/g,' ').replaceAll('_',' ') + ': ' +(value instanceof File?value.name||'No new file':value);summary.appendChild(p);}}
+ }
+ form.querySelectorAll('[data-wizard-goto]').forEach(b=>b.addEventListener('click',()=>show(Number(b.dataset.wizardGoto))));form.querySelector('[data-wizard-prev]').addEventListener('click',()=>show(current-1));form.querySelector('[data-wizard-next]').addEventListener('click',()=>show(current+1));
+ form.addEventListener('invalid',e=>{const step=e.target.closest('[data-wizard-step]');if(step)show(steps.indexOf(step));},true);
+ form.addEventListener('click',event=>{if(!event.target.closest('[data-remove-author]'))return;const list=form.querySelector('[data-author-list]');if(list.children.length===1)return;event.target.closest('[data-author-row]').remove();[...list.children].forEach((row,i)=>{row.querySelector('legend').textContent='Author '+(i+1);row.querySelectorAll('input').forEach(input=>{if(input.type==='radio')input.value=i;else input.name=input.name.replace(/\[\d+\]/,'['+i+']');});});if(!list.querySelector('input[type=radio]:checked'))list.querySelector('input[type=radio]').checked=true;});
+ form.querySelector('[data-add-author]').addEventListener('click',()=>{const list=form.querySelector('[data-author-list]');const i=list.children.length;if(i>=20)return;const row=list.firstElementChild.cloneNode(true);row.querySelector('legend').textContent='Author '+(i+1);row.querySelectorAll('input').forEach(input=>{if(input.type==='radio'){input.value=i;input.checked=false;}else{input.name=input.name.replace(/\[\d+\]/,'['+i+']');input.value='';}});list.appendChild(row);});show(0);
+});

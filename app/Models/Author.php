@@ -22,7 +22,7 @@ class Author extends Model
     use HasAuditLogs, HasFactory, HasUniqueSlug, SoftDeletes;
 
     protected $fillable = [
-        'user_id', 'name', 'slug', 'email', 'biography', 'designation', 'organization',
+        'department', 'country', 'user_id', 'name', 'slug', 'email', 'biography', 'designation', 'organization',
         'avatar_path', 'website_url', 'affiliation', 'orcid', 'social_links', 'is_verified', 'is_active',
     ];
 

@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -73,11 +74,20 @@ class Article extends Model
         return 'slug';
     }
 
+    public function workflow(): HasOne
+    {
+        return $this->hasOne(ManuscriptWorkflow::class);
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
     }
-    public function journalIssue(): BelongsTo { return $this->belongsTo(JournalIssue::class, 'journal_issue_id'); }
+
+    public function journalIssue(): BelongsTo
+    {
+        return $this->belongsTo(JournalIssue::class, 'journal_issue_id');
+    }
 
     public function creator(): BelongsTo
     {

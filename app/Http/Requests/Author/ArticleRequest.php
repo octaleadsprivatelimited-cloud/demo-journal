@@ -32,6 +32,20 @@ final class ArticleRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'author_details' => ['nullable', 'array', 'max:20'],
+            'author_details.*.name' => ['required', 'string', 'max:200'],
+            'author_details.*.email' => ['required', 'email', 'max:255'],
+            'author_details.*.organization' => [$this->input('intent') === 'submit' ? 'required' : 'nullable', 'string', 'max:255'],
+            'author_details.*.department' => ['nullable', 'string', 'max:255'],
+            'author_details.*.country' => ['nullable', 'string', 'max:100'],
+            'author_details.*.orcid' => ['nullable', 'regex:/^\\d{4}-\\d{4}-\\d{4}-\\d{3}[\\dX]$/'],
+            'corresponding_index' => ['nullable', 'integer', 'min:0', 'max:19'],
+            'intent' => ['nullable', 'in:draft,submit'],
+            'manuscript' => ['nullable', 'file', 'mimes:pdf,doc,docx', 'extensions:pdf,doc,docx', 'max:20480'],
+            'cover_letter' => ['nullable', 'file', 'mimes:pdf,doc,docx', 'extensions:pdf,doc,docx', 'max:20480'],
+            'supplementary' => ['nullable', 'array', 'max:10'],
+            'supplementary.*' => ['file', 'mimes:pdf,doc,docx', 'extensions:pdf,doc,docx', 'max:20480'],
+            'response' => ['nullable', 'file', 'mimes:pdf,doc,docx', 'extensions:pdf,doc,docx', 'max:20480'],
             'title' => ['required', 'string', 'max:240'],
             'subtitle' => ['nullable', 'string', 'max:300'],
             'excerpt' => ['nullable', 'string', 'max:1000'],

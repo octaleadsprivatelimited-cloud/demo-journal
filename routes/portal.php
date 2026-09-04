@@ -6,6 +6,8 @@ use App\Http\Controllers\Admin;
 use App\Http\Controllers\Author;
 use App\Http\Controllers\Editor;
 use App\Http\Controllers\Reviewer;
+use App\Http\Controllers\WorkflowController;
+use App\Http\Controllers\WorkflowOperationsController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'active', 'verified'])->group(function (): void {
@@ -82,4 +84,22 @@ Route::middleware(['auth', 'active', 'verified'])->group(function (): void {
             Route::delete('/readiness/{resource}/{record}', [Admin\ReadinessController::class, 'destroy'])->name('readiness.destroy');
         });
     });
+});
+
+Route::middleware(['auth', 'active', 'verified', 'role:author,contributor,reviewer,editor,admin,super-admin'])->group(function () {
+    Route::get('/workflow/staff/directory', [WorkflowOperationsController::class, 'staff'])->name('workflow.staff');
+    Route::post('/workflow/staff/{user}', [WorkflowOperationsController::class, 'staffUpdate'])->name('workflow.staff.update');
+    Route::get('/workflow/settings/configuration', [WorkflowOperationsController::class, 'settings'])->name('workflow.settings');
+    Route::post('/workflow/settings/configuration', [WorkflowOperationsController::class, 'saveSettings'])->name('workflow.settings.save');
+    Route::post('/workflow/{article}/deadline', [WorkflowOperationsController::class, 'deadline'])->name('workflow.deadline');
+    Route::post('/workflow/reviews/{review}/reopen', [WorkflowOperationsController::class, 'reopen'])->name('workflow.review.reopen');
+    Route::get('/workflow/reviews/{review}/attachment', [WorkflowOperationsController::class, 'reviewFile'])->name('workflow.review.file');
+    Route::get('/workflow', [WorkflowController::class, 'index'])->name('workflow.index');
+    Route::get('/workflow/files/{file}', [WorkflowController::class, 'download'])->name('workflow.download');
+    Route::get('/workflow/{article}', [WorkflowController::class, 'show'])->name('workflow.show');
+    Route::post('/workflow/{article}/action', [WorkflowController::class, 'action'])->middleware('throttle:30,1')->name('workflow.action');
+    Route::post('/workflow/{article}/assignment', [WorkflowController::class, 'assignEditor'])->name('workflow.assignment');
+    Route::post('/workflow/{article}/adopt', [WorkflowController::class, 'adopt'])->name('workflow.adopt');
+    Route::post('/workflow/{article}/override', [WorkflowController::class, 'override'])->name('workflow.override');
+    Route::get('/workflow/{article}/acceptance', [WorkflowController::class, 'acceptance'])->name('workflow.acceptance');
 });

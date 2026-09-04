@@ -37,6 +37,8 @@ final class PublicationSettings
                 'tagline' => $lookup('site.tagline', $defaults['tagline']),
                 'description' => $lookup('site.description', $defaults['description']),
                 'contact_email' => $lookup('contact.email', $defaults['contact_email']),
+                'contact_emails' => array_values(array_unique(array_filter([$lookup('contact.email', $defaults['contact_email']), $lookup('contact.additional_email'), $lookup('contact.editorial_email')]))),
+                'whatsapp' => $lookup('contact.whatsapp'),
                 'phone' => $lookup('contact.phone'),
                 'address' => $lookup('contact.address'),
                 'logo' => $defaults['logo'],

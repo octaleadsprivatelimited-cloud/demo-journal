@@ -15,3 +15,6 @@ README.md
 docker-compose*.yml
 npm-debug.log*
 .phpunit.cache
+
+storage/app/backups
+storage/app/private

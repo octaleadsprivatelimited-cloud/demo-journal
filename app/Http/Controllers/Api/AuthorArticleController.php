@@ -9,7 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\StoreArticleRequest;
 use App\Http\Resources\ArticleResource;
 use App\Models\Article;
-use App\Services\ArticleWorkflowService;
+use App\Services\ManuscriptWorkflowService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\DB;
 
 final class AuthorArticleController extends Controller
 {
-    public function __construct(private readonly ArticleWorkflowService $workflow) {}
+    public function __construct(private readonly ManuscriptWorkflowService $workflow) {}
 
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -71,14 +71,14 @@ final class AuthorArticleController extends Controller
     public function submit(Request $request, Article $article): JsonResponse
     {
         $this->authorize('submit', $article);
-        $request->validate(['cover_letter' => ['nullable', 'string', 'max:10000']]);
-
-        $submission = $this->workflow->submit($article, $request->user(), $request->string('cover_letter')->toString() ?: null);
+        $action = in_array($article->workflow?->stage, ['minor_revision', 'major_revision'], true) ? 'revise' : 'submit';
+        $workflow = $this->workflow->execute($article, $request->user(), $action, $request->all());
 
         return response()->json([
             'message' => 'Article submitted for editorial review.',
-            'submission_id' => $submission->public_id,
-            'status' => $submission->status->value,
+            'manuscript_id' => $workflow->manuscript_id,
+            'submission_id' => $workflow->data['current_submission_id'],
+            'status' => $workflow->stage,
         ], 201);
     }
 }

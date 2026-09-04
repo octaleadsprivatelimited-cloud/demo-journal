@@ -4,7 +4,9 @@ namespace App\Providers;
 
 use App\Models\User;
 use App\Services\Contracts\ArticleSearch;
+use App\Services\Contracts\DoiProvider;
 use App\Services\DatabaseArticleSearch;
+use App\Services\ManualDoiProvider;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -26,6 +28,7 @@ class AppServiceProvider extends ServiceProvider
         $this->preventUnsafeTestExecution();
 
         $this->app->bind(ArticleSearch::class, DatabaseArticleSearch::class);
+        $this->app->bind(DoiProvider::class, ManualDoiProvider::class);
     }
 
     /**

@@ -11,7 +11,9 @@ use App\Models\Article;
 use App\Models\Author;
 use App\Models\Category;
 use App\Models\Tag;
+use App\Models\WorkflowFile;
 use App\Services\ArticleVersionService;
+use App\Services\ManuscriptWorkflowService;
 use App\Services\MediaStorageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -63,15 +65,26 @@ final class ArticleController extends Controller
             $article->tags()->sync($request->input('tags', []));
             $this->storeSupportingDocuments($request, $article);
 
+            if ($request->input('intent') === 'submit') {
+                app(ManuscriptWorkflowService::class)->execute($article, $request->user(), 'submit', $request->all());
+            }
+
             return $article;
         });
 
-        return redirect()->route('author.articles.edit', $article)->with('success', 'Draft created. Autosave is now active.');
+        if ($request->input('intent') === 'submit') {
+            return redirect()->route('workflow.show', $article)->with('success', 'Manuscript submitted.');
+        }
+
+        return redirect()->route($request->has('intent') ? 'workflow.show' : 'author.articles.edit', $article)->with('success', 'Draft saved. Complete files and declarations to submit.');
     }
 
-    public function show(Request $request, Article $article): View
+    public function show(Request $request, Article $article)
     {
         Gate::authorize('view', $article);
+        if ($article->workflow) {
+            return redirect()->route('workflow.show', $article);
+        }
         $article->load([
             'category:id,name,slug', 'tags:id,name,slug', 'authors:id,name,slug',
             'versions.creator:id,name',
@@ -97,6 +110,8 @@ final class ArticleController extends Controller
         $data = $this->articleData($request);
 
         DB::transaction(function () use ($request, $article, $data, $versions): void {
+            $article = Article::whereKey($article->id)->lockForUpdate()->firstOrFail();
+            abort_unless(in_array($article->status, [ArticleStatus::Draft, ArticleStatus::RevisionRequired, ArticleStatus::Rejected]) && (! $article->workflow || in_array($article->workflow->stage, ['draft', 'returned', 'minor_revision', 'major_revision'])), 409);
             $article->fill($data + ['reading_time_minutes' => $this->readingTime((string) ($data['content'] ?? ''))])->save();
             $article->tags()->sync($request->input('tags', []));
             $this->syncAuthors($request, $article);
@@ -104,7 +119,13 @@ final class ArticleController extends Controller
             $versions->snapshot($article, $request->user(), $request->string('change_summary')->trim()->toString() ?: 'Manual draft update');
         });
 
-        return redirect()->route('author.articles.edit', $article)->with('success', 'Draft saved and a version snapshot was created.');
+        if ($request->input('intent') === 'submit') {
+            app(ManuscriptWorkflowService::class)->execute($article, $request->user(), in_array($article->workflow?->stage, ['minor_revision', 'major_revision']) ? 'revise' : 'submit', $request->all());
+
+            return redirect()->route('workflow.show', $article)->with('success', 'Manuscript submitted.');
+        }
+
+        return redirect()->route('workflow.show', $article)->with('success', 'Draft saved.');
     }
 
     public function destroy(Request $request, Article $article): RedirectResponse
@@ -129,7 +150,7 @@ final class ArticleController extends Controller
     /** @return array<string, mixed> */
     private function articleData(ArticleRequest $request): array
     {
-        $data = $request->safe()->except(['tags', 'co_authors', 'featured_image', 'manuscript_pdf', 'supporting_documents', 'change_summary']);
+        $data = $request->safe()->except(['intent', 'manuscript', 'cover_letter', 'supplementary', 'response', 'author_details', 'corresponding_index', 'tags', 'co_authors', 'featured_image', 'manuscript_pdf', 'supporting_documents', 'change_summary']);
         if ($request->hasFile('featured_image')) {
             $data['featured_image_path'] = $request->file('featured_image')->store('articles/images', 'public');
         }
@@ -147,6 +168,17 @@ final class ArticleController extends Controller
 
     private function storeSupportingDocuments(ArticleRequest $request, Article $article): void
     {
+        if ($request->input('intent') !== 'submit') {
+            foreach (['manuscript', 'cover_letter', 'supplementary', 'response'] as $purpose) {
+                if (! $request->hasFile($purpose)) {
+                    continue;
+                }$uploads = $purpose === 'supplementary' ? $request->file($purpose) : [$request->file($purpose)];
+                foreach ($uploads as $file) {
+                    $path = $file->store('workflow/'.$article->id, 'local');
+                    WorkflowFile::create(['article_id' => $article->id, 'uploaded_by_id' => $request->user()->id, 'purpose' => $purpose, 'path' => $path, 'original_name' => $file->getClientOriginalName(), 'mime_type' => $file->getMimeType(), 'checksum' => hash_file('sha256', $file->getRealPath()), 'size' => $file->getSize(), 'round' => 0]);
+                }
+            }
+        }
         foreach ($request->file('supporting_documents', []) as $file) {
             $this->mediaStorage->store($file, $request->user(), $article, 'supporting_documents', 'local', 'private');
         }
@@ -154,6 +186,19 @@ final class ArticleController extends Controller
 
     private function syncAuthors(ArticleRequest $request, Article $article): void
     {
+        if ($request->filled('author_details')) {
+            $details = $request->input('author_details');
+            abort_unless(array_key_exists($request->integer('corresponding_index'), $details), 422);
+            $sync = [];
+            foreach ($details as $index => $detail) {
+                // Manuscript-specific authors never overwrite another user's profile.
+                $author = Author::firstOrCreate($detail, ['is_active' => true, 'is_verified' => false]);
+                $sync[$author->id] = ['is_corresponding' => $index === $request->integer('corresponding_index'), 'sort_order' => $index];
+            }
+            $article->authors()->sync($sync);
+
+            return;
+        }
         $owner = $request->user()->author()->first();
         if (! $owner) {
             return;
