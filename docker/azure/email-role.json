@@ -1,0 +1,15 @@
+{
+  "Name": "Journal Email Sender",
+  "IsCustom": true,
+  "Description": "Authenticate the journal VM to its own Azure Communication Services email endpoint.",
+  "Actions": [
+    "Microsoft.Communication/CommunicationServices/Read",
+    "Microsoft.Communication/CommunicationServices/Write"
+  ],
+  "NotActions": [],
+  "DataActions": [],
+  "NotDataActions": [],
+  "AssignableScopes": [
+    "/subscriptions/bb469c5c-b447-42c5-b128-9174a05eb2ca/resourceGroups/journal-prod-rg"
+  ]
+}

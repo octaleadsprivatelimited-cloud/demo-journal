@@ -1,5 +1,12 @@
 @extends('layouts.public')
-@section('title','Journal archive') @section('description','Browse published journal volumes and issues by year.')
+@section('title','Archives')
 @section('content')
-<main class="section"><div class="container"><x-public.breadcrumbs :items="['Archive'=>null]"/><header class="page-heading"><p class="eyebrow">Publication record</p><h1>Volumes &amp; issues</h1><form method="get"><label for="year">Year</label><select id="year" name="year" onchange="this.form.submit()"><option value="">All years</option>@foreach($years as $item)<option @selected($year===$item)>{{ $item }}</option>@endforeach</select></form></header><div class="article-grid article-grid-three">@forelse($volumes as $volume)<section class="category-card"><h2>Volume {{ $volume->number }}</h2><p>{{ $volume->title ?: $volume->year }}</p><ul>@foreach($volume->issues as $issue)<li style="display:flex;gap:.75rem;margin-bottom:1rem">@if($issue->cover_image_path)<img src="{{ Storage::disk('public')->url($issue->cover_image_path) }}" alt="Cover for Issue {{ $issue->number }}" style="width:54px;height:72px;object-fit:cover">@endif<div><a href="{{ route('archive.issue',$issue) }}">Issue {{ $issue->number }}{{ $issue->title ? ': '.$issue->title : '' }}</a> <small>{{ $issue->articles_count }} articles</small>@if($issue->description)<p><small>{{ Str::limit($issue->description, 130) }}</small></p>@endif</div></li>@endforeach</ul></section>@empty<x-public.empty-state title="Archive awaiting publication data" message="No volume or issue records have been published yet."/>@endforelse</div><x-public.pagination :paginator="$volumes"/></div></main>
+<section class="section"><div class="container"><h1>Archives</h1>
+@forelse($volumes->groupBy('year') as $publicationYear=>$items)
+<section class="archive-year"><h2>{{ $publicationYear }}</h2><div class="archive-issues">@foreach($items as $volume)@foreach($volume->issues as $issue)<a href="{{ route('archive.issue',$issue) }}"><strong>Issue {{ $issue->number }}{{ $issue->title ? ' — '.$issue->title : '' }}</strong>@if($issue->description)<p>{{ $issue->description }}</p>@endif<small>Volume {{ $volume->number }} · {{ $issue->articles_count }} articles</small></a>@endforeach @endforeach</div></section>
+@empty<p>No issues are available.</p>@endforelse
+@foreach($articleYears as $articleYear=>$yearArticles)
+<section class="archive-year"><h2>{{ $articleYear }} articles</h2><div class="archive-issues">@foreach($yearArticles as $article)<a href="{{ route('articles.show',$article->slug) }}">{{ $article->title }}</a>@endforeach</div></section>
+@endforeach
+<x-public.pagination :paginator="$volumes"/></div></section>
 @endsection

@@ -10,6 +10,7 @@ class HomeController extends PublicController
 {
     public function __invoke(): View
     {
+        $editors = \App\Models\EditorialMember::where('is_active', true)->where('group', 'editorial_board')->orderBy('sort_order')->get();
         $heroArticles = $this->publishedArticles()
             ->where(fn ($query) => $query->where('is_featured', true)->orWhere('is_homepage_latest', true))
             ->orderByDesc('is_featured')
@@ -58,6 +59,7 @@ class HomeController extends PublicController
 
         return view('public.home', $this->publicViewData(compact(
             'heroArticles',
+            'editors',
             'latest',
             'trending',
             'authors',

@@ -26,10 +26,10 @@ final class CommentController extends Controller
                 $term = '%'.addcslashes($request->string('q')->toString(), '%_').'%';
 
                 $query->where(function ($nested) use ($term): void {
-                    $nested->where('body', 'like', $term)
-                        ->orWhere('guest_name', 'like', $term)
-                        ->orWhere('guest_email', 'like', $term)
-                        ->orWhereHas('article', fn ($article) => $article->where('title', 'like', $term));
+                    $nested->whereLike('body', $term)
+                        ->orWhereLike('guest_name', $term)
+                        ->orWhereLike('guest_email', $term)
+                        ->orWhereHas('article', fn ($article) => $article->whereLike('title', $term));
                 });
             })
             ->latest()

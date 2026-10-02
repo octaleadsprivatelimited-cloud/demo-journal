@@ -150,7 +150,7 @@ final class ArticleController extends Controller
     /** @return array<string, mixed> */
     private function articleData(ArticleRequest $request): array
     {
-        $data = $request->safe()->except(['intent', 'manuscript', 'cover_letter', 'supplementary', 'response', 'author_details', 'corresponding_index', 'tags', 'co_authors', 'featured_image', 'manuscript_pdf', 'supporting_documents', 'change_summary']);
+        $data = $request->safe()->except(['declarations', 'intent', 'manuscript', 'cover_letter', 'supplementary', 'response', 'author_details', 'corresponding_index', 'tags', 'co_authors', 'featured_image', 'manuscript_pdf', 'supporting_documents', 'change_summary']);
         if ($request->hasFile('featured_image')) {
             $data['featured_image_path'] = $request->file('featured_image')->store('articles/images', 'public');
         }

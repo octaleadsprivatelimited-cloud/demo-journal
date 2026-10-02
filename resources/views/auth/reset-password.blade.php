@@ -9,4 +9,5 @@
     <div class="portal-field"><label for="password_confirmation">Confirm new password</label><input class="portal-input" id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" required></div>
     <button class="portal-button primary" type="submit" data-loading-text="Resetting…">Reset password</button>
 </form>
+<p class="portal-help">Link expired or already used? <a href="{{ route('password.request') }}">Request a new reset link</a>.</p>
 @endsection

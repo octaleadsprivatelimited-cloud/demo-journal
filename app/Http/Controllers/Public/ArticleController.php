@@ -27,7 +27,8 @@ class ArticleController extends PublicController
         $year = $request->integer('year') ?: null;
         $volumes = JournalVolume::query()->with(['issues' => fn ($query) => $query->withCount(['articles' => fn ($q) => $q->published()])])->when($year, fn ($query) => $query->where('year', $year))->orderByDesc('year')->paginate(12)->withQueryString();
         $years = JournalVolume::query()->distinct()->orderByDesc('year')->pluck('year');
-        return view('public.articles.archive', $this->publicViewData(compact('volumes','years','year')));
+        $articleYears = $this->publishedArticles()->get()->groupBy(fn ($article) => $article->published_at->year)->sortKeysDesc();
+        return view('public.articles.archive', $this->publicViewData(compact('volumes','years','year','articleYears')));
     }
 
     public function issue(JournalIssue $issue): View
@@ -110,14 +111,18 @@ class ArticleController extends PublicController
         )));
     }
 
-    public function print(string $slug): View
+    public function print(string $slug): View|RedirectResponse
     {
         $article = $this->findPublishedArticle($slug);
+
+        if (Str::startsWith((string) $article->article_number, 'SJC-LEGACY-') && $article->pdf_path && $article->pdf_download_enabled && $this->featureEnabled('pdf_downloads')) {
+            return redirect()->route('articles.pdf', ['slug'=>$article->slug, 'inline'=>1]);
+        }
 
         return view('public.articles.print', $this->publicViewData(compact('article')));
     }
 
-    public function pdf(string $slug): RedirectResponse|Response
+    public function pdf(Request $request, string $slug): RedirectResponse|Response
     {
         $article = $this->findPublishedArticle($slug);
 
@@ -128,10 +133,11 @@ class ArticleController extends PublicController
         }
 
         if (filled($article->pdf_path) && Storage::disk('local')->exists($article->pdf_path)) {
-            return Storage::disk('local')->download(
+            return Storage::disk('local')->response(
                 $article->pdf_path,
                 Str::slug($article->title).'.pdf',
                 ['Content-Type' => 'application/pdf'],
+                $request->boolean('inline') ? 'inline' : 'attachment',
             );
         }
 

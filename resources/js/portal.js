@@ -48,7 +48,26 @@
         window.addEventListener('beforeunload', (event) => { if (!submitting && (dirty || manualDirty || saving || timer || [...autosave.querySelectorAll('input[type=file]')].some((input) => input.files.length))) { event.preventDefault(); event.returnValue = ''; } });
     }
 
-    document.querySelectorAll('[data-check-all]').forEach((master) => master.addEventListener('change', () => document.querySelectorAll(`[data-check-group="${master.dataset.checkAll}"]`).forEach((box) => box.checked = master.checked)));
+    document.querySelectorAll('[data-check-all]').forEach((master) => {
+        const boxes = [...document.querySelectorAll(`[data-check-group="${master.dataset.checkAll}"]`)].filter((box) => !box.disabled);
+        const counter = document.querySelector(`[data-selection-count="${master.dataset.checkAll}"]`);
+        const form = boxes[0]?.form;
+        const submit = form?.querySelector('[type="submit"]');
+        const action = form?.querySelector('[name="action"]');
+        const sync = () => {
+            const count = boxes.filter((box) => box.checked).length;
+            master.checked = boxes.length > 0 && count === boxes.length;
+            master.indeterminate = count > 0 && count < boxes.length;
+            master.disabled = boxes.length === 0;
+            if (counter) counter.textContent = `${count} selected on this page`;
+            if (submit) submit.disabled = count === 0 || !action?.value;
+        };
+        master.addEventListener('change', () => { boxes.forEach((box) => { box.checked = master.checked; }); sync(); });
+        boxes.forEach((box) => box.addEventListener('change', sync));
+        action?.addEventListener('change', sync);
+        window.addEventListener('pageshow', sync);
+        sync();
+    });
     document.querySelectorAll('[data-add-review-comment]').forEach((button) => button.addEventListener('click', () => {
         const container = document.querySelector(button.dataset.addReviewComment); const template = document.querySelector(button.dataset.template); if (!container || !template) return;
         const index = container.children.length; container.insertAdjacentHTML('beforeend', template.innerHTML.replaceAll('__INDEX__', String(index)));
@@ -75,7 +94,16 @@ document.querySelectorAll('[data-manuscript-wizard]').forEach(form=>{
  function show(n){current=Math.max(0,Math.min(n,steps.length-1));steps.forEach((s,i)=>s.hidden=i!==current);form.querySelectorAll('[data-wizard-goto]').forEach((b,i)=>b.classList.toggle('primary',i===current));form.querySelector('[data-wizard-prev]').hidden=current===0;form.querySelector('[data-wizard-next]').hidden=current===steps.length-1;
  if(current===4){const summary=form.querySelector('[data-submission-summary]');summary.replaceChildren();for(const [name,value] of new FormData(form)){if(name.startsWith('_')||name==='intent'||name==='content'||(!name.startsWith('author_details')&&!['title','abstract','publication_type','keywords','manuscript','cover_letter','supplementary[]','response','references','corresponding_index'].includes(name)))continue;const p=document.createElement('p');p.textContent=name.replace(/author_details\[(\d+)\]/,(_,i)=>'Author '+(Number(i)+1)).replace(/\[|\]/g,' ').replaceAll('_',' ') + ': ' +(value instanceof File?value.name||'No new file':value);summary.appendChild(p);}}
  }
- form.querySelectorAll('[data-wizard-goto]').forEach(b=>b.addEventListener('click',()=>show(Number(b.dataset.wizardGoto))));form.querySelector('[data-wizard-prev]').addEventListener('click',()=>show(current-1));form.querySelector('[data-wizard-next]').addEventListener('click',()=>show(current+1));
+ function advance(target) {
+  if (target > current) {
+   for (let i=0;i<target;i++) {
+    const invalid=[...steps[i].querySelectorAll('input,select,textarea')].find(input=>!input.checkValidity());
+    if(invalid){show(i);invalid.focus();invalid.reportValidity();return;}
+   }
+  }
+  show(target);
+ }
+ form.querySelectorAll('[data-wizard-goto]').forEach(b=>b.addEventListener('click',()=>advance(Number(b.dataset.wizardGoto))));form.querySelector('[data-wizard-prev]').addEventListener('click',()=>show(current-1));form.querySelector('[data-wizard-next]').addEventListener('click',()=>advance(current+1));
  form.addEventListener('invalid',e=>{const step=e.target.closest('[data-wizard-step]');if(step)show(steps.indexOf(step));},true);
  form.addEventListener('click',event=>{if(!event.target.closest('[data-remove-author]'))return;const list=form.querySelector('[data-author-list]');if(list.children.length===1)return;event.target.closest('[data-author-row]').remove();[...list.children].forEach((row,i)=>{row.querySelector('legend').textContent='Author '+(i+1);row.querySelectorAll('input').forEach(input=>{if(input.type==='radio')input.value=i;else input.name=input.name.replace(/\[\d+\]/,'['+i+']');});});if(!list.querySelector('input[type=radio]:checked'))list.querySelector('input[type=radio]').checked=true;});
  form.querySelector('[data-add-author]').addEventListener('click',()=>{const list=form.querySelector('[data-author-list]');const i=list.children.length;if(i>=20)return;const row=list.firstElementChild.cloneNode(true);row.querySelector('legend').textContent='Author '+(i+1);row.querySelectorAll('input').forEach(input=>{if(input.type==='radio'){input.value=i;input.checked=false;}else{input.name=input.name.replace(/\[\d+\]/,'['+i+']');input.value='';}});list.appendChild(row);});show(0);
@@ -83,9 +111,29 @@ document.querySelectorAll('[data-manuscript-wizard]').forEach(form=>{
 
 // Explain the same image policy wherever images can be selected.
 document.querySelectorAll('input[type="file"]').forEach(input => {
- if (!/image|\.jpg|\.png|\.svg/i.test(input.accept)) return;
+ if (input.hasAttribute('data-profile-image-input') || !/image|\.jpg|\.png|\.svg/i.test(input.accept)) return;
  const help=document.createElement('small');
  help.className='portal-help';
- help.textContent='Images are optimized losslessly and must fit within 1 MB. Dimensions, transparency and quality are preserved. Plain, self-contained SVG is supported. PDFs and Word documents keep their existing limits.';
+ help.textContent='Images are optimized losslessly and must fit within 5 MB. Dimensions, transparency and quality are preserved. Plain, self-contained SVG is supported. PDFs and Word documents keep their existing limits.';
  input.insertAdjacentElement('afterend',help);
+});
+
+// Preview a selected photo before saving.
+document.querySelectorAll('[data-profile-image]').forEach(root => {
+    const input = root.querySelector('[data-profile-image-input]');
+    const preview = root.querySelector('[data-profile-image-preview]');
+    const original = preview.getAttribute('src');
+    let reader;
+    input.addEventListener('change', () => {
+        reader?.abort();
+        const file = input.files[0];
+        if (file && ['image/jpeg', 'image/png', 'image/webp'].includes(file.type) && file.size <= 5 * 1024 * 1024) {
+            reader = new FileReader();
+            reader.addEventListener('load', () => { preview.src = reader.result; preview.hidden = false; });
+            reader.readAsDataURL(file);
+        } else {
+            if (original) preview.src = original; else preview.removeAttribute('src');
+            preview.hidden = !original;
+        }
+    });
 });

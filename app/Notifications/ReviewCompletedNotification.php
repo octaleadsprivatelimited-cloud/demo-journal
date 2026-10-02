@@ -30,7 +30,7 @@ class ReviewCompletedNotification extends Notification implements ShouldQueue
         $article = $this->review->article()->firstOrFail();
 
         if ($this->forAuthor) {
-            return (new MailMessage)
+            return (new MailMessage)->markdown('notifications::email', ['templateType' => 'review-completed'])
                 ->subject('Review update: '.$article->title)
                 ->greeting('Hello '.$notifiable->name.',')
                 ->line('A reviewer report has been received for your manuscript.')
@@ -38,7 +38,7 @@ class ReviewCompletedNotification extends Notification implements ShouldQueue
                 ->action('View manuscript', route('author.articles.show', $article));
         }
 
-        return (new MailMessage)
+        return (new MailMessage)->markdown('notifications::email', ['templateType' => 'review-completed'])
             ->subject('Review completed: '.$article->title)
             ->greeting('Hello '.$notifiable->name.',')
             ->line('A reviewer has completed their report for this manuscript.')

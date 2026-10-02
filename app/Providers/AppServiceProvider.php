@@ -57,6 +57,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \Illuminate\Support\Facades\Mail::extend('azure', fn (array $config) => new \App\Mail\AzureEmailTransport($config['endpoint'] ?? ''));
+
         Model::preventLazyLoading(! app()->isProduction());
 
         if (config('security.force_https')) {

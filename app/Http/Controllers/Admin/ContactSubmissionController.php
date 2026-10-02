@@ -27,7 +27,7 @@ final class ContactSubmissionController extends Controller
         return view('admin.contacts.index', ['contacts' => ContactSubmission::query()->with('assignee:id,name')->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))
             ->when($request->filled('q'), function ($q) use ($request): void {
                 $term = '%'.addcslashes($request->input('q'), '%_').'%';
-                $q->where(fn ($sub) => $sub->where('name', 'like', $term)->orWhere('email', 'like', $term)->orWhere('subject', 'like', $term));
+                $q->where(fn ($sub) => $sub->whereLike('name', $term)->orWhereLike('email', $term)->orWhereLike('subject', $term));
             })
             ->latest()->paginate(25)->withQueryString(), 'statuses' => ContactStatus::cases()]);
     }

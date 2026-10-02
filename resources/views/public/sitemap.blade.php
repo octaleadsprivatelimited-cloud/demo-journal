@@ -8,6 +8,12 @@
     <url><loc>{{ $sitemapBaseUrl }}/about</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
     <url><loc>{{ $sitemapBaseUrl }}/editorial-board</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
     <url><loc>{{ $sitemapBaseUrl }}/contact</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+    <url><loc>{{ $sitemapBaseUrl }}/policies</loc><changefreq>monthly</changefreq></url>
+    <url><loc>{{ $sitemapBaseUrl }}/archive</loc><changefreq>weekly</changefreq></url>
+    <url><loc>{{ $sitemapBaseUrl }}/corrections-retractions</loc><changefreq>weekly</changefreq></url>
+    @foreach(\App\Services\JournalPages::all() as $slug=>$page)
+        @if(!$page['route'] && \App\Services\JournalPages::state($slug)['published'])<url><loc>{{ $sitemapBaseUrl }}/policies/{{ $slug }}</loc><changefreq>monthly</changefreq></url>@endif
+    @endforeach
     @foreach($articles as $article)
         <url><loc>{{ $sitemapBaseUrl }}/article/{{ $article->slug }}</loc><lastmod>{{ optional($article->updated_at ?? $article->published_at)->toAtomString() }}</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
     @endforeach

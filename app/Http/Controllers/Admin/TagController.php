@@ -22,7 +22,7 @@ final class TagController extends Controller
         Gate::authorize('viewAny', Tag::class);
 
         return view('admin.tags.index', [
-            'tags' => Tag::query()->withCount('articles')->when($request->filled('q'), fn ($q) => $q->where('name', 'like', '%'.addcslashes($request->input('q'), '%_').'%'))->orderBy('name')->paginate(30)->withQueryString(),
+            'tags' => Tag::query()->withCount('articles')->when($request->filled('q'), fn ($q) => $q->whereLike('name', '%'.addcslashes($request->input('q'), '%_').'%'))->orderBy('name')->paginate(30)->withQueryString(),
             'allTags' => Tag::query()->orderBy('name')->get(['id', 'name']),
         ]);
     }

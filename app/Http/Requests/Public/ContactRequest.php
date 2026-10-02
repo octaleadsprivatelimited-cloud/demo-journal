@@ -20,7 +20,7 @@ class ContactRequest extends FormRequest
             'email' => ['required', 'email:rfc', 'max:254'],
             'phone' => ['nullable', 'string', 'max:40'],
             'subject' => ['required', 'string', 'min:3', 'max:180'],
-            'category' => ['nullable', Rule::in(['editorial', 'submissions', 'permissions', 'partnerships', 'technical', 'general'])],
+            'category' => ['nullable', Rule::in(['editorial', 'submissions', 'permissions', 'partnerships', 'technical', 'general', 'complaints', 'ethics', 'fees', 'privacy'])],
             'message' => ['required', 'string', 'min:20', 'max:10000'],
             'company_website' => ['nullable', 'string', 'max:0'],
         ];

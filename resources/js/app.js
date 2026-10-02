@@ -235,3 +235,20 @@ ready(() => {
         if (image.complete && image.naturalWidth === 0) fallback(image);
     });
 });
+
+// Let the empty space in the featured article open the same article.
+document.querySelectorAll('[data-clickable-article]').forEach(card => {
+    card.addEventListener('click', event => {
+        if (event.target.closest('a, button, input, select, textarea') || window.getSelection()?.toString()) return;
+        const link = card.querySelector('h1 a, h2 a, h3 a, .lead-story-image');
+        if (link) link.click();
+    });
+});
+
+if (document.querySelector('[data-pdf-reader]')) {
+    import('./article-reader').then(({mountReader}) => {
+        document.querySelectorAll('[data-pdf-reader]').forEach(mountReader);
+    }).catch(() => {
+        document.querySelectorAll('[data-pdf-status]').forEach(el => { el.textContent = 'Use the PDF download below to read the full article.'; });
+    });
+}

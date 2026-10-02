@@ -108,11 +108,17 @@ class ArticleWorkflowService
                 throw new DomainException('A reviewer can only be assigned to a submitted article.');
             }
 
-            if (! $reviewer->hasAnyRole('reviewer', 'editor', 'admin', 'super-admin')) {
+            if (! $reviewer->isActive() || ! data_get($reviewer->reviewer_profile, 'available', true) || ! $reviewer->hasAnyRole('reviewer', 'editor', 'admin', 'super-admin')) {
                 throw new DomainException('The selected user is not eligible to review articles.');
             }
 
+            if ($article->isOwnedBy($reviewer)) {
+                throw new DomainException('An author cannot review their own manuscript.');
+            }
             $submission = $article->submissions()->latest('round')->first();
+            if ($article->reviews()->where('submission_id', $submission?->id)->where('reviewer_id', $reviewer->id)->whereIn('status', ['assigned', 'in_progress', 'completed'])->exists()) {
+                throw new DomainException('This reviewer already has an assignment in this round.');
+            }
             $review = $article->reviews()->create([
                 'submission_id' => $submission?->getKey(),
                 'reviewer_id' => $reviewer->getKey(),

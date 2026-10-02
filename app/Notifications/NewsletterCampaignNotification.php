@@ -27,7 +27,7 @@ final class NewsletterCampaignNotification extends Notification implements Shoul
 
     public function toMail(object $notifiable): MailMessage
     {
-        $mail = (new MailMessage)->subject($this->campaign->subject)->greeting($this->campaign->subject);
+        $mail = (new MailMessage)->markdown('notifications::email', ['templateType' => 'newsletter'])->subject($this->campaign->subject)->greeting($this->campaign->subject);
         if ($this->campaign->preview_text) {
             $mail->line($this->campaign->preview_text);
         }

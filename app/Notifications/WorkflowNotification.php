@@ -29,6 +29,6 @@ class WorkflowNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)->subject(config('workflow.journal').' — '.$this->message)->line(app(WorkflowSettings::class)->values()['notification_intro'])->line($this->message)->line('Sign in to view the manuscript details.')->action('Open manuscripts', route('workflow.index'));
+        return (new MailMessage)->markdown('notifications::email', ['templateType' => \App\Services\EmailPresentation::type($this->message)])->subject(config('workflow.journal').' — '.$this->message)->line(app(WorkflowSettings::class)->values()['notification_intro'])->line($this->message)->line('Sign in to view the manuscript details.')->action('Open manuscripts', route('workflow.index'));
     }
 }

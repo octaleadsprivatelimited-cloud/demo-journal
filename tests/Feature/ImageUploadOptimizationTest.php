@@ -71,7 +71,7 @@ class ImageUploadOptimizationTest extends TestCase
         imagedestroy($after);
     }
 
-    public function test_oversize_lossless_image_is_rejected_instead_of_degraded(): void
+    public function test_image_above_one_mb_is_accepted_without_degrading_pixels(): void
     {
         $image = imagecreatetruecolor(700, 700);
         for ($y = 0; $y < 700; $y++) {
@@ -83,8 +83,10 @@ class ImageUploadOptimizationTest extends TestCase
         imagepng($image, null, 0);
         $bytes = ob_get_clean();
         imagedestroy($image);
-        $this->expectException(ValidationException::class);
-        app(ImageUploadOptimizer::class)->optimize($this->upload($bytes, 'noise.png', 'image/png'), 'figure');
+        $file = $this->upload($bytes, 'noise.png', 'image/png');
+        app(ImageUploadOptimizer::class)->optimize($file, 'figure');
+        $this->assertLessThanOrEqual(5 * 1024 * 1024, filesize($file->getPathname()));
+        $this->assertGreaterThan(1000000, filesize($file->getPathname()));
     }
 
     public function test_plain_svg_and_pdf_keep_their_data(): void
@@ -96,6 +98,16 @@ class ImageUploadOptimizationTest extends TestCase
         }
     }
 
+    public function test_exact_five_mb_svg_is_allowed(): void
+    {
+        $prefix = '<svg xmlns="http://www.w3.org/2000/svg"><desc>';
+        $suffix = '</desc></svg>';
+        $bytes = $prefix.str_repeat('x', 5 * 1024 * 1024 - strlen($prefix) - strlen($suffix)).$suffix;
+        $file = $this->upload($bytes, 'boundary.svg', 'image/svg+xml');
+        app(ImageUploadOptimizer::class)->optimize($file, 'figure');
+        $this->assertSame(5 * 1024 * 1024, filesize($file->getPathname()));
+    }
+
     public function test_active_svg_is_rejected_before_storage(): void
     {
         $file = $this->upload('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>', 'bad.svg', 'image/svg+xml');
@@ -103,10 +115,28 @@ class ImageUploadOptimizationTest extends TestCase
         app(ImageUploadOptimizer::class)->optimize($file, 'file');
     }
 
+    public function test_shared_hosting_without_compression_binaries_preserves_valid_images(): void
+    {
+        $path = getenv('PATH');
+        putenv('PATH=/missing-journal-optimizers');
+        try {
+            $file = UploadedFile::fake()->image('portrait.png', 96, 96);
+            $original = file_get_contents($file->getPathname());
+            app(ImageUploadOptimizer::class)->optimize($file, 'avatar');
+            $this->assertSame($original, file_get_contents($file->getPathname()));
+            // A missing binary must never bypass the normal upload validation.
+            $this->expectException(ValidationException::class);
+            $large = $this->upload('<svg xmlns="http://www.w3.org/2000/svg"><desc>'.str_repeat('x', 5 * 1024 * 1024).'</desc></svg>', 'large.svg', 'image/svg+xml');
+            app(ImageUploadOptimizer::class)->optimize($large, 'avatar');
+        } finally {
+            $path === false ? putenv('PATH') : putenv('PATH='.$path);
+        }
+    }
+
     public function test_web_upload_middleware_enforces_the_limit_on_nested_files(): void
     {
         Route::middleware(['web', OptimizeImageUploads::class])->post('/image-upload-test', fn () => response()->json(['ok' => true]));
-        $svg = '<svg xmlns="http://www.w3.org/2000/svg"><desc>'.str_repeat('x', 1000000).'</desc></svg>';
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg"><desc>'.str_repeat('x', 5 * 1024 * 1024).'</desc></svg>';
         $this->postJson('/image-upload-test', ['supplementary' => [$this->upload($svg, 'large.svg', 'image/svg+xml')]])->assertUnprocessable()->assertJsonValidationErrors('supplementary.0');
     }
 }

@@ -10,9 +10,10 @@
                 <span>Current edition</span>
                 <strong>{{ now()->format('F Y') }}</strong>
                 <span class="issue-rule"></span>
-                <a href="{{ route('articles.index') }}">Browse the archive <x-public.icon name="arrow-right" /></a>
+                <a href="{{ route('archive.index') }}">Browse the archive <x-public.icon name="arrow-right" /></a>
             </div>
 
+            <div class="home-hero-layout">
             @if($heroArticles->isNotEmpty())
                 <div class="hero-slider" data-hero-slider role="region" aria-roledescription="carousel" aria-label="Featured and latest articles">
                 @foreach($heroArticles as $featured)
@@ -22,7 +23,7 @@
                         : asset('assets/editorial-placeholder.svg');
                     $featuredDate = $featured->published_at ?? $featured->created_at;
                 @endphp
-                <article class="lead-story" data-hero-slide role="group" aria-roledescription="slide" aria-label="{{ $loop->iteration }} of {{ $loop->count }}" @if(!$loop->first) hidden @endif>
+                <article class="lead-story" data-clickable-article data-hero-slide role="group" aria-roledescription="slide" aria-label="{{ $loop->iteration }} of {{ $loop->count }}" @if(!$loop->first) hidden @endif>
                     <div class="lead-story-copy">
                         <p class="eyebrow">{{ $featured->is_featured ? 'Featured article' : 'Latest article' }}</p>
                         @if($featured->category)<a class="category-link" href="{{ route('categories.show', $featured->category->slug) }}">{{ $featured->category->name }}</a>@endif
@@ -59,9 +60,17 @@
                     <div><a class="button button-primary" href="{{ route('articles.index') }}">Explore the journal</a><a class="button button-ghost" href="{{ route('about') }}">Our editorial mission</a></div>
                 </div>
             @endif
+    @if($editors->isNotEmpty())
+    <aside class="home-editors" aria-label="Editorial team">
+        @foreach($editors->groupBy(fn($member) => str_contains(strtolower($member->role), 'chief') ? 'Editors-in-Chief' : 'Editors') as $heading => $members)
+        <div><h2>{{ $heading }}</h2>@foreach($members as $member)
+        <article class="home-editor"><div class="home-editor-photo">@if($member->photo_path)<img src="{{ Str::startsWith($member->photo_path,['http://','https://']) ? $member->photo_path : Storage::disk('public')->url($member->photo_path) }}" alt="{{ $member->name }}" loading="lazy">@else<span>{{ mb_substr($member->name,0,1) }}</span>@endif</div><div><h3><a href="{{ route('editorial-board') }}">{{ $member->name }}</a></h3><p>{{ $member->credentials }}</p><p>{{ $member->institution }}</p><p>{{ $member->country }}</p></div></article>
+        @endforeach</div>@endforeach
+    </aside>
+    @endif
+            </div>
         </div>
     </section>
-
     @if($latest->isNotEmpty())
         <section class="section section-latest">
             <div class="container">
@@ -105,7 +114,7 @@
                 </div>
                 <ol class="trending-list">
                     @foreach($trending as $article)
-                        <li>
+                        <li data-clickable-article>
                             <span class="trend-number">{{ str_pad((string) $loop->iteration, 2, '0', STR_PAD_LEFT) }}</span>
                             <div>
                                 <span class="article-kicker">{{ $article->category?->name ?? 'Journal' }}</span>

@@ -65,7 +65,7 @@ RUN apk add --no-cache \
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/99-journal.ini
 COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/10-opcache.ini
 COPY docker/entrypoint.sh /usr/local/bin/journal-entrypoint
-RUN chmod +x /usr/local/bin/journal-entrypoint
+RUN chmod 755 /usr/local/bin/journal-entrypoint
 
 ENTRYPOINT ["journal-entrypoint"]
 CMD ["php-fpm", "-F"]
@@ -98,3 +98,14 @@ FROM nginx:1.29-alpine AS web
 COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY public /var/www/html/public
 COPY --from=frontend /app/public/build /var/www/html/public/build
+
+# One web replica for Azure Container Apps, with no paid registry duplication.
+FROM production AS azure
+USER root
+RUN apk add --no-cache nginx supervisor
+COPY docker/azure/nginx.conf /etc/nginx/azure.conf
+COPY docker/azure/supervisord.conf /etc/supervisord.conf
+RUN chmod 755 /usr/local/bin/journal-entrypoint && chmod 644 /usr/local/etc/php/conf.d/*.ini /etc/nginx/azure.conf /etc/supervisord.conf
+USER www-data
+EXPOSE 8080
+CMD ["supervisord", "-c", "/etc/supervisord.conf"]

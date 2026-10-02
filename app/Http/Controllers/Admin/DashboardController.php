@@ -40,6 +40,10 @@ final class DashboardController extends Controller
             'stats' => [
                 'articles' => Article::withTrashed()->count(), 'published' => Article::status(ArticleStatus::Published)->count(),
                 'pending' => Submission::pending()->count(), 'drafts' => Article::status(ArticleStatus::Draft)->count(),
+                'submitted' => Article::status(ArticleStatus::Submitted)->count(),
+                'underReview' => Article::status(ArticleStatus::UnderReview)->count(),
+                'approved' => Article::status(ArticleStatus::Approved)->count(),
+                'production' => Article::status(ArticleStatus::Production)->count(),
                 'authors' => Author::count(), 'users' => User::count(), 'categories' => Category::count(), 'tags' => Tag::count(),
                 'contacts' => ContactSubmission::status(ContactStatus::New)->count(), 'subscribers' => NewsletterSubscriber::active()->count(),
                 'views' => ArticleView::count(),

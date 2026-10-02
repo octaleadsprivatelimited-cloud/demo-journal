@@ -4,11 +4,12 @@ namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process;
 
 class ImageUploadOptimizer
 {
-    public const MAX_BYTES = 1000000;
+    public const MAX_BYTES = 5 * 1024 * 1024;
 
     public const MAX_INPUT_BYTES = 5 * 1024 * 1024;
 
@@ -28,7 +29,7 @@ class ImageUploadOptimizer
         }
         if ($svg) {
             if (filesize($file->getPathname()) > self::MAX_BYTES) {
-                $fail('[svg_too_large] SVG files must be no larger than 1 MB. Vector data is preserved without rasterization.');
+                $fail('[svg_too_large] SVG files must be no larger than 5 MB. Vector data is preserved without rasterization.');
             }
             $this->validateSvg($file->getPathname(), $fail);
         } elseif (! in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true)) {
@@ -43,7 +44,11 @@ class ImageUploadOptimizer
                 'image/png' => ['optipng', '-o2', '-quiet', '-preserve', $file->getPathname()],
                 default => null,
             };
-            if ($command) {
+            // Shared hosting may omit optional lossless compression utilities.
+            // Validated originals within the size limit remain safe to store.
+            $executable = $command ? (new ExecutableFinder)->find($command[0]) : null;
+            if ($executable && function_exists('proc_open')) {
+                $command[0] = $executable;
                 $process = new Process($command);
                 $remaining = $deadline === null ? 15 : min(15, $deadline - microtime(true));
                 if ($remaining <= 0) {
@@ -59,7 +64,7 @@ class ImageUploadOptimizer
         }
         clearstatcache(true, $file->getPathname());
         if (filesize($file->getPathname()) > self::MAX_BYTES) {
-            $fail('[image_output_too_large] This image cannot fit within 1 MB using lossless compression. Upload a smaller original; pixels, resolution and quality are never reduced automatically.');
+            $fail('[image_output_too_large] This image cannot fit within 5 MB using lossless compression. Upload a smaller original; pixels, resolution and quality are never reduced automatically.');
         }
     }
 

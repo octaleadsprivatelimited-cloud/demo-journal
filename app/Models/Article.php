@@ -179,6 +179,7 @@ class Article extends Model
                     "to_tsvector('simple', coalesce(title, '') || ' ' || coalesce(subtitle, '') || ' ' || coalesce(abstract, '') || ' ' || coalesce(content, '') || ' ' || coalesce(doi, '') || ' ' || coalesce(public_id::text, '') || ' ' || coalesce(article_number, '')) @@ websearch_to_tsquery('simple', ?)",
                     [$plainTerm],
                 )
+                    ->orWhereLike('title', '%'.addcslashes($plainTerm, '%_').'%')
                     ->orWhereHas('authors', fn (Builder $authors) => $authors->where('name', 'ilike', '%'.$plainTerm.'%'))
                     ->orWhereHas('tags', fn (Builder $tags) => $tags->where('name', 'ilike', '%'.$plainTerm.'%'))
                     ->orWhereHas('category', fn (Builder $category) => $category->where('name', 'ilike', '%'.$plainTerm.'%'));

@@ -26,7 +26,7 @@ final class ContactReplyNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $mail = (new MailMessage)->subject($this->subject)->greeting('Hello,')->line('The editorial team has replied to your enquiry:');
+        $mail = (new MailMessage)->markdown('notifications::email', ['templateType' => 'contact'])->subject($this->subject)->greeting('Hello,')->line('The editorial team has replied to your enquiry:');
         foreach (preg_split('/\r\n|\r|\n/', $this->body) ?: [] as $line) {
             if (filled($line)) {
                 $mail->line($line);

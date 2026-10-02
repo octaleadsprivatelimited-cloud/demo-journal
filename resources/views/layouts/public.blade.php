@@ -49,6 +49,7 @@
             html{font-family:Arial,sans-serif;color:#18211f;background:#f8f6f0}body{margin:0}a{color:inherit}.site-shell{min-height:100vh}.container{width:min(1180px,calc(100% - 2rem));margin-inline:auto}.fallback-note{padding:1rem;text-align:center}
         </style>
     @endif
+    <style>{!! file_get_contents(resource_path('css/journal-pages.css')) !!}</style>
     <script type="application/ld+json">{!! json_encode($structuredData ?? $defaultSchema, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}</script>
     @stack('head')
 </head>
@@ -120,8 +121,10 @@
                 <a href="{{ route('home') }}" @class(['is-active' => request()->routeIs('home')])>Home</a>
                 <a href="{{ route('journals.index') }}" @class(['is-active' => request()->routeIs('journals.*')])>Journal</a>
                 <a href="{{ route('articles.index') }}" @class(['is-active' => request()->routeIs('articles.*')])>Latest</a>
+                <a href="{{ route('archive.index') }}" @class(['is-active' => request()->routeIs('archive.*')])>Archive</a>
                 <a href="{{ route('categories.index') }}" @class(['is-active' => request()->routeIs('categories.*')])>Disciplines</a>
                 <a href="{{ route('authors.index') }}" @class(['is-active' => request()->routeIs('authors.*')])>Contributors</a>
+                <details class="nav-dropdown" @if(request()->routeIs('resources')) open @endif><summary @class(['is-active' => request()->routeIs('resources')])>Resources</summary><div class="nav-dropdown-menu"><a href="/author-resources/guidelines.pdf" download>Guidelines</a><a href="/author-resources/copyright-form.pdf" download>Copyright form</a><a href="/author-resources/cover-letter.pdf" download>Cover letter</a><a href="{{ route('resources') }}">All resources</a></div></details>
                 @if (data_get($site, 'features.pdf_downloads', true))<a href="{{ route('downloads') }}" @class(['is-active' => request()->routeIs('downloads')])>Downloads</a>@endif
                 <a href="{{ route('about') }}" @class(['is-active' => request()->routeIs('about')])>About</a>
                 <a href="{{ route('contact') }}" @class(['is-active' => request()->routeIs('contact*')])>Contact</a>
@@ -133,8 +136,10 @@
         <nav class="mobile-nav" id="mobile-navigation" aria-label="Mobile navigation" hidden data-mobile-menu>
             <a href="{{ route('journals.index') }}">Journal</a>
             <a href="{{ route('articles.index') }}">Latest publications</a>
+            <a href="{{ route('archive.index') }}">Archive</a>
             <a href="{{ route('categories.index') }}">Disciplines</a>
             <a href="{{ route('authors.index') }}">Contributors</a>
+            <a href="{{ route('resources') }}">Resources</a>
             @if (data_get($site, 'features.pdf_downloads', true))<a href="{{ route('downloads') }}">Downloads</a>@endif
             <a href="{{ route('about') }}">About the journal</a>
             <a href="{{ route('editorial-board') }}">Editorial board</a>
@@ -156,6 +161,8 @@
     <main id="main-content" tabindex="-1">
         @yield('content')
     </main>
+
+    @include('public.pages.footer-guidance')
 
     <footer class="site-footer">
         @if(data_get($site, 'features.newsletter', true))

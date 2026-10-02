@@ -3,6 +3,13 @@
 declare(strict_types=1);
 
 return [
+    'local_editor_bypass' => ['enabled' => env('LOCAL_EDITOR_BYPASS_ENABLED', false)],
+    'local_reviewer_bypass' => ['enabled' => env('LOCAL_REVIEWER_BYPASS_ENABLED', false)],
+    'local_author_bypass' => [
+        'enabled' => env('LOCAL_AUTHOR_BYPASS_ENABLED', false),
+        'name' => 'Local Author',
+        'email' => 'local-author@localhost.test',
+    ],
     'force_https' => env('APP_FORCE_HTTPS', false),
     'trusted_proxies' => env('TRUSTED_PROXIES'),
     'local_admin_bypass' => [
@@ -17,6 +24,6 @@ return [
     ],
     'content_security_policy' => env(
         'CONTENT_SECURITY_POLICY',
-        "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self' data:; frame-src https://www.youtube-nocookie.com https://player.vimeo.com; object-src 'none'; base-uri 'self'; form-action 'self'"
+        "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self' data:; frame-src 'self' https://www.youtube-nocookie.com https://player.vimeo.com; object-src 'none'; base-uri 'self'; form-action 'self'"
     ),
 ];

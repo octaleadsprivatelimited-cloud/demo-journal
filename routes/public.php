@@ -45,11 +45,15 @@ Route::get('/category/{slug}', [CategoryController::class, 'show'])
 
 Route::get('/search', SearchController::class)->middleware('throttle:search')->name('search');
 Route::get('/about', [PageController::class, 'about'])->name('about');
+Route::get('/policies', [PageController::class, 'directory'])->name('policies.index');
+Route::get('/corrections-retractions', [PageController::class, 'corrections'])->name('corrections.index');
+Route::get('/current-issue', [PageController::class, 'currentIssue'])->name('current-issue');
 Route::get('/policies/{page}', [PageController::class, 'policy'])
-    ->whereIn('page', ['aims-scope', 'peer-review', 'publication-ethics', 'author-guidelines', 'copyright', 'open-access', 'fees', 'indexing', 'archiving', 'privacy', 'terms'])
+    ->where('page', '[a-z0-9-]+')
     ->name('policies.show');
 Route::get('/editorial-board', [PageController::class, 'editorialBoard'])->name('editorial-board');
 Route::get('/downloads', [PageController::class, 'downloads'])->name('downloads');
+Route::get('/resources', [PageController::class, 'resources'])->name('resources');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])
     ->middleware('throttle:contact')

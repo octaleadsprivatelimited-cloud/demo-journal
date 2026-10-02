@@ -19,6 +19,10 @@
 
     <div class="portal-form">
         @foreach ($definitions as $group => $fields)
+            @if($group === 'policies')
+                <section class="portal-card"><div class="portal-card-body"><h2>Pages & policies</h2><p>Draft, review and publish journal policies in the page manager.</p><a class="portal-button" href="{{ route('admin.pages.index') }}">Manage website pages</a></div></section>
+                @continue
+            @endif
             <section class="portal-card">
                 <div class="portal-card-head">
                     <div>

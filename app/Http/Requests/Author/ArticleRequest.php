@@ -32,6 +32,8 @@ final class ArticleRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'declarations' => ['nullable', 'array'],
+            ...($this->input('intent') === 'submit' ? array_fill_keys(array_map(fn ($key) => 'declarations.'.$key, ['original','exclusive','authors_approve','ethics','conflicts']), ['accepted']) : []),
             'author_details' => ['nullable', 'array', 'max:20'],
             'author_details.*.name' => ['required', 'string', 'max:200'],
             'author_details.*.email' => ['required', 'email', 'max:255'],

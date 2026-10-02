@@ -116,6 +116,7 @@ final class ReviewController extends Controller
     public function download(Review $review): StreamedResponse
     {
         Gate::authorize('view', $review);
+        abort_unless(in_array($review->status, [ReviewStatus::InProgress, ReviewStatus::Completed], true), 403);
         $article = $review->article;
         if ($article->workflow) {
             abort_unless($review->status === ReviewStatus::InProgress || $review->status === ReviewStatus::Completed, 403);

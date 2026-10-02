@@ -123,3 +123,17 @@ Private keys belong only in the runtime secret store. Variables prefixed with `V
 ## License
 
 This project is proprietary unless the repository owner supplies a different license.
+
+## Five curated demo journal articles
+
+To add five realistic technology, farming, soil, energy, and food-system demo articles locally:
+
+```bash
+docker compose exec -e SEED_DEMO_CONTENT=true app php artisan db:seed --class=DemoJournalSeeder
+```
+
+These are ordinary published records managed through **Admin → Articles**, including editing and deletion. Each is clearly identified as illustrative content. Re-running this seeder preserves existing edits and soft deletions using stable demo article numbers; it does not recreate deleted articles. It does not run automatically on website startup.
+
+For local author-portal development, set `LOCAL_AUTHOR_BYPASS_ENABLED=true` and open `/author/dashboard`. This uses the same loopback binding and allowed connection addresses as the admin bypass, with a separate request-scoped author identity and author permissions only. Both bypasses default to disabled and require `APP_ENV=local`. The existing `is_local_admin_bypass` database marker identifies both temporary local identities; neither remains active or has persisted roles after a request.
+
+The editor and reviewer dashboards support the same local-only workflow with `LOCAL_EDITOR_BYPASS_ENABLED=true` and `LOCAL_REVIEWER_BYPASS_ENABLED=true`. Open `/editor/dashboard` or `/reviewer/dashboard`. Each receives its own role-limited temporary identity; the switches default to false and share the loopback restrictions above.

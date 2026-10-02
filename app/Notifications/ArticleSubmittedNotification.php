@@ -28,7 +28,7 @@ class ArticleSubmittedNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
+        return (new MailMessage)->markdown('notifications::email', ['templateType' => 'submission'])
             ->subject('New article submission: '.$this->article->title)
             ->greeting('Hello '.$notifiable->name.',')
             ->line('A new manuscript has been submitted for editorial review.')

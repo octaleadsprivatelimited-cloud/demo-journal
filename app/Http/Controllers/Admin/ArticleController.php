@@ -32,7 +32,7 @@ final class ArticleController extends Controller
     public function index(Request $request): View
     {
         Gate::authorize('viewAny', Article::class);
-        $articles = Article::query()->when($request->user()->hasRole('editor') && ! $request->user()->hasAnyRole('admin', 'super-admin'), fn ($q) => $q->where('assigned_editor_id', $request->user()->id))->withTrashed()->with(['category:id,name,slug', 'creator:id,name', 'assignedEditor:id,name'])
+        $articles = Article::query()->when($request->user()->hasRole('editor') && ! $request->user()->hasAnyRole('admin', 'super-admin'), fn ($q) => $q->where('assigned_editor_id', $request->user()->id))->with(['category:id,name,slug', 'creator:id,name', 'assignedEditor:id,name'])
             ->when($request->string('trashed')->toString() === 'only', fn ($q) => $q->onlyTrashed())
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')->toString()))
             ->when($request->filled('category'), fn ($q) => $q->where('category_id', $request->integer('category')))

@@ -33,7 +33,10 @@ final class SubmissionController extends Controller
     public function update(SubmissionRequest $request, Submission $submission): RedirectResponse
     {
         Gate::authorize('update', $submission);
-        abort_if($submission->article->workflow, 409, 'Use the manuscript workflow to record decisions.');
+        if ($submission->article->workflow) {
+            return redirect()->route('workflow.show', $submission->article)
+                ->with('success', 'This submission uses the manuscript workflow. No status was changed. Choose an available action below to continue.');
+        }
         $status = $request->enum('status', SubmissionStatus::class);
         $submission->update(['status' => $status,
             'decision_at' => in_array($status, [SubmissionStatus::Accepted, SubmissionStatus::Rejected, SubmissionStatus::Withdrawn], true) ? now() : null]);

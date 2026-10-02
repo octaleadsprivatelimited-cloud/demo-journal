@@ -20,8 +20,17 @@ final class LocalhostAdminBypass
     /**
      * @param  Closure(Request): Response  $next
      */
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, string $portal = 'admin'): Response
     {
+        $sharedWorkflow = $portal === 'workflow';
+        if ($sharedWorkflow) {
+            $portal = (string) $request->session()->get('local_portal', '');
+            if (! in_array($portal, ['admin', 'author', 'editor', 'reviewer'], true)) {
+                return $next($request);
+            }
+        }
+        abort_unless(in_array($portal, ['admin', 'author', 'editor', 'reviewer'], true), 404);
+        $config = 'security.local_'.$portal.'_bypass';
         $authenticatedUser = Auth::user();
 
         if ($authenticatedUser instanceof User && $authenticatedUser->is_local_admin_bypass) {
@@ -36,24 +45,26 @@ final class LocalhostAdminBypass
             $authenticatedUser = null;
         }
 
-        if (! $this->shouldBypass($request)) {
+        if (! $this->shouldBypass($request, $portal)) {
             return $next($request);
         }
 
-        if ($authenticatedUser instanceof User && $authenticatedUser->hasAnyRole('editor', 'admin', 'super-admin')) {
+        if ($authenticatedUser instanceof User && $authenticatedUser->hasAnyRole(...(match ($portal) { 'author' => ['author', 'contributor'], 'editor' => ['editor'], 'reviewer' => ['reviewer', 'editor', 'admin', 'super-admin'], default => ['editor', 'admin', 'super-admin'] }))) {
             return $next($request);
         }
+
+        $request->session()->put('local_portal', $portal);
 
         $role = Role::query()->firstOrCreate(
-            ['slug' => 'super-admin'],
+            ['slug' => $portal === 'admin' ? 'super-admin' : $portal],
             [
-                'name' => 'Super Admin',
-                'description' => 'Full access to every publication and system setting.',
+                'name' => $portal === 'admin' ? 'Super Admin' : ucfirst($portal),
+                'description' => 'Local '.$portal.' portal role.',
                 'is_system' => true,
             ],
         );
 
-        $email = (string) config('security.local_admin_bypass.email', 'local-admin@localhost.test');
+        $email = (string) config($config.'.email', 'local-'.$portal.'@localhost.test');
         $user = User::query()->where('email', $email)->first();
 
         if ($user && ! $user->is_local_admin_bypass) {
@@ -65,7 +76,7 @@ final class LocalhostAdminBypass
         if (! $user) {
             $user = new User;
             $user->forceFill([
-                'name' => (string) config('security.local_admin_bypass.name', 'Local Administrator'),
+                'name' => (string) config($config.'.name', 'Local '.ucfirst($portal)),
                 'email' => $email,
                 'password' => Str::password(64),
                 'email_verified_at' => null,
@@ -82,7 +93,7 @@ final class LocalhostAdminBypass
             'status' => 'active',
             'is_active' => true,
         ]);
-        $user->setRelation('roles', collect([$role]));
+        $user->setRelation('roles', new \Illuminate\Database\Eloquent\Collection([$role]));
 
         Auth::setUser($user);
 
@@ -126,13 +137,13 @@ final class LocalhostAdminBypass
         return is_string($host) ? trim($host, '[]') : '';
     }
 
-    private function shouldBypass(Request $request): bool
+    private function shouldBypass(Request $request, string $portal): bool
     {
-        if (! app()->environment('local') || ! config('security.local_admin_bypass.enabled', false)) {
+        if (! app()->environment('local') || ! config('security.local_'.$portal.'_bypass.enabled', false)) {
             return false;
         }
 
-        if (! $request->is('admin', 'admin/*')) {
+        if (! $request->is($portal, $portal.'/*', 'workflow', 'workflow/*')) {
             return false;
         }
 

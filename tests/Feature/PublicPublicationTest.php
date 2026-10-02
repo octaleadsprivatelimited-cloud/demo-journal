@@ -154,4 +154,18 @@ final class PublicPublicationTest extends TestCase
             ->assertHeader('Content-Type', 'text/plain; charset=UTF-8')
             ->assertSee('Sitemap: '.route('sitemap'), false);
     }
+
+    public function test_search_years_include_only_visible_publications_in_descending_order(): void
+    {
+        Article::factory()->published()->create(['title' => 'Coronary Research', 'published_at' => '2025-06-01 12:00:00']);
+        Article::factory()->published()->create(['published_at' => '2025-01-01 12:00:00']);
+        Article::factory()->published()->create(['published_at' => '2024-01-01 12:00:00']);
+        Article::factory()->draft()->create(['published_at' => '2023-01-01 12:00:00']);
+        Article::factory()->published()->create(['published_at' => '2099-01-01 12:00:00']);
+
+        $this->get('/search?q=Coronary')
+            ->assertOk()
+            ->assertSee('Coronary Research')
+            ->assertViewHas('years', fn ($years) => $years->all() === [2025, 2024]);
+    }
 }

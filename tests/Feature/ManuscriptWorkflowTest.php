@@ -59,6 +59,20 @@ class ManuscriptWorkflowTest extends TestCase
         $this->service = app(ManuscriptWorkflowService::class);
     }
 
+    public function test_author_submission_rejects_each_missing_declaration_before_creating_article(): void
+    {
+        foreach (array_keys($this->declarations()) as $key) {
+            $declarations = $this->declarations();
+            unset($declarations[$key]);
+            $count = Article::count();
+            $this->actingAs($this->author)->post('/author/articles', [
+                'intent' => 'submit', 'title' => 'Declaration validation', 'publication_type' => 'research',
+                'declarations' => $declarations,
+            ])->assertSessionHasErrors('declarations.'.$key);
+            $this->assertSame($count, Article::count());
+        }
+    }
+
     private function person(string $role): User
     {
         $u = User::factory()->create(['status' => 'active', 'is_active' => true, 'email_verified_at' => now()]);
@@ -131,7 +145,11 @@ class ManuscriptWorkflowTest extends TestCase
         $doi = ['doi' => '10.1234/sjc.test', 'agency' => 'Manual test', 'evidence_url' => 'https://doi.org/10.1234/sjc.test', 'confirmed' => 1];
         $this->act('register_doi', $doi, $this->admin);
         $this->act('activate_doi', $doi, $this->admin);
+        $this->get(route('articles.show', $this->article))->assertNotFound();
+        $this->get(route('articles.index'))->assertOk()->assertDontSee($this->article->title);
         $this->act('publish', [], $this->admin);
+        $this->get(route('articles.index'))->assertOk()->assertSee($this->article->title);
+        $this->get('/')->assertOk()->assertSee($this->article->title);
         $this->act('indexing', [], $this->admin);
         $index = IndexingService::create(['name' => 'Example index', 'official_url' => 'https://example.org']);
         $this->act('save_indexing', ['service_id' => $index->id, 'indexing_status' => 'indexed', 'indexed_url' => 'https://example.org/article'], $this->admin);

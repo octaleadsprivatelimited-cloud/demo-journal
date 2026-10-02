@@ -25,7 +25,7 @@ final class NewsletterSubscriberController extends Controller
         Gate::authorize('viewAny', NewsletterSubscriber::class);
 
         return view('admin.newsletter.index', ['subscribers' => NewsletterSubscriber::query()
-            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))->when($request->filled('q'), fn ($q) => $q->where('email', 'like', '%'.addcslashes($request->input('q'), '%_').'%'))
+            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))->when($request->filled('q'), fn ($q) => $q->whereLike('email', '%'.addcslashes($request->input('q'), '%_').'%'))
             ->latest('subscribed_at')->paginate(30)->withQueryString(), 'campaigns' => NewsletterCampaign::query()->with('creator:id,name')->latest()->limit(12)->get()]);
     }
 

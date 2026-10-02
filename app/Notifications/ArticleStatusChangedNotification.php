@@ -28,7 +28,7 @@ class ArticleStatusChangedNotification extends Notification implements ShouldQue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $message = (new MailMessage)
+        $message = (new MailMessage)->markdown('notifications::email', ['templateType' => \App\Services\EmailPresentation::type($this->status->label())])
             ->subject("Article {$this->status->label()}: {$this->article->title}")
             ->greeting('Hello '.$notifiable->name.',')
             ->line("Your article status is now {$this->status->label()}.");

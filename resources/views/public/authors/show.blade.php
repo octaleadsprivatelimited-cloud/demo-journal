@@ -16,7 +16,7 @@
 @if($avatar) @section('image', $avatar) @endif
 
 @section('content')
-    <section class="profile-hero">
+    <section class="profile-hero profile-hero-compact">
         <div class="container">
             <x-public.breadcrumbs :items="['Contributors' => route('authors.index'), $author->name => null]" />
             <div class="profile-grid">

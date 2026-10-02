@@ -27,7 +27,7 @@ class ContactSubmissionReceivedNotification extends Notification implements Shou
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
+        return (new MailMessage)->markdown('notifications::email', ['templateType' => 'contact'])
             ->subject('New contact enquiry: '.$this->submission->subject)
             ->greeting('Hello '.$notifiable->name.',')
             ->line($this->submission->name.' submitted a new contact enquiry.')

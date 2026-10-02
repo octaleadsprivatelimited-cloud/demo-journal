@@ -42,7 +42,7 @@
     @if(data_get($site, 'journal.eissn'))<meta name="citation_eissn" content="{{ data_get($site, 'journal.eissn') }}">@endif
     @if($citationVolume)<meta name="citation_volume" content="{{ $citationVolume }}">@endif
     @if($citationIssue)<meta name="citation_issue" content="{{ $citationIssue }}">@endif
-    @if($article->article_number)<meta name="citation_firstpage" content="{{ $article->article_number }}">@endif
+    @if($article->article_number && !Str::startsWith($article->article_number, 'SJC-LEGACY-'))<meta name="citation_firstpage" content="{{ $article->article_number }}">@endif
     @if($article->doi)<meta name="citation_doi" content="{{ $article->doi }}">@endif
     @if($article->abstract)<meta name="citation_abstract_html_url" content="{{ route('articles.show', $article->slug) }}">@endif
     @if($article->pdf_download_enabled)<meta name="citation_pdf_url" content="{{ route('articles.pdf', $article->slug) }}">@endif
@@ -92,11 +92,11 @@
                     </div>
                     <div class="article-header-aside">
                         <dl>
-                            <div><dt>Reading time</dt><dd>{{ $readingTime }} minutes</dd></div>
+                            @unless(Str::startsWith((string) $article->article_number, 'SJC-LEGACY-'))<div><dt>Reading time</dt><dd>{{ $readingTime }} minutes</dd></div>@endunless
                             @if($article->doi)<div><dt>DOI</dt><dd><a href="https://doi.org/{{ $article->doi }}" rel="external noopener">{{ $article->doi }}</a></dd></div>@endif
                             @if($article->volume)<div><dt>Volume</dt><dd>{{ $article->volume }}</dd></div>@endif
                             @if($article->issue)<div><dt>Issue</dt><dd>{{ $article->issue }}</dd></div>@endif
-                            @if($article->article_number)<div><dt>Article</dt><dd>{{ $article->article_number }}</dd></div>@endif
+                            @if($article->article_number && !Str::startsWith($article->article_number, 'SJC-LEGACY-'))<div><dt>Article</dt><dd>{{ $article->article_number }}</dd></div>@endif
                             @if($article->publication_notice && $article->publication_notice !== 'none')<div><dt>Notice</dt><dd>{{ str($article->publication_notice)->headline() }}</dd></div>@endif
                             <div><dt>Article views</dt><dd>{{ number_format($article->view_count) }}</dd></div>
                         </dl>
@@ -105,9 +105,12 @@
             </div>
         </header>
 
+        @if($article->featured_image_path)
         <div class="article-hero-image container container-reading-wide">
             <img src="{{ $imageUrl }}" alt="{{ $article->title }}" width="1440" height="810" fetchpriority="high">
         </div>
+
+        @endif
 
         <div class="container article-reading-grid">
             <aside class="article-tools" aria-label="Article tools">
@@ -136,6 +139,25 @@
                     <a class="button button-outline" href="{{ route('articles.print', $article->slug) }}" target="_blank"><x-public.icon name="print" /> Print</a>
                     @if(data_get($site, 'features.pdf_downloads', true) && $article->pdf_download_enabled && $article->pdf_path)<a class="button button-outline" href="{{ route('articles.pdf', $article->slug) }}"><x-public.icon name="download" /> PDF</a>@endif
                 </div>
+
+                @if(Str::startsWith((string) $article->article_number, 'SJC-LEGACY-') && $article->pdf_path && $article->pdf_download_enabled && data_get($site, 'features.pdf_downloads', true))
+                    <section class="article-fulltext" aria-labelledby="full-article-heading">
+                        <div class="fulltext-heading"><h2 id="full-article-heading">Full article</h2><a class="text-link" href="{{ route('articles.pdf', ['slug'=>$article->slug, 'inline'=>1]) }}" target="_blank" rel="noopener">Open full screen ↗</a></div>
+                        <p>The complete article, including figures, tables and references.</p>
+                        <div class="article-pdf-reader" data-pdf-reader="{{ route('articles.pdf', ['slug'=>$article->slug, 'inline'=>1]) }}">
+                            <div class="pdf-reader-toolbar">
+                                <button type="button" class="button button-outline" data-pdf-previous disabled aria-label="Previous article page">←</button>
+                                <span data-pdf-status role="status" aria-live="polite">Loading article…</span>
+                                <button type="button" class="button button-outline" data-pdf-next disabled aria-label="Next article page">→</button>
+                                <label>Zoom <select data-pdf-zoom aria-label="Article zoom" disabled><option value="1">Fit width</option><option value="1.5">150%</option><option value="2">200%</option></select></label>
+                            </div>
+                            <div class="pdf-canvas-wrap"><canvas role="img" aria-label="Article page"></canvas></div>
+                            <details class="pdf-reader-text"><summary>Text on this page</summary><div data-pdf-text></div></details>
+                            <noscript><p>Enable JavaScript to use the reader, or download the full article below.</p></noscript>
+                        </div>
+                        <a class="button button-outline" href="{{ route('articles.pdf', $article->slug) }}">Download article PDF</a>
+                    </section>
+                @endif
 
                 <div class="article-content" data-article-content>
                     {!! $article->content !!}
@@ -176,13 +198,14 @@
             <section class="article-authors-section">
                 <div class="container container-reading">
                     <p class="eyebrow">About the {{ Str::plural('contributor', $article->authors->count()) }}</p>
-                    @foreach($article->authors as $author)
-                        <div class="article-author-bio">
-                            <x-public.author-card :author="$author" />
-                            @if($author->biography)<p>{{ $author->biography }}</p>@endif
-                            <a class="text-link" href="{{ route('authors.show', $author->slug) }}">More from {{ $author->name }} <x-public.icon name="arrow-right" /></a>
-                        </div>
-                    @endforeach
+                    <div class="article-contributor-list">
+                        @foreach($article->authors as $author)
+                            <a class="article-contributor" href="{{ route('authors.show', $author->slug) }}">
+                                <strong>{{ $author->name }}</strong>
+                                <span>{{ $author->organization ?: $author->affiliation ?: 'View author profile' }}</span>
+                            </a>
+                        @endforeach
+                    </div>
                 </div>
             </section>
         @endif

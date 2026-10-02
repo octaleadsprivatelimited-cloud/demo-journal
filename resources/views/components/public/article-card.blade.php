@@ -24,7 +24,7 @@
             <span aria-hidden="true">•</span>
             <time datetime="{{ optional($publishedAt)->toDateString() }}">{{ optional($publishedAt)->format('M j, Y') }}</time>
         </div>
-        <h3><a href="{{ route('articles.show', $article->slug) }}">{{ $article->title }}</a></h3>
+        <h3><a class="article-card-primary" href="{{ route('articles.show', $article->slug) }}">{{ $article->title }}</a></h3>
         @if($showExcerpt && ($article->excerpt || $article->subtitle))
             <p>{{ Illuminate\Support\Str::limit($article->excerpt ?: $article->subtitle, $layout === 'horizontal' ? 180 : 145) }}</p>
         @endif
@@ -32,7 +32,7 @@
             @if($article->authors->isNotEmpty())
                 <span>By {!! $article->authors->take(2)->map(fn($author) => '<a href="'.e(route('authors.show', $author->slug)).'">'.e($author->name).'</a>')->implode(', ') !!}</span>
             @endif
-            <span class="reading-time"><x-public.icon name="clock" /> {{ $readingTime }} min read</span>
+            <span class="reading-time">@if(Str::startsWith((string) $article->article_number, 'SJC-LEGACY-'))Full article @else<x-public.icon name="clock" /> {{ $readingTime }} min read @endif</span>
             @if($publicPdfEnabled)<a class="article-pdf-icon" href="{{ route('articles.pdf', $article->slug) }}" aria-label="Download {{ $article->title }} as PDF" title="Download PDF"><x-public.icon name="pdf" /></a>@endif
         </div>
     </div>

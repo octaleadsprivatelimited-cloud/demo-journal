@@ -25,8 +25,8 @@ final class MediaController extends Controller
 
         return view('admin.media.index', ['mediaItems' => Media::query()->with('uploadedBy:id,name')->when($request->filled('q'), function ($q) use ($request): void {
             $term = '%'.addcslashes($request->string('q')->toString(), '%_').'%';
-            $q->where(fn ($sub) => $sub->where('original_name', 'like', $term)->orWhere('alt_text', 'like', $term));
-        })->when($request->filled('type'), fn ($q) => $q->where('mime_type', 'like', $request->string('type')->toString().'/%'))->latest()->paginate(24)->withQueryString()]);
+            $q->where(fn ($sub) => $sub->whereLike('original_name', $term)->orWhereLike('alt_text', $term));
+        })->when($request->filled('type'), fn ($q) => $q->whereLike('mime_type', $request->string('type')->toString().'/%'))->latest()->paginate(24)->withQueryString()]);
     }
 
     public function store(MediaRequest $request): RedirectResponse
@@ -62,11 +62,10 @@ final class MediaController extends Controller
         if ($request->hasFile('file')) {
             $file = $request->file('file');
             $isImage = str_starts_with((string) $file->getMimeType(), 'image/');
-            $replacement = $this->storage->store($file, $request->user(), null, $request->input('collection', $medium->collection), $isImage ? 'public' : 'local', $isImage ? 'public' : 'private');
-            $replacement->update($data);
-            $this->storage->delete($medium);
+            app(\App\Services\UploadManager::class)->change('media', $medium, $file);
+            $medium->refresh()->update($data);
 
-            return redirect()->route('admin.media.edit', $replacement)->with('success', 'Media file replaced and metadata updated.');
+            return back()->with('success', 'Media file replaced and metadata updated.');
         } else {
             $medium->update($data);
         }

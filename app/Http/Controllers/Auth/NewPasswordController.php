@@ -28,6 +28,7 @@ final class NewPasswordController extends Controller
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function (User $user, string $password): void {
                 $user->forceFill(['password' => $password, 'remember_token' => Str::random(60)])->save();
+                \Illuminate\Support\Facades\DB::table('sessions')->where('user_id', $user->id)->delete();
                 event(new PasswordReset($user));
             },
         );

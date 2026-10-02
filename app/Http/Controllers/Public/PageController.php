@@ -24,6 +24,11 @@ class PageController extends PublicController
         )));
     }
 
+    public function resources(): View
+    {
+        return view('public.pages.resources', $this->publicViewData());
+    }
+
     public function editorialBoard(): View
     {
         $records = EditorialMember::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
@@ -53,26 +58,46 @@ class PageController extends PublicController
 
     public function policy(string $page): View
     {
-        $pages = [
-            'aims-scope' => ['Aims & Scope', 'policy.aims_scope'],
-            'peer-review' => ['Peer Review Policy', 'policy.peer_review'],
-            'publication-ethics' => ['Publication Ethics', 'policy.publication_ethics'],
-            'author-guidelines' => ['Author Guidelines', 'policy.author_guidelines'],
-            'copyright' => ['Copyright', 'policy.copyright'],
-            'open-access' => ['Open Access', 'policy.open_access'],
-            'fees' => ['Fees & APC', 'policy.fees'],
-            'indexing' => ['Indexing & Abstracting', 'policy.indexing'],
-            'archiving' => ['Archiving', 'policy.archiving'],
-            'privacy' => ['Privacy Policy', 'policy.privacy'],
-            'terms' => ['Terms', 'policy.terms'],
-        ];
+        $definition=\App\Services\JournalPages::all()[$page] ?? null;
+        abort_unless($definition && !$definition['route'],404);
+        $title=$definition['title'];
+        $state=\App\Services\JournalPages::state($page);
+        $content=$state['published'] ? $state['content'] : null;
+        $indexingServices=in_array($page,['indexing','database-coverage']) ? IndexingService::where('is_active',true)->where('status','verified')->orderBy('sort_order')->get() : collect();
+        $facts=match($page) {
+            'issn'=>['Print ISSN'=>Setting::value('journal.issn'),'Electronic ISSN'=>Setting::value('journal.eissn')],
+            'publisher'=>['Publisher'=>Setting::value('journal.publisher_name'),'Address'=>Setting::value('journal.publisher_address')],
+            'publication-frequency'=>['Publication frequency'=>Setting::value('journal.frequency')],
+            'journal-history'=>['History'=>Setting::value('journal.publication_history')],
+            default=>[],
+        };
+        $facts=array_filter($facts,fn($value)=>filled($value) && !str_contains(strtoupper((string)$value),'CLIENT INPUT'));
+        return view('public.pages.policy',$this->publicViewData(compact('title','content','page','definition','state','indexingServices','facts')));
+    }
 
-        abort_unless(isset($pages[$page]), 404);
-        [$title, $key] = $pages[$page];
-        $content = Setting::value($key);
-        $indexingServices = $page === 'indexing' ? IndexingService::query()->where('is_active', true)->where('status', 'verified')->orderBy('sort_order')->get() : collect();
+    public function directory(\Illuminate\Http\Request $request): View
+    {
+        $q=trim((string)$request->query('q'));
+        $group=(string)$request->query('group');
+        $pages=collect(\App\Services\JournalPages::all())->filter(fn($page)=>(!$q || str_contains(mb_strtolower($page['title']),mb_strtolower($q))) && (!$group || $page['group']===$group));
+        return view('public.pages.directory',$this->publicViewData(compact('pages','q','group')));
+    }
 
-        return view('public.pages.policy', $this->publicViewData(compact('title', 'content', 'page', 'indexingServices')));
+    public function corrections(\Illuminate\Http\Request $request): View
+    {
+        $type=(string)$request->query('type');
+        $q=trim((string)$request->query('q'));
+        $notices=$this->publishedArticles()->whereIn('publication_notice',['correction','retraction','expression_of_concern'])
+            ->when(in_array($type,['correction','retraction','expression_of_concern']),fn($query)=>$query->where('publication_notice',$type))
+            ->when($q,fn($query)=>$query->whereRaw('LOWER(title) LIKE ?', ['%'.mb_strtolower($q).'%']))
+            ->latest('updated_at')->paginate(20)->withQueryString();
+        return view('public.pages.corrections',$this->publicViewData(compact('notices','q','type')));
+    }
+
+    public function currentIssue()
+    {
+        $issue=\App\Models\JournalIssue::query()->where('is_current',true)->whereHas('articles')->orderByDesc('publication_date')->first();
+        return $issue ? redirect()->route('archive.issue',$issue) : redirect()->route('archive.index');
     }
 
     public function contact(): View

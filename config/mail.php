@@ -37,6 +37,8 @@ return [
 
     'mailers' => [
 
+        'azure' => ['transport' => 'azure', 'endpoint' => env('AZURE_EMAIL_ENDPOINT', '')],
+
         'smtp' => [
             'transport' => 'smtp',
             'scheme' => env('MAIL_SCHEME'),
@@ -82,6 +84,8 @@ return [
         'failover' => [
             'transport' => 'failover',
             'mailers' => [
+
+        'azure' => ['transport' => 'azure', 'endpoint' => env('AZURE_EMAIL_ENDPOINT', '')],
                 'smtp',
                 'log',
             ],
@@ -91,6 +95,8 @@ return [
         'roundrobin' => [
             'transport' => 'roundrobin',
             'mailers' => [
+
+        'azure' => ['transport' => 'azure', 'endpoint' => env('AZURE_EMAIL_ENDPOINT', '')],
                 'ses',
                 'postmark',
             ],

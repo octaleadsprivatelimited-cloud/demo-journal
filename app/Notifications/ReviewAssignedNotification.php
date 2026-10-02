@@ -29,7 +29,7 @@ class ReviewAssignedNotification extends Notification implements ShouldQueue
     {
         $article = $this->review->article()->firstOrFail();
 
-        return (new MailMessage)
+        return (new MailMessage)->markdown('notifications::email', ['templateType' => 'review'])
             ->subject('Review assignment: '.$article->title)
             ->greeting('Hello '.$notifiable->name.',')
             ->line('You have been assigned a manuscript to review.')

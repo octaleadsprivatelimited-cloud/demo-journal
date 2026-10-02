@@ -48,6 +48,10 @@ class SearchController extends PublicController
         $categories = Category::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'slug']);
         $tags = Tag::query()->whereHas('articles', fn ($articles) => $articles->published())->orderBy('name')->limit(50)->get(['id', 'name', 'slug']);
         $authors = Author::query()->where('is_active', true)->whereHas('articles', fn ($articles) => $articles->published())->orderBy('name')->get(['id', 'name', 'slug']);
+        $years = $this->publishedArticles()->whereNotNull('published_at')
+            ->distinct()->pluck('published_at')
+            ->map(fn ($publishedAt) => (int) substr((string) $publishedAt, 0, 4))
+            ->unique()->sortDesc()->values();
 
         return view('public.search', $this->publicViewData(compact(
             'articles',
@@ -55,7 +59,7 @@ class SearchController extends PublicController
             'tags',
             'authors',
             'filters',
-            'hasSearch',
+            'hasSearch', 'years',
         )));
     }
 }

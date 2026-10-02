@@ -11,7 +11,7 @@ use App\Http\Controllers\WorkflowOperationsController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'active', 'verified'])->group(function (): void {
-    Route::prefix('author')->name('author.')->middleware('role:author,contributor')->group(function (): void {
+    Route::prefix('author')->name('author.')->middleware(['local-admin-bypass:author', 'role:author,contributor'])->group(function (): void {
         Route::get('/dashboard', Author\DashboardController::class)->name('dashboard');
         Route::get('/submissions', [Author\SubmissionController::class, 'index'])->name('submissions.index');
         Route::get('/reviews', Author\ReviewFeedbackController::class)->name('reviews.index');
@@ -25,7 +25,14 @@ Route::middleware(['auth', 'active', 'verified'])->group(function (): void {
         Route::get('/articles/{article}/manuscript', Author\ManuscriptController::class)->name('articles.manuscript');
     });
 
-    Route::prefix('reviewer')->name('reviewer.')->middleware('role:reviewer,editor,admin,super-admin')->group(function (): void {
+    Route::prefix('reviewer')->name('reviewer.')->middleware(['local-admin-bypass:reviewer', 'role:reviewer,editor,admin,super-admin'])->group(function (): void {
+        Route::get('/profile', [Reviewer\ProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('/profile', [Reviewer\ProfileController::class, 'update'])->name('profile.update');
+        Route::get('/settings', [Reviewer\ProfileController::class, 'settings'])->name('settings.edit');
+        Route::put('/settings', [Reviewer\ProfileController::class, 'preferences'])->name('settings.update');
+        Route::put('/settings/password', [Reviewer\ProfileController::class, 'password'])->middleware('throttle:6,1')->name('settings.password');
+        Route::get('/files/{file}', [\App\Http\Controllers\WorkflowController::class, 'download'])->name('files.download');
+        Route::get('/reviews/{review}/attachment', [WorkflowOperationsController::class, 'reviewFile'])->name('reviews.attachment');
         Route::get('/dashboard', Reviewer\DashboardController::class)->name('dashboard');
         Route::get('/reviews/{review}', [Reviewer\ReviewController::class, 'show'])->name('reviews.show');
         Route::put('/reviews/{review}', [Reviewer\ReviewController::class, 'update'])->middleware('throttle:6,1')->name('reviews.update');
@@ -34,15 +41,30 @@ Route::middleware(['auth', 'active', 'verified'])->group(function (): void {
         Route::get('/reviews/{review}/manuscript', [Reviewer\ReviewController::class, 'download'])->name('reviews.manuscript');
     });
 
-    Route::prefix('editor')->name('editor.')->middleware('role:editor')->group(function (): void {
+    Route::prefix('editor')->name('editor.')->middleware(['local-admin-bypass:editor', 'role:editor'])->group(function (): void {
         Route::get('/dashboard', Editor\DashboardController::class)->name('dashboard');
+        Route::get('/profile', [Editor\ProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('/profile', [Editor\ProfileController::class, 'update'])->name('profile.update');
     });
 
     Route::prefix('admin')->name('admin.')->middleware(['local-admin-bypass', 'role:editor,admin,super-admin'])->group(function (): void {
+        Route::get('/pages', [Admin\JournalPageController::class, 'index'])->name('pages.index');
+        Route::get('/pages/{page}/edit', [Admin\JournalPageController::class, 'edit'])->name('pages.edit');
+        Route::put('/pages/{page}', [Admin\JournalPageController::class, 'update'])->name('pages.update');
+        Route::get('/email-templates', [Admin\AccountController::class, 'emailTemplates'])->middleware('role:admin,super-admin')->name('email-templates');
+        Route::get('/account', [Admin\AccountController::class, 'edit'])->middleware('role:admin,super-admin')->name('account.edit');
+        Route::put('/account', [Admin\AccountController::class, 'update'])->middleware(['role:admin,super-admin','throttle:6,1'])->name('account.update');
         Route::get('/', Admin\DashboardController::class)->middleware('role:admin,super-admin')->name('dashboard');
         Route::post('/articles/bulk', [Admin\ArticleController::class, 'bulk'])->middleware('throttle:10,1')->name('articles.bulk');
         Route::post('/articles/{article}/restore', [Admin\ArticleController::class, 'restore'])->name('articles.restore');
         Route::post('/articles/{article}/action', [Admin\ArticleController::class, 'action'])->middleware('throttle:20,1')->name('articles.action');
+        Route::post('/uploads', [Admin\UploadController::class, 'store'])->name('uploads.store');
+        Route::get('/assign-reviewer', [Admin\ReviewerAssignmentController::class, 'index'])->name('assign-reviewer.index');
+        Route::get('/assign-reviewer/{article}', [Admin\ReviewerAssignmentController::class, 'show'])->name('assign-reviewer.show');
+        Route::post('/assign-reviewer/{article}', [Admin\ReviewerAssignmentController::class, 'store'])->name('assign-reviewer.store');
+        Route::get('/uploads', [Admin\UploadController::class, 'index'])->name('uploads.index');
+        Route::put('/uploads/{type}/{id}', [Admin\UploadController::class, 'update'])->name('uploads.update');
+        Route::delete('/uploads/{type}/{id}', [Admin\UploadController::class, 'destroy'])->name('uploads.destroy');
         Route::resource('articles', Admin\ArticleController::class);
         Route::resource('categories', Admin\CategoryController::class)->except('show');
         Route::post('/tags/{tag}/merge', [Admin\TagController::class, 'merge'])->name('tags.merge');
@@ -86,7 +108,7 @@ Route::middleware(['auth', 'active', 'verified'])->group(function (): void {
     });
 });
 
-Route::middleware(['auth', 'active', 'verified', 'role:author,contributor,reviewer,editor,admin,super-admin'])->group(function () {
+Route::middleware(['local-admin-bypass:workflow', 'auth', 'active', 'verified', 'role:author,contributor,reviewer,editor,admin,super-admin'])->group(function () {
     Route::get('/workflow/staff/directory', [WorkflowOperationsController::class, 'staff'])->name('workflow.staff');
     Route::post('/workflow/staff/{user}', [WorkflowOperationsController::class, 'staffUpdate'])->name('workflow.staff.update');
     Route::get('/workflow/settings/configuration', [WorkflowOperationsController::class, 'settings'])->name('workflow.settings');

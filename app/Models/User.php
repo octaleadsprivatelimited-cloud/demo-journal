@@ -110,6 +110,13 @@ class User extends Authenticatable implements MustVerifyEmail
 
         $permission = mb_strtolower(trim($permission));
 
+        // Local portal roles exist only in memory for the current request.
+        if ($this->is_local_admin_bypass && $this->isActive() && $this->relationLoaded('roles')) {
+            return Role::query()->whereKey($this->roles->modelKeys())
+                ->whereHas('permissions', fn (Builder $query) => $query->where('slug', $permission))->exists();
+        }
+
+
         return $this->roles()->whereHas('permissions', fn (Builder $query) => $query->where('slug', $permission))->exists();
     }
 

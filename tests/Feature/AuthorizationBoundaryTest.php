@@ -16,6 +16,68 @@ final class AuthorizationBoundaryTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_local_author_bypass_is_scoped_and_leaves_no_active_identity(): void
+    {
+        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+        config()->set('security.local_author_bypass.enabled', true);
+        config()->set('security.local_admin_bypass.enabled', false);
+        config()->set('security.local_admin_bypass.bind_address', '127.0.0.1');
+        config()->set('security.local_admin_bypass.allowed_remote_addresses', ['127.0.0.1']);
+        $this->get('http://localhost/author/dashboard')->assertRedirect(route('author.login'));
+        $this->app->detectEnvironment(static fn (): string => 'local');
+        $this->get('http://localhost/author/dashboard')->assertOk();
+        $this->get('http://localhost/author/articles/create')->assertOk();
+        $user = User::where('email', 'local-author@localhost.test')->firstOrFail();
+        $this->assertFalse($user->isActive());
+        $this->assertFalse($user->hasVerifiedEmail());
+        $this->assertSame(0, $user->roles()->count());
+        $this->assertGuest();
+        $this->get('http://localhost/admin')->assertRedirect(route('admin.login'));
+        $this->get('http://example.test/author/dashboard')->assertRedirect(route('author.login'));
+        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.1'])
+            ->get('http://localhost/author/dashboard')->assertRedirect(route('author.login'));
+    }
+
+    public function test_editor_and_reviewer_bypasses_are_local_and_request_scoped(): void
+    {
+        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+        config()->set('security.local_admin_bypass.enabled', false);
+        config()->set('security.local_admin_bypass.bind_address', '127.0.0.1');
+        config()->set('security.local_admin_bypass.allowed_remote_addresses', ['127.0.0.1']);
+        foreach (['editor', 'reviewer'] as $portal) {
+            config()->set('security.local_'.$portal.'_bypass.enabled', true);
+            $this->app->detectEnvironment(static fn (): string => 'testing');
+            $this->get('http://localhost/'.$portal.'/dashboard')->assertRedirect();
+            $this->app->detectEnvironment(static fn (): string => 'local');
+            $this->withServerVariables(['REMOTE_ADDR' => '127.0.0.1'])
+                ->get('http://localhost/'.$portal.'/dashboard')->assertOk();
+            $user = User::where('email', 'local-'.$portal.'@localhost.test')->firstOrFail();
+            $this->assertFalse($user->isActive());
+            $this->assertFalse($user->hasVerifiedEmail());
+            $this->assertSame(0, $user->roles()->count());
+            $this->assertGuest();
+            $this->get('http://example.test/'.$portal.'/dashboard')->assertRedirect();
+            $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.1'])
+                ->get('http://localhost/'.$portal.'/dashboard')->assertRedirect();
+            config()->set('security.local_'.$portal.'_bypass.enabled', false);
+        }
+        $this->get('http://localhost/admin')->assertRedirect();
+    }
+
+    public function test_local_portal_identity_carries_into_shared_workflow_only_locally(): void
+    {
+        config()->set('security.local_admin_bypass.enabled', true);
+        config()->set('security.local_admin_bypass.bind_address', '127.0.0.1');
+        config()->set('security.local_admin_bypass.allowed_remote_addresses', ['127.0.0.1']);
+        $this->app->detectEnvironment(static fn (): string => 'local');
+        $this->get('http://localhost/admin')->assertOk();
+        $this->get('http://localhost/workflow')->assertOk();
+        $this->assertGuest();
+        $this->get('http://example.test/workflow')->assertRedirect();
+        config()->set('security.local_admin_bypass.enabled', false);
+        $this->get('http://localhost/workflow')->assertRedirect();
+    }
+
     public function test_guests_are_redirected_from_every_protected_workspace(): void
     {
         $this->get('/admin')->assertRedirect(route('admin.login'));

@@ -33,7 +33,7 @@ final class UserController extends Controller
                 ->with(['roles:id,name,slug', 'author:id,user_id,is_verified,is_active'])
                 ->when($request->filled('q'), function ($q) use ($request): void {
                     $term = '%'.addcslashes($request->string('q')->toString(), '%_').'%';
-                    $q->where(fn ($sub) => $sub->where('name', 'like', $term)->orWhere('email', 'like', $term));
+                    $q->where(fn ($sub) => $sub->whereLike('name', $term)->orWhereLike('email', $term));
                 })
                 ->when($request->filled('role'), fn ($q) => $q->where(fn ($rolesOrRequest) => $rolesOrRequest
                     ->where('requested_role', $request->input('role'))

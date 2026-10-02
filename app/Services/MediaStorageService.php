@@ -92,7 +92,6 @@ class MediaStorageService
 
     public function delete(Media $media): void
     {
-        Storage::disk($media->disk)->delete($media->path);
-        $media->delete();
+        app(UploadManager::class)->change('media', $media, null);
     }
 }
