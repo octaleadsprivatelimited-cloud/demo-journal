@@ -7,7 +7,7 @@ namespace Tests\Feature\Auth;
 use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
-use Illuminate\Auth\Notifications\VerifyEmail;
+use App\Notifications\QueuedVerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
@@ -223,7 +223,7 @@ final class RolePortalAuthenticationTest extends TestCase
             'auditable_id' => $applicant->getKey(),
             'event' => 'account_application_approved',
         ]);
-        Notification::assertSentTo($applicant, VerifyEmail::class);
+        Notification::assertSentTo($applicant, QueuedVerifyEmail::class);
     }
 
     public function test_super_administrator_can_reject_a_pending_application_with_an_audit_record(): void

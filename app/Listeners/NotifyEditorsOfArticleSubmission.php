@@ -7,7 +7,7 @@ namespace App\Listeners;
 use App\Events\ArticleSubmitted;
 use App\Models\User;
 use App\Notifications\ArticleSubmittedNotification;
-use Illuminate\Support\Facades\Notification;
+use App\Services\EditorialOfficeNotifications;
 
 class NotifyEditorsOfArticleSubmission
 {
@@ -17,6 +17,6 @@ class NotifyEditorsOfArticleSubmission
             ->where(fn ($query) => $query->whereHas('roles', fn ($roles) => $roles->whereIn('slug', ['super-admin', 'admin']))->orWhere('id', $event->article->assigned_editor_id))
             ->get();
 
-        Notification::send($recipients, new ArticleSubmittedNotification($event->article, $event->submission));
+        app(EditorialOfficeNotifications::class)->send($recipients, new ArticleSubmittedNotification($event->article, $event->submission), 'contact_email');
     }
 }

@@ -9,6 +9,7 @@ use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\Author;
 use App\Models\User;
 use App\Services\PublicationSettings;
+use App\Services\AccountApplicationNotifications;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -99,6 +100,8 @@ final class RegisteredUserController extends Controller
 
             return $user;
         });
+
+        app(AccountApplicationNotifications::class)->submitted($user);
 
         return redirect()->route('registration.submitted')->with('application', [
             'email' => $user->email,

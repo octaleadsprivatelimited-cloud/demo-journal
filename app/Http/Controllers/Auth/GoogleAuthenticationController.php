@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Author;
 use App\Models\User;
+use App\Services\AccountApplicationNotifications;
 use App\Support\PortalDestination;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -105,6 +106,7 @@ final class GoogleAuthenticationController extends Controller
                 return $this->failure($portal, '[registration_closed] New author registration is currently closed.');
             }
             $user = $this->createPendingApplicant($profile, $email, $googleId, self::PORTAL_ROLES[$portal]);
+            app(AccountApplicationNotifications::class)->submitted($user);
 
             return redirect()->route('registration.submitted')->with('application', [
                 'email' => $user->email,

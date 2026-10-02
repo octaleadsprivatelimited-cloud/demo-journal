@@ -9,6 +9,7 @@ use App\Models\Submission;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\Notification;
 
 class ArticleSubmittedNotification extends Notification implements ShouldQueue
@@ -17,20 +18,20 @@ class ArticleSubmittedNotification extends Notification implements ShouldQueue
 
     public function __construct(public Article $article, public Submission $submission)
     {
-        $this->afterCommit();
+        $this->onQueue('mail')->afterCommit();
     }
 
     /** @return list<string> */
     public function via(object $notifiable): array
     {
-        return ['database', 'mail'];
+        return $notifiable instanceof AnonymousNotifiable ? ['mail'] : ['database', 'mail'];
     }
 
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)->markdown('notifications::email', ['templateType' => 'submission'])
             ->subject('New article submission: '.$this->article->title)
-            ->greeting('Hello '.$notifiable->name.',')
+            ->greeting('Hello '.($notifiable->name ?? 'Editorial office').',')
             ->line('A new manuscript has been submitted for editorial review.')
             ->line('Submission round: '.$this->submission->round)
             ->action('Review submission', rtrim((string) config('app.url'), '/').'/admin/submissions/'.$this->submission->getKey());

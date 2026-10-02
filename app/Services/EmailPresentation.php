@@ -9,6 +9,7 @@ class EmailPresentation
     public static function designs(): array
     {
         return [
+            'application' => ['Account applications', 'Account application update', '#087e8b', 'Application → Super Admin review → Decision', 'View application', 'Your account application has an update from the editorial office.'],
             'reset' => ['Account security', 'Choose a new password', '#254bb5', 'Only use this link if you requested a password reset.', 'Reset password', 'We received a request to reset the password for your journal account. Use the secure button below to choose a new password.'],
             'verification' => ['Welcome to the journal', 'Verify your email address', '#087e8b', 'Confirm your address to finish setting up your account.', 'Verify email address', 'Thank you for creating an account. Please confirm your email address before accessing your workspace.'],
             'submission' => ['Submission receipt', 'Your manuscript is with us', '#176b58', 'Received → Editorial checks → Peer review', 'Track submission', 'Dear Dr. Priya Sharma, we have received your manuscript “Technology-assisted approaches to cardiovascular care”. The editorial office will check your submission and contact you about the next step.'],

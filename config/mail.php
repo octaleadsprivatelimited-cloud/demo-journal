@@ -47,7 +47,7 @@ return [
             'port' => env('MAIL_PORT', 2525),
             'username' => env('MAIL_USERNAME'),
             'password' => env('MAIL_PASSWORD'),
-            'timeout' => null,
+            'timeout' => (int) env('MAIL_TIMEOUT', 15),
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
 
@@ -84,8 +84,6 @@ return [
         'failover' => [
             'transport' => 'failover',
             'mailers' => [
-
-        'azure' => ['transport' => 'azure', 'endpoint' => env('AZURE_EMAIL_ENDPOINT', '')],
                 'smtp',
                 'log',
             ],
@@ -95,8 +93,6 @@ return [
         'roundrobin' => [
             'transport' => 'roundrobin',
             'mailers' => [
-
-        'azure' => ['transport' => 'azure', 'endpoint' => env('AZURE_EMAIL_ENDPOINT', '')],
                 'ses',
                 'postmark',
             ],

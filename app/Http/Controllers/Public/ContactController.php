@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Public;
 
-use App\Events\ContactSubmissionReceived;
 use App\Http\Requests\Public\ContactRequest;
 use App\Models\ContactSubmission;
 use Illuminate\Http\RedirectResponse;
@@ -14,7 +13,7 @@ class ContactController extends PublicController
     {
         $validated = $request->validated();
 
-        $submission = ContactSubmission::query()->create([
+        ContactSubmission::query()->create([
             'user_id' => $request->user()?->getKey(),
             'name' => $validated['name'],
             'email' => $validated['email'],
@@ -28,8 +27,6 @@ class ContactController extends PublicController
                 : null,
             'user_agent' => Str::limit((string) $request->userAgent(), 1024, ''),
         ]);
-
-        ContactSubmissionReceived::dispatch($submission);
 
         return back()->with('success', 'Thank you. Your message has reached our editorial team.');
     }

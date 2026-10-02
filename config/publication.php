@@ -7,6 +7,7 @@ return [
     'tagline' => env('PUBLICATION_TAGLINE', 'Ideas with evidence. Research with consequence.'),
     'sitemap_base_url' => rtrim((string) env('SITEMAP_BASE_URL', 'https://sjcjournal.com'), '/'),
     'contact_email' => env('CONTACT_NOTIFICATION_EMAIL', env('MAIL_FROM_ADDRESS')),
+    'account_notification_email' => env('ACCOUNT_NOTIFICATION_EMAIL', env('CONTACT_NOTIFICATION_EMAIL', env('MAIL_FROM_ADDRESS'))),
     'features' => [
         'comments' => env('COMMENTS_ENABLED', true),
         'author_registration' => env('AUTHOR_REGISTRATION_ENABLED', true),

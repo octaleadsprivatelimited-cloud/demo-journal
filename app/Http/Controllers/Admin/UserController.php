@@ -10,6 +10,7 @@ use App\Models\Author;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\AuditService;
+use App\Services\AccountApplicationNotifications;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -130,7 +131,7 @@ final class UserController extends Controller
                 throw ValidationException::withMessages(['application' => 'Only pending account applications can be approved.']);
             }
 
-            $role = Role::query()->whereIn('slug', ['author', 'editor', 'admin'])->where('slug', $application->requested_role)->first();
+            $role = Role::query()->whereIn('slug', ['author', 'editor', 'reviewer', 'contributor', 'admin'])->where('slug', $application->requested_role)->first();
 
             if (! $role) {
                 throw ValidationException::withMessages(['application' => 'This application requests an unsupported role.']);
@@ -161,8 +162,9 @@ final class UserController extends Controller
         if (! $application->hasVerifiedEmail()) {
             event(new Registered($application));
         }
+        app(AccountApplicationNotifications::class)->decided($application);
 
-        return back()->with('success', "{$application->name}'s {$application->requested_role} application was approved. A verification email has been sent.");
+        return back()->with('success', "{$application->name}'s {$application->requested_role} application was approved. The approval notification has been queued.");
     }
 
     public function reject(Request $request, User $user, AuditService $audit): RedirectResponse
@@ -170,7 +172,7 @@ final class UserController extends Controller
         Gate::authorize('reject', $user);
         $this->assertManageableUser($user);
 
-        DB::transaction(function () use ($request, $user, $audit): void {
+        $application = DB::transaction(function () use ($request, $user, $audit): User {
             $application = User::query()->lockForUpdate()->findOrFail($user->getKey());
 
             if (! $application->isPendingApproval()) {
@@ -195,7 +197,11 @@ final class UserController extends Controller
                 'Rejected account application.',
                 $request->user(),
             );
+
+            return $application;
         });
+
+        app(AccountApplicationNotifications::class)->decided($application);
 
         return back()->with('success', "{$user->name}'s application was rejected.");
     }
