@@ -4,10 +4,13 @@
     $site = $site ?? [];
     $siteName = data_get($site, 'name', config('app.name', 'Singapore Journal of Cardiology'));
     $pageTitle = trim($__env->yieldContent('title'));
-    $pageDescription = trim($__env->yieldContent('description')) ?: data_get($site ?? [], 'description');
-    $canonicalUrl = trim($__env->yieldContent('canonical')) ?: url()->current();
-    $socialImage = trim($__env->yieldContent('image')) ?: asset('assets/journal-mark.svg');
-    $robots = trim($__env->yieldContent('robots')) ?: 'index, follow, max-image-preview:large';
+    $pageDescription = \App\Services\PublicSeo::description(trim($__env->yieldContent('description')) ?: data_get($site ?? [], 'description'));
+    $canonicalUrl = \App\Services\PublicSeo::canonical(trim($__env->yieldContent('canonical')) ?: url()->current());
+    $socialImage = trim($__env->yieldContent('image')) ?: asset('assets/larix-logo-transparent.png');
+    $robots = trim($__env->yieldContent('robots')) ?: (\App\Services\PublicSeo::filteredListing() ? 'noindex, follow' : 'index, follow, max-image-preview:large');
+    if (\App\Services\PublicSeo::paginated() && request()->integer('page') > 1) {
+        $pageTitle .= ' — Page '.request()->integer('page');
+    }
     $fullTitle = $pageTitle ? $pageTitle.' — '.$siteName : $siteName;
     $defaultSchema = [
         '@context' => 'https://schema.org',
@@ -34,13 +37,15 @@
     <meta property="og:type" content="@yield('og_type', 'website')">
     <meta property="og:site_name" content="{{ $siteName }}">
     <meta property="og:title" content="{{ trim($__env->yieldContent('og_title')) ?: $fullTitle }}">
-    <meta property="og:description" content="{{ trim($__env->yieldContent('og_description')) ?: $pageDescription }}">
+    <meta property="og:description" content="{{ \App\Services\PublicSeo::description(trim($__env->yieldContent('og_description')) ?: $pageDescription) }}">
     <meta property="og:url" content="{{ $canonicalUrl }}">
     <meta property="og:image" content="{{ $socialImage }}">
-    <meta name="twitter:card" content="summary_large_image">
+    <meta property="og:image:alt" content="{{ $pageTitle ?: $siteName }}">
+    <meta name="twitter:card" content="@yield('twitter_card', 'summary')">
     <meta name="twitter:title" content="{{ trim($__env->yieldContent('og_title')) ?: $fullTitle }}">
-    <meta name="twitter:description" content="{{ trim($__env->yieldContent('og_description')) ?: $pageDescription }}">
+    <meta name="twitter:description" content="{{ \App\Services\PublicSeo::description(trim($__env->yieldContent('og_description')) ?: $pageDescription) }}">
     <meta name="twitter:image" content="{{ $socialImage }}">
+    @if(config('publication.integrations.search_console_verification'))<meta name="google-site-verification" content="{{ config('publication.integrations.search_console_verification') }}">@endif
     <link rel="icon" href="{{ asset('assets/journal-mark.svg') }}" type="image/svg+xml">
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
         @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -50,7 +55,7 @@
         </style>
     @endif
     <style>{!! file_get_contents(resource_path('css/journal-pages.css')) !!}</style>
-    <script type="application/ld+json">{!! json_encode($structuredData ?? $defaultSchema, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}</script>
+    <script type="application/ld+json">{!! json_encode($structuredData ?? $defaultSchema, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) !!}</script>
     @stack('head')
 </head>
 <body class="site-shell antialiased">

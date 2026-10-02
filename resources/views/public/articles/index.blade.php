@@ -4,8 +4,8 @@
     $isJournal = $mode === 'journals';
     $heading = $isJournal ? 'The journal archive' : 'Latest publications';
     $description = $isJournal
-        ? 'Explore peer-informed essays, research, commentary, and reviews from across the journal.'
-        : 'New essays and research from our community of contributors.';
+        ? 'Browse cardiology research, cardiovascular medicine reviews and clinical case reports in the Singapore Journal of Cardiology archive.'
+        : 'Read the latest cardiology research, cardiovascular medicine reviews and clinical case reports published in Singapore Journal of Cardiology.';
 @endphp
 @section('title', $heading)
 @section('description', $description)

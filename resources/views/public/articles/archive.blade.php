@@ -1,5 +1,6 @@
 @extends('layouts.public')
 @section('title','Archives')
+@section('description', 'Explore past cardiology publications by year, volume and issue in the Singapore Journal of Cardiology archive.')
 @section('content')
 <section class="section"><div class="container"><h1>Archives</h1>
 @forelse($volumes->groupBy('year') as $publicationYear=>$items)

@@ -1,11 +1,12 @@
 @extends('layouts.public')
 
+@section('title', 'Cardiology Research')
 @section('description', data_get($site, 'description'))
 
 @section('content')
     <section class="home-intro">
         <div class="container">
-            <h1 class="sr-only">Featured and latest journal articles</h1>
+            <h1 class="sr-only">{{ data_get($site, 'name', config('app.name')) }} — cardiology research and clinical case reports</h1>
             <div class="issue-line">
                 <span>Current edition</span>
                 <strong>{{ now()->format('F Y') }}</strong>

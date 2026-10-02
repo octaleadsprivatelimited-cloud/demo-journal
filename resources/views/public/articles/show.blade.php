@@ -4,38 +4,42 @@
     $readingTime = $article->reading_time_minutes ?: max(1, (int) ceil(str_word_count(strip_tags((string) $article->content)) / 220));
     $imageUrl = $article->featured_image_path
         ? (Illuminate\Support\Str::startsWith($article->featured_image_path, ['http://', 'https://']) ? $article->featured_image_path : Illuminate\Support\Facades\Storage::disk(config('publication.uploads.disk', 'public'))->url($article->featured_image_path))
-        : asset('assets/editorial-placeholder.svg');
+        : asset('assets/larix-logo-transparent.png');
+    $articleDescription = \App\Services\PublicSeo::articleDescription($article, data_get($site, 'name', config('app.name')));
+    $articleKeywords = collect($article->keywords)->merge($seo?->focus_keywords ?? [])->merge($article->tags->pluck('name'))->filter()->unique()->values();
     $citationVolume = $article->journalIssue?->volume?->number ?: $article->volume;
     $citationIssue = $article->journalIssue?->number ?: $article->issue;
     $structuredData = array_filter([
         '@context' => 'https://schema.org',
         '@type' => $seo?->schema_type ?: 'ScholarlyArticle',
         'headline' => $seo?->og_title ?: $article->title,
-        'description' => $seo?->meta_description ?: $article->excerpt ?: $article->abstract,
+        'description' => $articleDescription,
         'image' => [$imageUrl],
         'datePublished' => optional($publishedAt)->toIso8601String(),
         'dateModified' => optional($article->updated_at)->toIso8601String(),
-        'mainEntityOfPage' => route('articles.show', $article->slug),
+        'mainEntityOfPage' => $seo?->canonical_url ?: route('articles.show', $article->slug),
         'author' => $article->authors->map(fn($author) => ['@type' => 'Person', 'name' => $author->name, 'url' => route('authors.show', $author->slug)])->values()->all(),
         'publisher' => ['@type' => 'Organization', 'name' => data_get($site, 'name'), 'url' => route('home')],
         'articleSection' => $article->category?->name,
-        'keywords' => collect($article->keywords)->merge($article->tags->pluck('name'))->filter()->join(', '),
+        'keywords' => $articleKeywords->join(', '),
         'identifier' => $article->doi ? 'https://doi.org/'.$article->doi : $article->public_id,
-        'isPartOf' => array_filter(['@type' => 'PublicationIssue', 'issueNumber' => $article->journalIssue?->number ?? $article->issue, 'isPartOf' => array_filter(['@type' => 'PublicationVolume', 'volumeNumber' => $article->journalIssue?->volume?->number ?? $article->volume])]),
+        'isPartOf' => array_filter(['@type' => 'PublicationIssue', 'issueNumber' => $article->journalIssue?->number ?? $article->issue, 'isPartOf' => array_filter(['@type' => 'PublicationVolume', 'volumeNumber' => $article->journalIssue?->volume?->number ?? $article->volume, 'isPartOf' => array_filter(['@type' => 'Periodical', 'name' => data_get($site, 'name'), 'issn' => data_get($site, 'journal.issn') ?: data_get($site, 'journal.eissn')])])]),
     ]);
 @endphp
 @extends('layouts.public')
 
 @section('title', $seo?->seo_title ?: $article->title)
-@section('description', $seo?->meta_description ?: $article->excerpt ?: $article->abstract ?: Illuminate\Support\Str::limit(strip_tags($article->content), 155))
+@section('description', $articleDescription)
 @section('canonical', $seo?->canonical_url ?: route('articles.show', $article->slug))
 @section('image', $seo?->og_image ?: $imageUrl)
 @section('og_title', $seo?->og_title ?: $article->title)
-@section('og_description', $seo?->og_description ?: $article->excerpt ?: $article->abstract)
+@section('og_description', $seo?->og_description ?: $articleDescription)
 @section('og_type', 'article')
+@section('twitter_card', $seo?->twitter_card ?: ($article->featured_image_path ? 'summary_large_image' : 'summary'))
 
 @push('head')
     <meta name="citation_title" content="{{ $article->title }}">
+    <meta name="citation_journal_title" content="{{ data_get($site, 'name', config('app.name')) }}">
     @foreach($article->authors as $author)<meta name="citation_author" content="{{ $author->name }}">@if(filled($author->affiliation) || filled($author->organization))<meta name="citation_author_institution" content="{{ $author->affiliation ?: $author->organization }}">@endif @endforeach
     <meta name="citation_publication_date" content="{{ optional($publishedAt)->format('Y/m/d') }}">
     @if(data_get($site, 'journal.issn'))<meta name="citation_issn" content="{{ data_get($site, 'journal.issn') }}">@endif

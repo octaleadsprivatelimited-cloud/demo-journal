@@ -91,7 +91,7 @@ final class PublicationSettings
         return [
             'name' => config('publication.name', config('app.name', 'Singapore Journal of Cardiology')),
             'tagline' => config('publication.tagline', 'Independent ideas. Enduring perspective.'),
-            'description' => 'A journal of research, culture, public life, and the ideas shaping our shared future.',
+            'description' => 'Read cardiology research, clinical case reports and cardiovascular medicine reviews in Singapore Journal of Cardiology, an open access journal.',
             'contact_email' => config('publication.contact_email', config('mail.from.address')),
             'phone' => null,
             'address' => null,

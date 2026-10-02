@@ -39,7 +39,7 @@ class Setting extends Model
                 'label' => 'Website and default SEO description',
                 'type' => 'textarea',
                 'rules' => ['nullable', 'string', 'max:500'],
-                'default' => 'Independent research, criticism, and ideas for a changing world.',
+                'default' => 'Read cardiology research, clinical case reports and cardiovascular medicine reviews in Singapore Journal of Cardiology, an open access journal.',
                 'public' => true,
             ],
             'contact.email' => [

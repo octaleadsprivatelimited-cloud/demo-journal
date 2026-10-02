@@ -2,6 +2,8 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url><loc>{{ $sitemapBaseUrl }}</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
     <url><loc>{{ $sitemapBaseUrl }}/articles</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
+    <url><loc>{{ $sitemapBaseUrl }}/journals</loc><changefreq>weekly</changefreq></url>
+    <url><loc>{{ $sitemapBaseUrl }}/resources</loc><changefreq>monthly</changefreq></url>
     <url><loc>{{ $sitemapBaseUrl }}/authors</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
     <url><loc>{{ $sitemapBaseUrl }}/categories</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
     <url><loc>{{ $sitemapBaseUrl }}/downloads</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
