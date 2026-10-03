@@ -23,7 +23,7 @@ Production verification resend reports unavailable delivery when the mail driver
 
 The Hostinger release `journal-security-20261003` completed at 2026-10-03 19:44 UTC. It reports Laravel 13.34.0, CommonMark 2.10.3, production mode, debug disabled, secure database sessions, database queues, disabled local bypasses and the preserved public HTML root. Database health passed; pending and failed job counts were both zero. The temporary deployment cron was removed; scheduler and queue-worker jobs remain configured.
 
-The registration confirmation and administrator sign-in pages render in Chrome. The confirmation page produced no browser errors or warnings.
+The registration confirmation and administrator sign-in pages render in Chrome. The confirmation page produced no browser errors or warnings. A read-only production smoke check made 28 GET/HEAD requests with no 5xx responses: home, health, receipt and login pages returned 200; protected dashboards redirected guests to the appropriate login; the API returned 401. Environment/Git paths returned 403, and SQLite/private manuscript paths returned 404. HTTPS validated normally; session cookies carried Secure, HttpOnly and SameSite=Lax, and security headers included HSTS, nosniff, frame protection, referrer policy and permissions policy.
 
 ## Outstanding production setup
 
