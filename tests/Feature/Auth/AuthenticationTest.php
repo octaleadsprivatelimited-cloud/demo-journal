@@ -59,6 +59,27 @@ final class AuthenticationTest extends TestCase
         ]);
     }
 
+    public function test_application_confirmation_renders_without_session_details(): void
+    {
+        $this->get(route('registration.submitted'))
+            ->assertOk()
+            ->assertSeeText('Application submitted')
+            ->assertSeeText('You will be able to sign in only after approval and email verification.');
+    }
+
+    public function test_application_confirmation_renders_and_escapes_session_details(): void
+    {
+        $this->withSession(['application' => [
+            'role' => 'Author',
+            'email' => '<script>alert(1)</script>@example.test',
+        ]])->get(route('registration.submitted'))
+            ->assertOk()
+            ->assertSeeText('The author application for')
+            ->assertSee('&lt;script&gt;alert(1)&lt;/script&gt;@example.test', false)
+            ->assertDontSee('<script>alert(1)</script>', false)
+            ->assertSeeText('was received.');
+    }
+
     public function test_author_registration_routes_are_unavailable_when_registration_is_disabled(): void
     {
         config()->set('publication.features.author_registration', false);

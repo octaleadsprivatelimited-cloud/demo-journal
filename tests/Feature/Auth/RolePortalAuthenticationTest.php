@@ -6,8 +6,8 @@ namespace Tests\Feature\Auth;
 
 use App\Models\Role;
 use App\Models\User;
-use Database\Seeders\RolePermissionSeeder;
 use App\Notifications\QueuedVerifyEmail;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
@@ -54,12 +54,17 @@ final class RolePortalAuthenticationTest extends TestCase
     {
         Notification::fake();
 
-        foreach (['author', 'editor', 'admin'] as $role) {
+        foreach (['author', 'editor', 'reviewer', 'contributor', 'admin'] as $role) {
             $email = "{$role}.applicant@example.test";
 
-            $this->post(route("{$role}.register.store"), $this->registrationPayload($role, $email))
-                ->assertRedirect()
+            $response = $this->post(route("{$role}.register.store"), $this->registrationPayload($role, $email))
+                ->assertRedirect(route('registration.submitted'))
                 ->assertSessionHasNoErrors();
+
+            $this->followRedirects($response)
+                ->assertOk()
+                ->assertSeeText("The {$role} application for {$email} was received.")
+                ->assertSeeText('You will be able to sign in only after approval and email verification.');
 
             $user = User::query()->where('email', $email)->firstOrFail();
 
