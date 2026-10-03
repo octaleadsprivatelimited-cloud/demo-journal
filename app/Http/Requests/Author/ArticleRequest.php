@@ -33,8 +33,9 @@ final class ArticleRequest extends FormRequest
     {
         return [
             'declarations' => ['nullable', 'array'],
-            ...($this->input('intent') === 'submit' ? array_fill_keys(array_map(fn ($key) => 'declarations.'.$key, ['original','exclusive','authors_approve','ethics','conflicts']), ['accepted']) : []),
+            ...($this->input('intent') === 'submit' ? array_fill_keys(array_map(fn ($key) => 'declarations.'.$key, ['original', 'exclusive', 'authors_approve', 'ethics', 'conflicts']), ['accepted']) : []),
             'author_details' => ['nullable', 'array', 'max:20'],
+            'author_details.*' => ['array:name,email,organization,department,country,orcid'],
             'author_details.*.name' => ['required', 'string', 'max:200'],
             'author_details.*.email' => ['required', 'email', 'max:255'],
             'author_details.*.organization' => [$this->input('intent') === 'submit' ? 'required' : 'nullable', 'string', 'max:255'],

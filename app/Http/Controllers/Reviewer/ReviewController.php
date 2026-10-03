@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Reviewer;
 use App\Enums\ArticleStatus;
 use App\Enums\ReviewRecommendation;
 use App\Enums\ReviewStatus;
+use App\Enums\SubmissionStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Reviewer\CompleteReviewRequest;
 use App\Models\Article;
@@ -82,8 +83,10 @@ final class ReviewController extends Controller
                 $from = $w->stage;
                 if ($from === 'reviewer_assignment') {
                     $w->update(['stage' => 'under_review']);
-                    $article->update(['status' => ArticleStatus::UnderReview]);
-                }app(ManuscriptWorkflowService::class)->log($article, request()->user(), 'review_accepted', $from, $w->stage, null, [], false);
+                }
+                $article->update(['status' => ArticleStatus::UnderReview]);
+                $review->submission()->update(['status' => SubmissionStatus::InReview, 'decision_at' => null]);
+                app(ManuscriptWorkflowService::class)->log($article, request()->user(), 'review_accepted', $from, $w->stage, null, [], false);
                 app(ManuscriptWorkflowService::class)->notify($article, 'Reviewer accepted invitation', request()->user());
             }
             $review->forceFill(['status' => ReviewStatus::InProgress, 'started_at' => now(), 'responded_at' => now(), 'conflict_declared' => false])->save();

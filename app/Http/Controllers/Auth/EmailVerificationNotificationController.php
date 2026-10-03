@@ -20,8 +20,12 @@ final class EmailVerificationNotificationController extends Controller
             return redirect()->route(PortalDestination::routeNameForUser($user));
         }
 
+        if (app()->isProduction() && (blank(config('mail.default')) || in_array(config('mail.default'), ['log', 'array'], true))) {
+            return back()->withErrors(['email' => 'Email verification delivery is not available yet. Please contact the journal administrator.']);
+        }
+
         $user?->sendEmailVerificationNotification();
 
-        return back()->with('success', 'A fresh verification link has been sent to your email address.');
+        return back()->with('success', 'A fresh verification link has been queued for delivery to your email address.');
     }
 }

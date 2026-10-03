@@ -9,6 +9,7 @@ use App\Models\Author;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -18,7 +19,7 @@ final class AuthorizationBoundaryTest extends TestCase
 
     public function test_local_author_bypass_is_scoped_and_leaves_no_active_identity(): void
     {
-        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+        $this->seed(RolePermissionSeeder::class);
         config()->set('security.local_author_bypass.enabled', true);
         config()->set('security.local_admin_bypass.enabled', false);
         config()->set('security.local_admin_bypass.bind_address', '127.0.0.1');
@@ -40,7 +41,7 @@ final class AuthorizationBoundaryTest extends TestCase
 
     public function test_editor_and_reviewer_bypasses_are_local_and_request_scoped(): void
     {
-        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+        $this->seed(RolePermissionSeeder::class);
         config()->set('security.local_admin_bypass.enabled', false);
         config()->set('security.local_admin_bypass.bind_address', '127.0.0.1');
         config()->set('security.local_admin_bypass.allowed_remote_addresses', ['127.0.0.1']);
@@ -62,6 +63,40 @@ final class AuthorizationBoundaryTest extends TestCase
             config()->set('security.local_'.$portal.'_bypass.enabled', false);
         }
         $this->get('http://localhost/admin')->assertRedirect();
+    }
+
+    public function test_switching_trusted_local_portals_never_persists_the_temporary_password_hash(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+        $this->app->detectEnvironment(static fn (): string => 'local');
+        config(['security.local_admin_bypass.bind_address' => '127.0.0.1', 'security.local_admin_bypass.allowed_remote_addresses' => ['127.0.0.1']]);
+        foreach (['author', 'editor', 'reviewer', 'admin'] as $portal) {
+            config(['security.local_'.$portal.'_bypass.enabled' => true]);
+            $path = $portal === 'admin' ? '/admin' : '/'.$portal.'/dashboard';
+            $this->withServerVariables(['REMOTE_ADDR' => '127.0.0.1'])->get('http://localhost'.$path)
+                ->assertOk()->assertSessionMissing('password_hash_web');
+            $this->assertGuest();
+        }
+    }
+
+    public function test_local_temporary_identity_preserves_the_prior_real_sessions_password_hash(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+        $user = User::factory()->create();
+        $user->roles()->attach(Role::where('slug', 'author')->firstOrFail());
+        $this->app->detectEnvironment(static fn (): string => 'local');
+        config(['security.local_editor_bypass.enabled' => true, 'security.local_author_bypass.enabled' => false,
+            'security.local_admin_bypass.bind_address' => '127.0.0.1', 'security.local_admin_bypass.allowed_remote_addresses' => ['127.0.0.1']]);
+        $hash = $this->app['auth']->guard('web')->hashPasswordForCookie($user->getAuthPassword());
+        $this->actingAs($user)->withSession(['password_hash_web' => $hash]);
+        $this->withServerVariables(['REMOTE_ADDR' => '127.0.0.1'])->get('http://localhost/editor/dashboard')
+            ->assertOk()->assertSessionHas('password_hash_web', $hash);
+        $this->assertAuthenticatedAs($user);
+        $this->get('http://localhost/author/dashboard')->assertOk();
+        $this->withSession(['password_hash_web' => 'a-stale-real-session-hash']);
+        $this->get('http://localhost/editor/dashboard')->assertOk()->assertSessionHas('password_hash_web', 'a-stale-real-session-hash');
+        $this->getJson('http://localhost/author/dashboard')->assertUnauthorized();
+        $this->assertGuest();
     }
 
     public function test_local_portal_identity_carries_into_shared_workflow_only_locally(): void

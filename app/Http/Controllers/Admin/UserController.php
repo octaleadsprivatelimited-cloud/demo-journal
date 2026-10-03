@@ -9,8 +9,9 @@ use App\Http\Requests\Admin\UserRequest;
 use App\Models\Author;
 use App\Models\Role;
 use App\Models\User;
-use App\Services\AuditService;
 use App\Services\AccountApplicationNotifications;
+use App\Services\AuditService;
+use App\Services\CredentialRevocation;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -97,7 +98,12 @@ final class UserController extends Controller
             }
             $data['is_active'] = $request->boolean('is_active');
             $data['email_verified_at'] = $request->boolean('email_verified') ? ($user->email_verified_at ?? now()) : null;
+            $credentialsChanged = filled($data['password'] ?? null) || $user->email !== $data['email'];
             $user->update($data);
+            if ($credentialsChanged) {
+                $preservedSession = $request->user()->is($user) ? $request->session()->getId() : null;
+                app(CredentialRevocation::class)->revoke($user, $preservedSession);
+            }
             $user->roles()->sync($request->input('roles', []));
             $this->syncAuthor($user, $request);
         });

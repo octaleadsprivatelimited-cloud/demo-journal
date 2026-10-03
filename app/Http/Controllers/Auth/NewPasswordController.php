@@ -7,11 +7,12 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Models\User;
+use App\Services\CredentialRevocation;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -27,8 +28,10 @@ final class NewPasswordController extends Controller
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function (User $user, string $password): void {
-                $user->forceFill(['password' => $password, 'remember_token' => Str::random(60)])->save();
-                \Illuminate\Support\Facades\DB::table('sessions')->where('user_id', $user->id)->delete();
+                DB::transaction(function () use ($user, $password): void {
+                    $user->forceFill(['password' => $password])->save();
+                    app(CredentialRevocation::class)->revoke($user);
+                });
                 event(new PasswordReset($user));
             },
         );

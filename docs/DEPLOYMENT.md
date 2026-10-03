@@ -24,7 +24,7 @@ Persist only PostgreSQL, Redis when durability matters, and `storage/app`. Prefe
 ## Laravel Forge, DigitalOcean, Hostinger, or a traditional VPS
 
 - Point the site root to `public`, never the repository root.
-- Use PHP 8.3 or newer with the extensions listed in the README.
+- Use PHP 8.4.1 or newer with the extensions listed in the README.
 - Run Nginx under an unprivileged service account and grant write access only to `storage` and `bootstrap/cache`.
 - Install a Supervisor process for `php artisan queue:work --queue=default,mail --sleep=2 --tries=3 --max-time=3600` and restart it after every release.
 - Add one cron entry: `* * * * * cd /path/to/current && php artisan schedule:run >> /dev/null 2>&1`.

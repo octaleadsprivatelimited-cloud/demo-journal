@@ -2,16 +2,24 @@
 
 use App\Http\Middleware\EnsureAccountIsActive;
 use App\Http\Middleware\EnsureAuthorRegistrationIsEnabled;
+use App\Http\Middleware\GoogleOnlyAuthentication;
 use App\Http\Middleware\LocalhostAdminBypass;
+use App\Http\Middleware\OptimizeImageUploads;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\SecurityHeaders;
+use App\Support\ErrorCodes;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\PostTooLargeException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Session\Middleware\AuthenticateSession;
 use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 use Laravel\Sanctum\Http\Middleware\CheckForAnyAbility;
+use League\Flysystem\FilesystemException;
+use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -33,8 +41,8 @@ return Application::configure(basePath: dirname(__DIR__))
         }
 
         $middleware->statefulApi();
-        $middleware->web(append: [\App\Http\Middleware\OptimizeImageUploads::class, \App\Http\Middleware\GoogleOnlyAuthentication::class]);
-        $middleware->api(append: [\App\Http\Middleware\OptimizeImageUploads::class]);
+        $middleware->web(append: [AuthenticateSession::class, OptimizeImageUploads::class, GoogleOnlyAuthentication::class]);
+        $middleware->api(append: [OptimizeImageUploads::class]);
         $middleware->append(SecurityHeaders::class);
         $middleware->redirectGuestsTo(static function (Request $request): string {
             return match (true) {
@@ -56,26 +64,28 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prependToPriorityList(AuthenticatesRequests::class, LocalhostAdminBypass::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->render(function (\Illuminate\Http\Exceptions\PostTooLargeException $error, Request $request) {
+        $exceptions->render(function (PostTooLargeException $error, Request $request) {
             $message = 'The upload is too large. Keep the complete submission below 32 MB and each document below 20 MB. Submit supplementary files in smaller batches.';
+
             return $request->is('api/*') || $request->expectsJson()
                 ? response()->json(['message' => $message, 'code' => 'upload_too_large'], 413)
                 : response()->view('errors.413', [], 413);
         });
-        $exceptions->render(function (\League\Flysystem\FilesystemException $error, Request $request) {
+        $exceptions->render(function (FilesystemException $error, Request $request) {
             $message = 'File storage is temporarily unavailable. Keep your original files and retry when storage is available.';
+
             return $request->is('api/*') || $request->expectsJson()
                 ? response()->json(['message' => $message, 'code' => 'storage_unavailable'], 503)
                 : response()->view('errors.storage', [], 503)->header('X-Error-Code', 'storage_unavailable');
         });
 
-        $exceptions->respond(function (\Symfony\Component\HttpFoundation\Response $response, \Throwable $exception, Request $request) {
+        $exceptions->respond(function (Response $response, Throwable $exception, Request $request) {
             $status = $response->getStatusCode();
             if ($status < 400) {
                 return $response;
             }
-            $code = $response->headers->get('X-Error-Code') ?: \App\Support\ErrorCodes::forStatus($status);
-            if ($response instanceof \Illuminate\Http\JsonResponse) {
+            $code = $response->headers->get('X-Error-Code') ?: ErrorCodes::forStatus($status);
+            if ($response instanceof JsonResponse) {
                 $data = $response->getData(true);
                 $data = is_array($data) ? $data : [];
                 $code = $data['code'] ?? $code;
@@ -85,7 +95,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 $data['code'] = $code;
                 if (isset($data['errors']) && is_array($data['errors'])) {
                     $data['error_codes'] = collect($data['errors'])->map(fn ($messages) => array_map(
-                        fn ($message) => \App\Support\ErrorCodes::fromMessage($message), (array) $messages,
+                        fn ($message) => ErrorCodes::fromMessage($message), (array) $messages,
                     ))->all();
                 }
                 $response->setData($data);
@@ -93,6 +103,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 $response = response()->view($status === 503 ? 'errors.503' : 'errors.500', [], $status);
             }
             $response->headers->set('X-Error-Code', $code);
+
             return $response;
         });
 

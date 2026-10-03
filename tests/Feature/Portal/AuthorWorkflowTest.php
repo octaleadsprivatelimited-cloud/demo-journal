@@ -11,6 +11,7 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 final class AuthorWorkflowTest extends TestCase
@@ -51,6 +52,23 @@ final class AuthorWorkflowTest extends TestCase
         $response->assertSee('data-autosave="'.route('author.articles.autosave', $article).'"', false);
     }
 
+    public function test_draft_record_opens_the_complete_wizard_without_an_incomplete_submit_form(): void
+    {
+        [$user] = $this->authorUser();
+        $article = Article::factory()->draft()->create(['created_by_id' => $user->id]);
+
+        $this->actingAs($user)->get(route('author.articles.show', $article))->assertOk()
+            ->assertSee('Complete files and declarations to submit')
+            ->assertSee('href="'.route('author.articles.edit', $article).'"', false)
+            ->assertDontSee('action="'.route('author.articles.submit', $article).'"', false);
+
+        $wizard = $this->get(route('author.articles.edit', $article))->assertOk();
+        foreach (['original', 'exclusive', 'authors_approve', 'ethics', 'conflicts'] as $declaration) {
+            $wizard->assertSee('name="declarations['.$declaration.']"', false);
+        }
+        $wizard->assertSee('name="manuscript"', false)->assertSee('name="cover_letter"', false);
+    }
+
     public function test_author_cannot_delete_their_own_articles_at_any_stage(): void
     {
         [$user] = $this->authorUser();
@@ -59,7 +77,7 @@ final class AuthorWorkflowTest extends TestCase
             $this->assertFalse($user->can('delete', $article));
         }
 
-        $this->assertFalse(\Illuminate\Support\Facades\Route::has('author.articles.destroy'));
+        $this->assertFalse(Route::has('author.articles.destroy'));
     }
 
     public function test_author_cannot_edit_another_authors_manuscript(): void

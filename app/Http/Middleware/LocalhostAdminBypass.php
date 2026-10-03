@@ -7,6 +7,7 @@ namespace App\Http\Middleware;
 use App\Models\Role;
 use App\Models\User;
 use Closure;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -49,7 +50,9 @@ final class LocalhostAdminBypass
             return $next($request);
         }
 
-        if ($authenticatedUser instanceof User && $authenticatedUser->hasAnyRole(...(match ($portal) { 'author' => ['author', 'contributor'], 'editor' => ['editor'], 'reviewer' => ['reviewer', 'editor', 'admin', 'super-admin'], default => ['editor', 'admin', 'super-admin'] }))) {
+        if ($authenticatedUser instanceof User && $authenticatedUser->hasAnyRole(...(match ($portal) {
+            'author' => ['author', 'contributor'], 'editor' => ['editor'], 'reviewer' => ['reviewer', 'editor', 'admin', 'super-admin'], default => ['editor', 'admin', 'super-admin']
+        }))) {
             return $next($request);
         }
 
@@ -93,16 +96,24 @@ final class LocalhostAdminBypass
             'status' => 'active',
             'is_active' => true,
         ]);
-        $user->setRelation('roles', new \Illuminate\Database\Eloquent\Collection([$role]));
+        $user->setRelation('roles', new Collection([$role]));
 
+        $passwordHashKey = 'password_hash_'.Auth::getDefaultDriver();
+        $hadPasswordHash = $request->session()->has($passwordHashKey);
+        $passwordHash = $request->session()->get($passwordHashKey);
+        $request->session()->forget($passwordHashKey);
         Auth::setUser($user);
 
         try {
             return $next($request);
         } finally {
             $this->deactivatePersistentIdentity($user);
+            $request->session()->forget($passwordHashKey);
 
             if ($authenticatedUser instanceof User) {
+                if ($hadPasswordHash) {
+                    $request->session()->put($passwordHashKey, $passwordHash);
+                }
                 Auth::setUser($authenticatedUser);
             } else {
                 Auth::forgetUser();

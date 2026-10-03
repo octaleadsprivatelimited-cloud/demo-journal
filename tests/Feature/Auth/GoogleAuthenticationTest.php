@@ -7,7 +7,9 @@ namespace Tests\Feature\Auth;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 final class GoogleAuthenticationTest extends TestCase
@@ -80,5 +82,75 @@ final class GoogleAuthenticationTest extends TestCase
 
         $this->assertAuthenticatedAs($reviewer->fresh());
         $this->assertSame('google-reviewer-id', $reviewer->fresh()->google_id);
+    }
+
+    public function test_google_login_preserves_a_signed_verification_destination_for_the_current_account(): void
+    {
+        $user = $this->googleAuthor('original@gmail.com');
+        $url = URL::temporarySignedRoute('verification.verify', now()->addHour(), [
+            'id' => $user->getKey(), 'hash' => sha1($user->getEmailForVerification()),
+        ]);
+        $this->fakeAuthorGoogleProfile();
+
+        $this->withSession([
+            'url.intended' => $url,
+            'google_oauth' => ['portal' => 'author', 'state' => hash('sha256', 'state')],
+        ])->get(route('google.callback', ['code' => 'code', 'state' => 'state']))
+            ->assertRedirect($url)->assertSessionMissing('url.intended')
+            ->assertSessionHas('password_hash_web', Auth::guard('web')->hashPasswordForCookie($user->getAuthPassword()));
+
+        $this->assertAuthenticatedAs($user);
+        $this->get($url)->assertRedirect(route('author.dashboard'));
+    }
+
+    public function test_google_login_does_not_verify_a_changed_local_email_with_the_original_google_email(): void
+    {
+        $user = $this->googleAuthor('changed@example.test');
+        $this->fakeAuthorGoogleProfile();
+
+        $this->withSession(['google_oauth' => ['portal' => 'author', 'state' => hash('sha256', 'state')]])
+            ->get(route('google.callback', ['code' => 'code', 'state' => 'state']))
+            ->assertRedirect(route('verification.notice'));
+
+        $this->assertAuthenticatedAs($user);
+        $this->assertFalse($user->fresh()->hasVerifiedEmail());
+        $this->get(route('author.dashboard'))->assertRedirect(route('verification.notice'));
+    }
+
+    public function test_the_google_author_portal_accepts_an_approved_contributor_without_staff_access(): void
+    {
+        $user = User::factory()->create(['email' => 'original@gmail.com', 'google_id' => 'google-author-id']);
+        $role = Role::query()->create(['slug' => 'contributor', 'name' => 'Contributor']);
+        $user->roles()->attach($role);
+        $this->fakeAuthorGoogleProfile();
+
+        $this->withSession(['google_oauth' => ['portal' => 'author', 'state' => hash('sha256', 'state')]])
+            ->get(route('google.callback', ['code' => 'code', 'state' => 'state']))
+            ->assertRedirect(route('author.dashboard'));
+
+        $this->assertAuthenticatedAs($user);
+        $this->get(route('author.dashboard'))->assertOk();
+        $this->get(route('editor.dashboard'))->assertForbidden();
+        $this->get(route('admin.dashboard'))->assertForbidden();
+    }
+
+    private function googleAuthor(string $email): User
+    {
+        $user = User::factory()->unverified()->create(['email' => $email, 'google_id' => 'google-author-id']);
+        $role = Role::query()->firstOrCreate(['slug' => 'author'], ['name' => 'Author']);
+        $user->roles()->attach($role);
+
+        return $user;
+    }
+
+    private function fakeAuthorGoogleProfile(): void
+    {
+        Http::fake([
+            'oauth2.googleapis.com/*' => Http::response(['access_token' => 'token']),
+            'openidconnect.googleapis.com/*' => Http::response([
+                'sub' => 'google-author-id', 'email' => 'original@gmail.com',
+                'email_verified' => true, 'name' => 'Google Author',
+            ]),
+        ]);
     }
 }

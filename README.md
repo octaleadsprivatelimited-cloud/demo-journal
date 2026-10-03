@@ -14,7 +14,7 @@ Singapore Journal of Cardiology is a production-oriented scholarly and professio
 
 ## Requirements
 
-The recommended path requires Docker Desktop or Docker Engine with Compose. A native installation requires PHP 8.3 or newer with `bcmath`, `ctype`, `fileinfo`, `gd`, `intl`, `mbstring`, `openssl`, `pdo_pgsql`, `tokenizer`, and `zip`; Composer 2; Node.js 22; PostgreSQL 15+; and Redis 7+.
+The recommended path requires Docker Desktop or Docker Engine with Compose. A native installation requires PHP 8.4.1 or newer with `bcmath`, `ctype`, `fileinfo`, `gd`, `intl`, `mbstring`, `openssl`, `pdo_pgsql`, `tokenizer`, and `zip`; Composer 2; Node.js 22; PostgreSQL 15+; and Redis 7+.
 
 ## Docker quick start
 

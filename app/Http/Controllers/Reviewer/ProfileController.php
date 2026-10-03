@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Reviewer;
 
 use App\Http\Controllers\Controller;
+use App\Services\CredentialRevocation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -61,7 +62,10 @@ final class ProfileController extends Controller
             'current_password' => ['required', 'current_password:web'],
             'password' => ['required', 'confirmed', Password::min(12)->mixedCase()->numbers()->symbols()],
         ]);
-        $request->user()->update(['password' => Hash::make($data['password']), 'remember_token' => null]);
+        DB::transaction(function () use ($request, $data): void {
+            $request->user()->update(['password' => Hash::make($data['password'])]);
+            app(CredentialRevocation::class)->revoke($request->user(), $request->session()->getId());
+        });
         $request->session()->regenerate();
 
         return back()->with('success', 'Password updated.');

@@ -6,8 +6,10 @@ use App\Models\Role;
 use App\Models\User;
 use Firebase\JWT\JWT;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 class GoogleOneTapTest extends TestCase
@@ -78,6 +80,20 @@ class GoogleOneTapTest extends TestCase
         $this->assertNull(session('google_one_tap.contributor'));
     }
 
+    public function test_an_approved_contributor_can_use_google_after_the_shared_author_dashboard_redirect(): void
+    {
+        $user = User::factory()->create(['email' => 'person@gmail.com', 'google_id' => 'google-person']);
+        $role = Role::create(['name' => 'Contributor', 'slug' => 'contributor']);
+        $user->roles()->attach($role);
+
+        $this->get(route('author.dashboard'))->assertRedirect(route('author.login'));
+        $this->signIn('author')->assertRedirect(route('author.dashboard'));
+        $this->assertAuthenticatedAs($user);
+        $this->get(route('author.dashboard'))->assertOk();
+        $this->get(route('editor.dashboard'))->assertForbidden();
+        $this->get(route('admin.dashboard'))->assertForbidden();
+    }
+
     public function test_invalid_audience_expiry_nonce_and_unverified_email_do_not_create_accounts(): void
     {
         foreach ([['aud' => 'wrong-client'], ['exp' => time() - 5], ['nonce' => 'wrong-nonce'], ['email_verified' => false], ['iss' => 'https://attacker.test']] as $claims) {
@@ -123,5 +139,51 @@ class GoogleOneTapTest extends TestCase
     {
         config(['services.google.enabled' => false]);
         $this->get('/author/login')->assertOk()->assertSee('name="password"', false);
+    }
+
+    public function test_one_tap_preserves_the_current_accounts_signed_verification_destination(): void
+    {
+        $user = $this->googleAuthor('person@gmail.com');
+        $url = URL::temporarySignedRoute('verification.verify', now()->addHour(), [
+            'id' => $user->getKey(), 'hash' => sha1($user->getEmailForVerification()),
+        ]);
+
+        $this->withSession(['url.intended' => $url]);
+        $this->signIn('author')->assertRedirect($url)->assertSessionMissing('url.intended')
+            ->assertSessionHas('password_hash_web', Auth::guard('web')->hashPasswordForCookie($user->getAuthPassword()));
+        $this->assertAuthenticatedAs($user);
+        $this->get($url)->assertRedirect(route('author.dashboard'));
+    }
+
+    public function test_one_tap_does_not_verify_a_changed_local_email_with_the_original_google_email(): void
+    {
+        $user = $this->googleAuthor('changed@example.test');
+
+        $this->signIn('author')->assertRedirect(route('verification.notice'));
+        $this->assertAuthenticatedAs($user);
+        $this->assertFalse($user->fresh()->hasVerifiedEmail());
+        $this->get(route('author.dashboard'))->assertRedirect(route('verification.notice'));
+    }
+
+    public function test_a_google_linked_pending_applicant_still_cannot_sign_in_or_verify_a_different_email(): void
+    {
+        $user = $this->googleAuthor('changed@example.test');
+        $user->update(['status' => 'pending', 'is_active' => false, 'requested_role' => 'author']);
+        $user->roles()->detach();
+
+        $this->signIn('author')->assertSessionHasErrors('email');
+        $this->assertGuest();
+        $this->assertFalse($user->fresh()->hasVerifiedEmail());
+        $this->assertSame('pending', $user->fresh()->status);
+        $this->assertFalse($user->fresh()->roles()->exists());
+    }
+
+    private function googleAuthor(string $email): User
+    {
+        $user = User::factory()->unverified()->create(['email' => $email, 'google_id' => 'google-person']);
+        $role = Role::query()->firstOrCreate(['slug' => 'author'], ['name' => 'Author']);
+        $user->roles()->attach($role);
+
+        return $user;
     }
 }

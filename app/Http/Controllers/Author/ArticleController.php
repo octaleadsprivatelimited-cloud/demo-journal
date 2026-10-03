@@ -15,11 +15,14 @@ use App\Models\WorkflowFile;
 use App\Services\ArticleVersionService;
 use App\Services\ManuscriptWorkflowService;
 use App\Services\MediaStorageService;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 final class ArticleController extends Controller
@@ -187,12 +190,25 @@ final class ArticleController extends Controller
     private function syncAuthors(ArticleRequest $request, Article $article): void
     {
         if ($request->filled('author_details')) {
-            $details = $request->input('author_details');
+            $details = $request->validated('author_details');
             abort_unless(array_key_exists($request->integer('corresponding_index'), $details), 422);
             $sync = [];
             foreach ($details as $index => $detail) {
                 // Manuscript-specific authors never overwrite another user's profile.
-                $author = Author::firstOrCreate($detail, ['is_active' => true, 'is_verified' => false]);
+                $attributes = Arr::only($detail, ['name', 'email', 'organization', 'department', 'country', 'orcid']);
+                $matchingAuthor = Author::query()->where($attributes)->first();
+                $orcid = $attributes['orcid'] ?? null;
+                if (! $matchingAuthor && filled($orcid) && Author::withTrashed()->where('orcid', $orcid)->exists()) {
+                    throw ValidationException::withMessages(['author_details.'.$index.'.orcid' => 'This ORCID is already saved with different author details. Check the ORCID or use the existing author profile details.']);
+                }
+                try {
+                    $author = $matchingAuthor ?? Author::firstOrCreate($attributes, ['user_id' => null, 'is_active' => true, 'is_verified' => false]);
+                } catch (UniqueConstraintViolationException $exception) {
+                    if (filled($orcid) && Author::withTrashed()->where('orcid', $orcid)->exists()) {
+                        throw ValidationException::withMessages(['author_details.'.$index.'.orcid' => 'This ORCID is already saved with different author details. Check the ORCID or use the existing author profile details.']);
+                    }
+                    throw $exception;
+                }
                 $sync[$author->id] = ['is_corresponding' => $index === $request->integer('corresponding_index'), 'sort_order' => $index];
             }
             $article->authors()->sync($sync);

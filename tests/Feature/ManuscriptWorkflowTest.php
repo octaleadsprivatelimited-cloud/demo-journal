@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\ArticleStatus;
 use App\Enums\ReviewStatus;
+use App\Enums\SubmissionStatus;
 use App\Models\Article;
 use App\Models\Author;
 use App\Models\IndexingService;
@@ -14,6 +15,8 @@ use App\Models\Role;
 use App\Models\User;
 use App\Models\WorkflowActivity;
 use App\Models\WorkflowFile;
+use App\Notifications\ArticleSubmittedNotification;
+use App\Notifications\ReviewAssignedNotification;
 use App\Notifications\WorkflowNotification;
 use App\Services\ArticleWorkflowService;
 use App\Services\ManuscriptWorkflowService;
@@ -23,6 +26,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
+use League\Flysystem\FilesystemException;
 use Tests\TestCase;
 
 class ManuscriptWorkflowTest extends TestCase
@@ -73,6 +77,42 @@ class ManuscriptWorkflowTest extends TestCase
         }
     }
 
+    public function test_complete_new_author_submission_opens_the_workflow_and_keeps_files_private(): void
+    {
+        $response = $this->actingAs($this->author)->post(route('author.articles.store'), [
+            'intent' => 'submit', 'title' => 'A new manuscript from the author wizard',
+            'abstract' => 'Complete abstract describing the study and its findings.',
+            'publication_type' => 'research', 'keywords' => 'cardiology, research',
+            'references' => 'Reference 1', 'corresponding_index' => 0,
+            'author_details' => [[
+                'name' => $this->author->name, 'email' => $this->author->email,
+                'organization' => 'Test University',
+            ]],
+            'declarations' => $this->declarations(),
+            'manuscript' => $this->pdf(), 'cover_letter' => $this->pdf('cover.pdf'),
+        ])->assertSessionHasNoErrors();
+        $article = Article::where('title', 'A new manuscript from the author wizard')->firstOrFail();
+        $response->assertRedirect(route('workflow.show', $article));
+        $this->get(route('workflow.show', $article))->assertOk()->assertSee('Manuscript submitted.');
+
+        $this->assertSame(ArticleStatus::Submitted, $article->status);
+        $this->assertSame('submitted', $article->workflow->stage);
+        $this->assertSame($this->author->id, $article->created_by_id);
+        $this->assertSame(1, $article->submissions()->count());
+        $this->assertSame(SubmissionStatus::Pending, $article->submissions()->firstOrFail()->status);
+        $files = WorkflowFile::where('article_id', $article->id)->get();
+        $this->assertCount(2, $files);
+        foreach ($files as $file) {
+            Storage::disk('local')->assertExists($file->path);
+            $this->get(route('workflow.download', $file))->assertOk()->assertDownload($file->original_name);
+        }
+        $this->get(route('articles.show', $article))->assertNotFound();
+        $this->actingAs($this->person('author'))->get(route('workflow.show', $article))->assertForbidden();
+        foreach ($files as $file) {
+            $this->get(route('workflow.download', $file))->assertForbidden();
+        }
+    }
+
     private function person(string $role): User
     {
         $u = User::factory()->create(['status' => 'active', 'is_active' => true, 'email_verified_at' => now()]);
@@ -96,6 +136,7 @@ class ManuscriptWorkflowTest extends TestCase
         if ($this->throughHttp) {
             $this->actingAs($actor ?? $this->editor)->post(route('workflow.action', $this->article), ['action' => $action] + $data)
                 ->assertRedirect(route('workflow.show', $this->article))->assertSessionHasNoErrors();
+
             return $this->article->workflow()->firstOrFail();
         }
 
@@ -169,6 +210,29 @@ class ManuscriptWorkflowTest extends TestCase
         $this->actingAs($this->editor)->post(route('workflow.action', $this->article), ['action' => 'accept', 'comments' => 'Cannot skip checks'])->assertSessionHasErrors('workflow');
         $this->expectException(\DomainException::class);
         app(ArticleWorkflowService::class)->transition($this->article, ArticleStatus::Published, $this->admin);
+    }
+
+    public function test_legacy_service_and_bulk_publication_cannot_publish_an_accepted_managed_manuscript(): void
+    {
+        $this->reachReview();
+        $this->act('accept', ['comments' => 'Accepted after independent review.']);
+        $this->assertSame(ArticleStatus::Approved, $this->article->fresh()->status);
+
+        try {
+            app(ArticleWorkflowService::class)->transition($this->article, ArticleStatus::Published, $this->admin);
+            $this->fail('Legacy publication must not skip the controlled production workflow.');
+        } catch (\DomainException $exception) {
+            $this->assertSame('Use the manuscript workflow actions for this record.', $exception->getMessage());
+        }
+
+        $this->actingAs($this->admin)->post(route('admin.articles.bulk'), [
+            'action' => 'publish', 'article_ids' => [$this->article->id],
+        ])->assertRedirect()->assertSessionHas('success', 'Bulk action completed for 0 article(s); 1 skipped due to workflow state.');
+
+        $this->assertSame(ArticleStatus::Approved, $this->article->fresh()->status);
+        $this->assertSame('accepted', $this->article->fresh()->workflow->stage);
+        $this->get(route('articles.show', $this->article))->assertNotFound();
+        $this->get(route('articles.index'))->assertOk()->assertDontSee($this->article->title);
     }
 
     public function test_private_reports_confidential_reviews_and_other_manuscripts_are_protected()
@@ -252,15 +316,16 @@ class ManuscriptWorkflowTest extends TestCase
 
     public function test_api_submission_cannot_skip_declarations()
     {
-        Sanctum::actingAs($this->author,['*']);
+        Sanctum::actingAs($this->author, ['*']);
         $this->postJson(route('api.author.articles.submit', $this->article))->assertUnprocessable();
-        $this->assertDatabaseCount('manuscript_workflows',0);
+        $this->assertDatabaseCount('manuscript_workflows', 0);
     }
+
     public function test_admin_assigns_editor_then_reviewer_after_author_submission(): void
     {
         $this->article->update(['assigned_editor_id' => null]);
         $this->submit();
-        Notification::assertSentTo($this->admin, \App\Notifications\ArticleSubmittedNotification::class);
+        Notification::assertSentTo($this->admin, ArticleSubmittedNotification::class);
         $this->actingAs($this->admin)->get(route('workflow.index'))->assertOk()->assertSee($this->article->title);
         $this->actingAs($this->editor)->get(route('workflow.show', $this->article))->assertForbidden();
         $this->actingAs($this->author)->post(route('workflow.assignment', $this->article), ['editor_id' => $this->editor->id, 'comments' => 'Attempted self assignment'])->assertForbidden();
@@ -277,11 +342,36 @@ class ManuscriptWorkflowTest extends TestCase
         $this->actingAs($this->admin)->post(route('workflow.action', $this->article), $invite)->assertRedirect()->assertSessionHasNoErrors();
         $review = $this->article->reviews()->firstOrFail();
         $this->assertSame($this->admin->id, $review->assigned_by_id);
-        Notification::assertSentTo($this->reviewer, \App\Notifications\ReviewAssignedNotification::class);
+        Notification::assertSentTo($this->reviewer, ReviewAssignedNotification::class);
         $this->actingAs($this->reviewer)->get(route('reviewer.reviews.show', $review))->assertOk();
         $this->post(route('reviewer.reviews.accept', $review))->assertRedirect()->assertSessionHasNoErrors();
         $this->assertSame('under_review', $this->article->fresh()->workflow->stage);
+        $this->assertSame(SubmissionStatus::InReview, $review->submission()->firstOrFail()->status);
+        $this->actingAs($this->author)->get(route('author.submissions.index'))->assertOk()->assertSee('In Review');
     }
+
+    public function test_accepting_a_revision_invitation_keeps_current_round_review_status_consistent(): void
+    {
+        $this->reachReview();
+        $originalSubmission = $this->article->submissions()->latest('round')->firstOrFail();
+        $this->act('major_revision', ['comments' => 'Clarify the analysis.', 'deadline' => now()->addDays(30)->toDateString()]);
+        $this->act('revise', ['declarations' => $this->declarations(), 'manuscript' => $this->pdf('revision.pdf'), 'response' => $this->pdf('response.pdf')], $this->author);
+        $this->act('reviewer_recheck');
+        $this->act('assign_reviewer', [
+            'reviewer_id' => $this->reviewer->id, 'deadline' => now()->addDays(21)->toDateString(),
+            'invitation_deadline' => now()->addDays(7)->toDateString(), 'editor_message' => 'Please review the revised analysis.',
+        ]);
+        $review = $this->article->reviews()->latest('id')->firstOrFail();
+
+        $this->actingAs($this->reviewer)->post(route('reviewer.reviews.accept', $review))->assertRedirect()->assertSessionHasNoErrors();
+
+        $this->assertSame('reviewer_recheck', $this->article->fresh()->workflow->stage);
+        $this->assertSame(ArticleStatus::UnderReview, $this->article->fresh()->status);
+        $this->assertSame(SubmissionStatus::InReview, $review->submission()->firstOrFail()->status);
+        $this->assertSame(SubmissionStatus::RevisionRequested, $originalSubmission->fresh()->status);
+        $this->actingAs($this->author)->get(route('author.submissions.index'))->assertOk()->assertSee('In Review');
+    }
+
     public function test_storage_outage_rolls_back_workflow_stage_and_file_records(): void
     {
         $this->article->workflow()->create(['stage' => 'plagiarism_check']);
@@ -294,7 +384,7 @@ class ManuscriptWorkflowTest extends TestCase
                 'report' => UploadedFile::fake()->createWithContent('paper.pdf', "%PDF-1.4\npaper"),
             ]);
             $this->fail('A failed upload must not complete the workflow action.');
-        } catch (\League\Flysystem\FilesystemException $exception) {
+        } catch (FilesystemException $exception) {
             $this->assertSame('plagiarism_check', $this->article->workflow()->first()->stage);
             $this->assertSame(0, WorkflowFile::where('article_id', $this->article->id)->count());
             $this->assertSame(0, WorkflowActivity::where('article_id', $this->article->id)->count());

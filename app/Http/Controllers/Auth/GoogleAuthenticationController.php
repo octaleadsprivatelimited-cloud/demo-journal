@@ -8,13 +8,16 @@ use App\Http\Controllers\Controller;
 use App\Models\Author;
 use App\Models\User;
 use App\Services\AccountApplicationNotifications;
-use App\Support\PortalDestination;
+use App\Services\GoogleIdTokenVerifier;
+use App\Services\PublicationSettings;
+use App\Support\PortalLoginRedirect;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 final class GoogleAuthenticationController extends Controller
@@ -102,7 +105,7 @@ final class GoogleAuthenticationController extends Controller
             ?? User::query()->where('email', $email)->first();
 
         if (! $user) {
-            if ($portal === 'author' && ! app(\App\Services\PublicationSettings::class)->featureEnabled('author_registration')) {
+            if ($portal === 'author' && ! app(PublicationSettings::class)->featureEnabled('author_registration')) {
                 return $this->failure($portal, '[registration_closed] New author registration is currently closed.');
             }
             $user = $this->createPendingApplicant($profile, $email, $googleId, self::PORTAL_ROLES[$portal]);
@@ -125,7 +128,8 @@ final class GoogleAuthenticationController extends Controller
         $user->forceFill([
             'google_id' => $googleId,
             'google_avatar_url' => is_string($profile['picture'] ?? null) ? $profile['picture'] : $user->google_avatar_url,
-            'email_verified_at' => $user->email_verified_at ?? now(),
+            'email_verified_at' => $user->email_verified_at
+                ?? (Str::lower($user->email) === $email ? now() : null),
         ])->save();
 
         if (! $user->isActive()) {
@@ -141,7 +145,7 @@ final class GoogleAuthenticationController extends Controller
         Auth::login($user, true);
         $request->session()->regenerate();
 
-        return redirect()->route(PortalDestination::routeNameForPortal($portal))
+        return PortalLoginRedirect::forPortal($request, $user, $portal)
             ->with('success', 'Welcome back, '.$user->name.'.');
     }
 
@@ -180,7 +184,7 @@ final class GoogleAuthenticationController extends Controller
     private function canAccessPortal(User $user, string $portal): bool
     {
         return match ($portal) {
-            'author' => $user->hasRole('author'),
+            'author' => $user->hasAnyRole('author', 'contributor'),
             'contributor' => $user->hasRole('contributor'),
             'editor' => $user->hasRole('editor'),
             'reviewer' => $user->hasRole('reviewer'),
@@ -193,25 +197,27 @@ final class GoogleAuthenticationController extends Controller
         return redirect()->route($portal.'.login')->withErrors(['email' => $message]);
     }
 
-    public function oneTap(Request $request, string $portal, \App\Services\GoogleIdTokenVerifier $verifier): RedirectResponse
+    public function oneTap(Request $request, string $portal, GoogleIdTokenVerifier $verifier): RedirectResponse
     {
         $this->assertEnabled();
         $request->validate(['credential' => ['required', 'string', 'max:16384']]);
         $challenge = $request->session()->pull('google_one_tap.'.$portal);
-        if (!is_array($challenge) || ($challenge['expires'] ?? 0) < time()) {
+        if (! is_array($challenge) || ($challenge['expires'] ?? 0) < time()) {
             return $this->failure($portal, '[google_session_expired] Reload this page and try Google sign-in again.');
         }
         try {
             $profile = $verifier->verify($request->string('credential')->toString());
-        } catch (\Illuminate\Validation\ValidationException $exception) {
+        } catch (ValidationException $exception) {
             return $this->failure($portal, $exception->errors()['google'][0]);
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             report($exception);
+
             return $this->failure($portal, '[google_unavailable] Google sign-in is temporarily unavailable. Please try again.');
         }
-        if (!is_string($profile['nonce'] ?? null) || !hash_equals($challenge['nonce'], $profile['nonce'])) {
+        if (! is_string($profile['nonce'] ?? null) || ! hash_equals($challenge['nonce'], $profile['nonce'])) {
             return $this->failure($portal, '[google_session_expired] This sign-in does not match your session. Reload and try again.');
         }
+
         return $this->complete($request, $portal, $profile);
     }
 

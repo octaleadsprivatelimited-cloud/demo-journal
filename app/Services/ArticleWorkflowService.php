@@ -68,6 +68,9 @@ class ArticleWorkflowService
     ): Article {
         return DB::transaction(function () use ($article, $to, $actor, $note, $scheduledFor): Article {
             $article = Article::query()->lockForUpdate()->findOrFail($article->getKey());
+            if ($article->workflow) {
+                throw new DomainException('Use the manuscript workflow actions for this record.');
+            }
             $from = $article->status;
             $this->assertTransition($from, $to);
 
