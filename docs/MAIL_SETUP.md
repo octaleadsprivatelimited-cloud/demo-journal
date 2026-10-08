@@ -38,10 +38,12 @@ php artisan mail:check --authenticate
 
 `mail:check` displays only non-secret settings. `--authenticate` opens an SMTP connection and authenticates without sending mail. A successful result establishes connectivity and credentials, not inbox delivery. Send a real configuration test only with the owner's authorization, then verify receipt and spam placement.
 
-Hostinger already runs a worker every minute:
+The Hostinger worker runs every minute through a guarded entry point:
 
 ```sh
-php artisan queue:work --queue=default,mail --stop-when-empty --max-time=50 --tries=3
+php /home/u709299470/domains/sjcjournal.com/journal_app/scripts/hostinger-mail-worker.php
 ```
 
-Keep that worker and `schedule:run` enabled. Check `php artisan queue:failed` if delivery fails. After fixing the cause, retry only the affected failed job IDs; inspect recipients and avoid bulk replay of obsolete notices. Logs and backups of `.env` must remain private.
+The entry point preserves queued messages while SMTP credentials are missing or the mailer is `log`. Once production SMTP is configured, it processes `default,mail` with a 50-second limit and three attempts. Keep that worker and `schedule:run` enabled. Both cron paths must use `domains/sjcjournal.com`; the old temporary domain folder no longer exists. Scheduled commands run in-process because this shared hosting installation disables `proc_open`.
+
+Check `php artisan queue:failed` if delivery fails. After fixing the cause, retry only the affected failed job IDs; inspect recipients and avoid bulk replay of obsolete notices. Logs and backups of `.env` must remain private. After deploying new PHP classes, regenerate the production Composer class map; this installation uses an authoritative optimized map.
