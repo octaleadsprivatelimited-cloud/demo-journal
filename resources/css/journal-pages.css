@@ -39,3 +39,5 @@
 .journal-information .article-body ol{list-style:decimal}.journal-information .article-body li{padding-left:4px;margin-bottom:8px}
 .journal-information .article-body a{color:#235944;text-decoration:underline;text-underline-offset:3px}.journal-information .article-body a:hover{color:#986035}
 .journal-information .article-body strong{font-weight:700}.journal-information .article-body blockquote{border-left:3px solid #b9c9bd;padding-left:18px;margin:20px 0}
+/* Keep long article titles proportionate to the reading layout. */
+.article-page .article-header-main>h1{font-size:clamp(1.75rem,3.2vw,3rem);line-height:1.15;letter-spacing:-.035em;overflow-wrap:break-word}
