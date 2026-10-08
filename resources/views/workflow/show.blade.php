@@ -1,7 +1,7 @@
 @extends('layouts.portal')
 @section('title',$article->title) @section('section','Manuscript workflow') @section('page-title',$article->title)
 @section('page-description',$article->workflow?->manuscript_id??'Complete your draft and submit it for editorial assessment.')
-@section('page-actions')<a class="portal-button" href="{{ route('workflow.index') }}">All manuscripts</a>@if($article->created_by_id===auth()->id() && in_array($article->workflow?->stage??$article->status->value,['draft','returned','minor_revision','major_revision']))<a class="portal-button" href="{{ route('author.articles.edit',$article) }}">Edit manuscript details</a>@endif @endsection
+@section('page-actions')<a class="portal-button" href="{{ route('workflow.index') }}">All manuscripts</a>@if($article->status===\App\Enums\ArticleStatus::Published)<a class="portal-button primary" href="{{ route('articles.show',$article) }}">View published article</a>@endif @if($article->created_by_id===auth()->id() && in_array($article->workflow?->stage??$article->status->value,['draft','returned','minor_revision','major_revision']))<a class="portal-button" href="{{ route('author.articles.edit',$article) }}">Edit manuscript details</a>@endif @endsection
 @section('content')
 @if(auth()->user()->hasAnyRole('admin','super-admin'))<p><a class="portal-button" href="{{ route('admin.uploads.index',['article'=>$article->id]) }}">Manage uploaded files — replace, delete, or upload</a></p>@endif
 

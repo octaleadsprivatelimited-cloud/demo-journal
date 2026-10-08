@@ -15,7 +15,7 @@
     <div class="metric-grid">
         <x-portal.metric label="Pending submissions" :value="$stats['pending']" tone="gold" hint="Awaiting editorial review" />
         <x-portal.metric label="Under review" :value="$stats['underReview']" tone="blue" hint="Currently being assessed" />
-        <x-portal.metric label="Approved" :value="$stats['approved']" hint="Ready for publication" />
+        <x-portal.metric label="Approved" :value="$stats['approved']" hint="Accepted for production" />
         <x-portal.metric label="Scheduled" :value="$stats['scheduled']" hint="Queued for release" />
     </div>
 

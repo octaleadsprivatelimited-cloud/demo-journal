@@ -340,19 +340,34 @@ class ManuscriptWorkflowService
             $workflow->save();
             $article->touch();
             $this->log($article, $actor, $action, $from, $workflow->stage, $v['comments'] ?? null, collect($v)->except(['manuscript', 'cover_letter', 'supplementary', 'response', 'report', 'edited_manuscript', 'galley', 'correction', 'final_pdf'])->all(), ! in_array($action, ['pass_similarity', 'save_similarity', 'assign_reviewer'], true));
-            $this->notify($article, $definition['label'], $actor);
+            // Submission events already send the author receipt and editorial alerts.
+            if (! in_array($action, ['submit', 'revise'], true)) {
+                $message = match ($action) {
+                    'accept' => 'Manuscript accepted',
+                    'reject' => 'Manuscript rejected',
+                    'return' => 'Manuscript returned for corrections',
+                    'minor_revision' => 'Minor revision requested',
+                    'major_revision' => 'Major revision requested',
+                    'send_proof' => 'Galley proof ready for approval',
+                    'approve_proof' => 'Final proof approved',
+                    'publish' => 'Article published',
+                    default => $definition['label'],
+                };
+                // The publication event sends the author's status notification.
+                $this->notify($article, $message, $actor, $action === 'publish' ? [$article->created_by_id] : []);
+            }
 
             return $workflow;
         });
     }
 
-    public function notify(Article $article,string $message,User $actor): void
+    public function notify(Article $article, string $message, User $actor, array $excludedIds = []): void
     {
         $ids = [$article->created_by_id, $article->assigned_editor_id];
-        $admins = User::active()->whereHas('roles',fn ($q) => $q->whereIn('slug',['admin', 'super-admin']))->pluck('id');
-        foreach (User::active()->whereIn('id',array_unique(array_filter(array_merge($ids,$admins->all()))))->get() as $user) {
-            if ($user->id !== $actor->id) {
-                $user->notify(new WorkflowNotification($article->id,$message));
+        $admins = User::active()->whereHas('roles', fn ($q) => $q->whereIn('slug', ['admin', 'super-admin']))->pluck('id');
+        foreach (User::active()->whereIn('id', array_unique(array_filter(array_merge($ids, $admins->all()))))->get() as $user) {
+            if ($user->id !== $actor->id && ! in_array($user->id, $excludedIds, true)) {
+                $user->notify(new WorkflowNotification($article->id, $message));
             }
         }
     }

@@ -83,7 +83,7 @@ class WorkflowOperationsController extends Controller
                 $review = $a->reviews()->whereKey($v['review_id'] ?? 0)->lockForUpdate()->firstOrFail();
                 abort_unless(in_array($review->status->value, ['assigned', 'in_progress']), 409);
                 $review->update([$v['kind'] === 'invitation' ? 'invitation_deadline' : 'due_at' => $v['deadline']]);
-                $review->reviewer->notify(new WorkflowNotification($a->id, 'Review deadline updated'));
+                $review->reviewer->notify(new WorkflowNotification($a->id, 'Review deadline updated', $review));
             }$service->log($a, $request->user(), 'deadline_updated', $w->stage, $w->stage, $v['comments'], $v);
             $service->notify($a, 'Manuscript deadline updated', $request->user());
         });
@@ -111,8 +111,8 @@ class WorkflowOperationsController extends Controller
 
     public function reviewFile(Request $request, Review $review)
     {
-        abort_unless(app(ManuscriptWorkflowService::class)->canEdit($request->user(),$review->article) || $request->user()->id === $review->reviewer_id, 403);
-        abort_unless($review->review_file_path && Storage::disk('local')->exists($review->review_file_path),404);
+        abort_unless(app(ManuscriptWorkflowService::class)->canEdit($request->user(), $review->article) || $request->user()->id === $review->reviewer_id, 403);
+        abort_unless($review->review_file_path && Storage::disk('local')->exists($review->review_file_path), 404);
 
         return Storage::disk('local')->download($review->review_file_path);
     }

@@ -55,13 +55,13 @@ Never place a real production password in a seeder or committed environment file
 
 Each staff role has a dedicated sign-in and application page: `/author/login`, `/editor/login`, `/reviewer/login`, and `/admin/login`, with matching `/author/register`, `/editor/register`, `/reviewer/register`, and `/admin/register` application routes.
 
-New applications remain signed out, inactive, unverified, and without permissions until a Super Admin approves them. The requested role is taken from the server-owned registration route, not from editable form input. Approval activates the account, assigns only the requested role, and starts email verification. Rejection does not grant portal access.
+New applications receive an email verification link immediately and remain signed out, inactive, and without permissions until a Super Admin approves them. Portal access requires both a verified email address and approval, in either order. The requested role is taken from the server-owned registration route, not from editable form input. Approval activates the account and assigns only the requested role; rejection does not grant portal access.
 
 Super Admins control users, applications, roles, permissions, and site settings. Admins operate publication content, Editors manage the editorial workflow, Reviewers access only assigned manuscripts, and Authors manage only their own work. There is no public Super Admin registration path.
 
 ## Workflow email and Google sign-in
 
-The application queues both database and email notifications for submission receipts, new editorial submissions, reviewer assignments (including reassignment or changed due dates), completed reviewer reports, and article status decisions. Authors never receive confidential reviewer notes by email.
+The application queues both database and email notifications for submission receipts, new editorial submissions, reviewer assignments (including reassignment or changed due dates), completed reviewer reports, and article status decisions. Authors never receive confidential reviewer notes by email. Workflow updates include the manuscript title, ID, stage, applicable deadline, and a link to the relevant manuscript or review. Submission and publication events send one author notification per event. See the [8 October workflow verification](docs/WORKFLOW_VERIFICATION_20261008.md) for the tested journey and deployment scope.
 
 For local development, leave the SMTP settings pointed at Mailpit and inspect messages at `http://localhost:8025`. For a live mail provider, set `MAIL_MAILER=smtp` and provide the provider host, port, username, password, encryption scheme, and verified `MAIL_FROM_ADDRESS` in the deployment environment. The queue worker must remain running for delivery.
 

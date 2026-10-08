@@ -8,8 +8,8 @@ use App\Models\Article;
 use App\Models\Submission;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\AnonymousNotifiable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class ArticleSubmittedNotification extends Notification implements ShouldQueue
@@ -33,8 +33,9 @@ class ArticleSubmittedNotification extends Notification implements ShouldQueue
             ->subject('New article submission: '.$this->article->title)
             ->greeting('Hello '.($notifiable->name ?? 'Editorial office').',')
             ->line('A new manuscript has been submitted for editorial review.')
+            ->line('Manuscript: '.$this->article->title)
             ->line('Submission round: '.$this->submission->round)
-            ->action('Review submission', rtrim((string) config('app.url'), '/').'/admin/submissions/'.$this->submission->getKey());
+            ->action('Review submission', route('admin.submissions.show', $this->submission));
     }
 
     /** @return array<string, mixed> */
@@ -45,6 +46,7 @@ class ArticleSubmittedNotification extends Notification implements ShouldQueue
             'article_id' => $this->article->public_id,
             'submission_id' => $this->submission->getKey(),
             'title' => $this->article->title,
+            'url' => route('admin.submissions.show', $this->submission),
         ];
     }
 }

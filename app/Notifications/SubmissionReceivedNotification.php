@@ -17,7 +17,7 @@ class SubmissionReceivedNotification extends Notification implements ShouldQueue
 
     public function __construct(public Article $article, public Submission $submission)
     {
-        $this->afterCommit();
+        $this->onQueue('mail')->afterCommit();
     }
 
     /** @return list<string> */
@@ -32,6 +32,8 @@ class SubmissionReceivedNotification extends Notification implements ShouldQueue
             ->subject('Submission received: '.$this->article->title)
             ->greeting('Hello '.$notifiable->name.',')
             ->line('We have received your manuscript and logged it for editorial assessment.')
+            ->line('Manuscript: '.$this->article->title)
+            ->when($this->article->workflow?->manuscript_id, fn (MailMessage $mail) => $mail->line('Manuscript ID: '.$this->article->workflow->manuscript_id))
             ->line('Submission round: '.$this->submission->round)
             ->line('You will receive another update when its editorial or review status changes.')
             ->action('View manuscript', route('author.articles.show', $this->article));
@@ -46,6 +48,7 @@ class SubmissionReceivedNotification extends Notification implements ShouldQueue
             'submission_id' => $this->submission->getKey(),
             'title' => $this->article->title,
             'round' => $this->submission->round,
+            'url' => route('author.articles.show', $this->article),
         ];
     }
 }

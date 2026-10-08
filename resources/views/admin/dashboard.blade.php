@@ -19,9 +19,9 @@
  <div class="portal-card-head"><div><h2>Article workflow</h2><p>Follow these steps for every manuscript submitted by an author.</p></div><a class="portal-button small" href="{{ route('workflow.index') }}">Open workflow</a></div>
  <div class="portal-card-body"><div class="admin-flow-steps">
   <a class="admin-flow-step" href="{{ route('admin.submissions.index',['status'=>'pending']) }}"><span class="admin-flow-number">1</span><strong>New submissions</strong><small>{{ $stats['pending'] }} waiting for an editorial check</small></a>
-  <a class="admin-flow-step" href="{{ route('workflow.index',['stage'=>'editorial_screening']) }}"><span class="admin-flow-number">2</span><strong>Assign an editor</strong><small>Open the manuscript and choose its handling editor</small></a>
+  <a class="admin-flow-step" href="{{ route('workflow.index',['unassigned'=>1]) }}"><span class="admin-flow-number">2</span><strong>Assign an editor</strong><small>Open the manuscript and choose its handling editor</small></a>
   <a class="admin-flow-step" href="{{ route('admin.assign-reviewer.index') }}"><span class="admin-flow-number">3</span><strong>Assign reviewers</strong><small>{{ $stats['underReview'] }} currently under review</small></a>
-  <a class="admin-flow-step" href="{{ route('workflow.index',['publication_status'=>'approved']) }}"><span class="admin-flow-number">4</span><strong>Make a decision</strong><small>{{ $stats['approved'] }} approved for production or publication</small></a>
+  <a class="admin-flow-step" href="{{ route('workflow.index',['stages'=>['under_review','revision_submitted','editor_recheck','reviewer_recheck']]) }}"><span class="admin-flow-number">4</span><strong>Make a decision</strong><small>Assess completed reviews and revised manuscripts</small></a>
   <a class="admin-flow-step" href="{{ route('admin.articles.index',['status'=>'published']) }}"><span class="admin-flow-number">5</span><strong>Publish</strong><small>{{ $stats['published'] }} visible on the website</small></a>
  </div></div>
 </section>

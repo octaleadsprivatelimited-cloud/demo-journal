@@ -16,7 +16,7 @@ class ReviewCompletedNotification extends Notification implements ShouldQueue
 
     public function __construct(public Review $review, public bool $forAuthor)
     {
-        $this->afterCommit();
+        $this->onQueue('mail')->afterCommit();
     }
 
     /** @return list<string> */
@@ -34,6 +34,7 @@ class ReviewCompletedNotification extends Notification implements ShouldQueue
                 ->subject('Review update: '.$article->title)
                 ->greeting('Hello '.$notifiable->name.',')
                 ->line('A reviewer report has been received for your manuscript.')
+                ->line('Manuscript: '.$article->title)
                 ->line('Any author-facing feedback is available in your manuscript workspace.')
                 ->action('View manuscript', route('author.articles.show', $article));
         }
@@ -42,6 +43,7 @@ class ReviewCompletedNotification extends Notification implements ShouldQueue
             ->subject('Review completed: '.$article->title)
             ->greeting('Hello '.$notifiable->name.',')
             ->line('A reviewer has completed their report for this manuscript.')
+            ->line('Manuscript: '.$article->title)
             ->line('Open the editorial review record to assess the recommendation and next action.')
             ->action('Open review', route('admin.reviews.show', $this->review));
     }
@@ -58,6 +60,7 @@ class ReviewCompletedNotification extends Notification implements ShouldQueue
             'article_id' => $article->public_id,
             'title' => $article->title,
             'recommendation' => $this->review->recommendation?->value,
+            'url' => $this->forAuthor ? route('author.articles.show', $article) : route('admin.reviews.show', $this->review),
         ];
     }
 }

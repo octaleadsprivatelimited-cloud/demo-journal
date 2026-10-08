@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ArticleStatus;
 use App\Models\Article;
 use App\Models\IndexingService;
 use App\Models\JournalIssue;
@@ -27,10 +28,11 @@ class WorkflowController extends Controller
             return redirect()->route('reviewer.dashboard');
         }
         $query = $this->workflow->scope(Article::query(), $user);
+        $query->when($request->boolean('unassigned'), fn ($q) => $q->whereNull('assigned_editor_id')->whereIn('status', [ArticleStatus::Submitted, ArticleStatus::UnderReview, ArticleStatus::RevisionRequired, ArticleStatus::Approved, ArticleStatus::Production]));
         $counts = (clone $query)->leftJoin('manuscript_workflows', 'articles.id', '=', 'manuscript_workflows.article_id')->selectRaw('coalesce(manuscript_workflows.stage, articles.status) as stage, count(*) as total')->groupByRaw('coalesce(manuscript_workflows.stage, articles.status)')->pluck('total', 'stage');
         $selectedStages = array_values(array_intersect((array) $request->input('stages', []), array_merge(config('workflow.stages'), ['revision_required', 'approved'])));
         $query->when($selectedStages, fn ($q) => $q->where(fn ($q) => $q->whereHas('workflow', fn ($w) => $w->whereIn('stage', $selectedStages))->orWhere(fn ($q) => $q->whereDoesntHave('workflow')->whereIn('status', $selectedStages))));
-        $listing = $query->with(['workflow', 'creator', 'assignedEditor', 'reviews.reviewer'])->when($request->filled('stage'), fn ($q) => $q->whereHas('workflow', fn ($w) => $w->where('stage', $request->input('stage'))))->when($request->filled('q'), fn ($q) => $q->where(fn ($q) => $q->where('title', 'like', '%'.$request->input('q').'%')->orWhereHas('workflow', fn ($w) => $w->where('manuscript_id', 'like', '%'.$request->input('q').'%'))))->when($request->filled('author'), fn ($q) => $q->whereHas('creator', fn ($u) => $u->where('name', 'like', '%'.$request->input('author').'%')))->when($request->filled('reviewer'), fn ($q) => $q->whereHas('reviews', fn ($r) => $r->where('reviewer_id', $request->input('reviewer'))))->when($request->filled('type'), fn ($q) => $q->where('publication_type', $request->input('type')))->when($request->filled('date'), fn ($q) => $q->whereDate('submitted_at', $request->input('date')))->when($request->filled('publication_status'), fn ($q) => $q->where('status', $request->input('publication_status')))->latest('articles.updated_at');
+        $listing = $query->with(['workflow', 'creator', 'assignedEditor', 'reviews.reviewer'])->when($request->filled('stage'), fn ($q) => $q->where(fn ($q) => $q->whereHas('workflow', fn ($w) => $w->where('stage', $request->input('stage')))->orWhere(fn ($q) => $q->whereDoesntHave('workflow')->where('status', $request->input('stage')))))->when($request->filled('q'), fn ($q) => $q->where(fn ($q) => $q->where('title', 'like', '%'.$request->input('q').'%')->orWhereHas('workflow', fn ($w) => $w->where('manuscript_id', 'like', '%'.$request->input('q').'%'))))->when($request->filled('author'), fn ($q) => $q->whereHas('creator', fn ($u) => $u->where('name', 'like', '%'.$request->input('author').'%')))->when($request->filled('reviewer'), fn ($q) => $q->whereHas('reviews', fn ($r) => $r->where('reviewer_id', $request->input('reviewer'))))->when($request->filled('type'), fn ($q) => $q->where('publication_type', $request->input('type')))->when($request->filled('date'), fn ($q) => $q->whereDate('submitted_at', $request->input('date')))->when($request->filled('publication_status'), fn ($q) => $q->where('status', $request->input('publication_status')))->latest('articles.updated_at');
         if ($request->input('export') === 'csv') {
             return response()->streamDownload(function () use ($listing) {
                 $out = fopen('php://output', 'w');
@@ -142,15 +144,15 @@ class WorkflowController extends Controller
         DB::transaction(function () use ($article, $v, $request) {
             $a = Article::whereKey($article->id)->lockForUpdate()->firstOrFail();
             $w = $a->workflow;
-            abort_unless($w && ! in_array($w->stage,['published', 'indexing', 'indexed', 'archived']), 409);
+            abort_unless($w && ! in_array($w->stage, ['published', 'indexing', 'indexed', 'archived']), 409);
             $from = $w->stage;
             $d = $w->data ?? [];
-            abort_if($v['stage'] === 'copyediting' && empty($d['acceptance']),422,'Accept the manuscript before copyediting.');
+            abort_if($v['stage'] === 'copyediting' && empty($d['acceptance']), 422, 'Accept the manuscript before copyediting.');
             unset($d['proof_approval'],$d['metadata']);
             $w->update(['stage' => $v['stage'], 'deadline' => null, 'data' => $d]);
-            $this->workflow->log($a,$request->user(),'super_admin_override',$from,$v['stage'],$v['comments']);
+            $this->workflow->log($a, $request->user(), 'super_admin_override', $from, $v['stage'], $v['comments']);
         });
 
-        return back()->with('success','Override recorded in the activity log.');
+        return back()->with('success', 'Override recorded in the activity log.');
     }
 }

@@ -6,6 +6,7 @@ namespace App\Notifications;
 
 use App\Enums\ArticleStatus;
 use App\Models\Article;
+use App\Services\EmailPresentation;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -17,7 +18,7 @@ class ArticleStatusChangedNotification extends Notification implements ShouldQue
 
     public function __construct(public Article $article, public ArticleStatus $status, public ?string $note = null)
     {
-        $this->afterCommit();
+        $this->onQueue('mail')->afterCommit();
     }
 
     /** @return list<string> */
@@ -28,7 +29,7 @@ class ArticleStatusChangedNotification extends Notification implements ShouldQue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $message = (new MailMessage)->markdown('notifications::email', ['templateType' => \App\Services\EmailPresentation::type($this->status->label())])
+        $message = (new MailMessage)->markdown('notifications::email', ['templateType' => EmailPresentation::type($this->status->label())])
             ->subject("Article {$this->status->label()}: {$this->article->title}")
             ->greeting('Hello '.$notifiable->name.',')
             ->line("Your article status is now {$this->status->label()}.");
@@ -37,7 +38,7 @@ class ArticleStatusChangedNotification extends Notification implements ShouldQue
             $message->line($this->note);
         }
 
-        return $message->action('View article', rtrim((string) config('app.url'), '/').'/author/articles/'.$this->article->slug.'/edit');
+        return $message->action('View article', route('author.articles.show', $this->article));
     }
 
     /** @return array<string, mixed> */
@@ -49,6 +50,7 @@ class ArticleStatusChangedNotification extends Notification implements ShouldQue
             'title' => $this->article->title,
             'status' => $this->status->value,
             'note' => $this->note,
+            'url' => route('author.articles.show', $this->article),
         ];
     }
 }

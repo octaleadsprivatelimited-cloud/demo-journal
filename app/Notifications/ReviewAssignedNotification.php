@@ -16,7 +16,7 @@ class ReviewAssignedNotification extends Notification implements ShouldQueue
 
     public function __construct(public Review $review)
     {
-        $this->afterCommit();
+        $this->onQueue('mail')->afterCommit();
     }
 
     /** @return list<string> */
@@ -33,8 +33,11 @@ class ReviewAssignedNotification extends Notification implements ShouldQueue
             ->subject('Review assignment: '.$article->title)
             ->greeting('Hello '.$notifiable->name.',')
             ->line('You have been assigned a manuscript to review.')
+            ->line('Manuscript: '.$article->title)
+            ->when($this->review->invitation_deadline && $this->review->status->value === 'assigned', fn (MailMessage $mail) => $mail->line('Respond to this invitation by: '.$this->review->invitation_deadline->toFormattedDateString()))
             ->when($this->review->due_at, fn (MailMessage $mail) => $mail->line('Due: '.$this->review->due_at->toFormattedDateString()))
-            ->action('Open review', rtrim((string) config('app.url'), '/').'/reviewer/reviews/'.$this->review->getKey());
+            ->when($this->review->editor_message, fn (MailMessage $mail) => $mail->line('Message from the editor: '.$this->review->editor_message))
+            ->action('Open review', route('reviewer.reviews.show', $this->review));
     }
 
     /** @return array<string, mixed> */
@@ -48,6 +51,8 @@ class ReviewAssignedNotification extends Notification implements ShouldQueue
             'article_id' => $article->public_id,
             'title' => $article->title,
             'due_at' => $this->review->due_at?->toIso8601String(),
+            'invitation_deadline' => $this->review->invitation_deadline?->toIso8601String(),
+            'url' => route('reviewer.reviews.show', $this->review),
         ];
     }
 }

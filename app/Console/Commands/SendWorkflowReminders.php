@@ -34,7 +34,7 @@ class SendWorkflowReminders extends Command
                 $recipients[] = $review->article->assigned_editor_id;
                 $recipients = array_merge($recipients, User::active()->whereHas('roles', fn ($q) => $q->whereIn('slug', ['admin', 'super-admin']))->pluck('id')->all());
             }
-            $sent += $this->send($key, $review->article_id, 'Review '.$type, $recipients);
+            $sent += $this->send($key, $review->article_id, 'Review '.$type, $recipients, $review);
         }
         foreach (ManuscriptWorkflow::with('article')->whereIn('stage', ['minor_revision', 'major_revision', 'proofing'])->whereNotNull('deadline')->where('deadline', '<=', now()->addDays(2))->cursor() as $w) {
             if (! $w->article) {
@@ -47,17 +47,17 @@ class SendWorkflowReminders extends Command
         return self::SUCCESS;
     }
 
-    private function send(string $key, int $articleId, string $message, array $ids): int
+    private function send(string $key, int $articleId, string $message, array $ids, ?Review $review = null): int
     {
-        return DB::transaction(function () use ($key, $articleId, $message, $ids) {
+        return DB::transaction(function () use ($key, $articleId, $message, $ids, $review) {
             if (! DB::table('workflow_reminders')->insertOrIgnore(['key' => $key, 'created_at' => now()])) {
                 return 0;
             }$users = User::active()->whereIn('id', array_unique(array_filter($ids)))->get();
             foreach ($users as $user) {
-                $user->notify(new WorkflowNotification($articleId,$message));
+                $user->notify(new WorkflowNotification($articleId, $message, $review));
             }
 
-return $users->count();
+            return $users->count();
         });
     }
 }
