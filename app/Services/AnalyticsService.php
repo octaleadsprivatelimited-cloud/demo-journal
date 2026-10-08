@@ -9,11 +9,48 @@ use App\Models\ArticleView;
 use App\Models\SearchLog;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class AnalyticsService
 {
+    /** Public, anonymous reader traffic only. Never expose account or manuscript data. */
+    public static function publicTracking(Request $request): array
+    {
+        if (! app()->environment('production') || ! config('publication.integrations.tracking_enabled')
+            || ! $request->isMethod('GET') || $request->user()
+            || $request->getHost() !== config('publication.integrations.tracking_host')
+            || ! $request->routeIs('home', 'journals.index', 'articles.index', 'articles.show', 'archive.*',
+                'categories.*', 'authors.*', 'about', 'resources', 'editorial-board', 'downloads', 'policies.*')) {
+            return [];
+        }
+        // Search terms, tokens, email addresses and arbitrary query parameters are never tracked.
+        foreach ($request->query() as $key => $value) {
+            if (! is_string($value) || ! in_array($key, ['page', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'], true)
+                || ! preg_match('/^[a-zA-Z0-9_-]{1,80}$/D', $value)
+                || ($key === 'page' && ! ctype_digit($value))) {
+                return [];
+            }
+        }
+        $ga = (string) config('publication.integrations.analytics_id');
+        $clarity = (string) config('publication.integrations.clarity_id');
+        $ids = array_filter([
+            'ga' => preg_match('/^G-[A-Z0-9]{6,20}$/D', $ga) ? $ga : null,
+            'clarity' => preg_match('/^[a-z0-9]{6,20}$/D', $clarity) ? $clarity : null,
+        ]);
+
+        $campaign = [];
+        foreach (['source', 'medium', 'campaign', 'content', 'term'] as $part) {
+            $key = $part === 'campaign' ? 'campaign_name' : 'campaign_'.$part;
+            if ($request->filled('utm_'.$part)) {
+                $campaign[$key] = $request->query('utm_'.$part);
+            }
+        }
+
+        return $ids ? [...$ids, 'page' => $request->url(), 'campaign' => $campaign] : [];
+    }
+
     public function recordArticleView(
         Article $article,
         ?User $user = null,

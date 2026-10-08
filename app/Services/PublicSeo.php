@@ -31,7 +31,7 @@ final class PublicSeo
 
     public static function paginated(): bool
     {
-        return request()->routeIs('articles.index', 'journals.index', 'archive.*', 'authors.*', 'categories.show', 'policies.index', 'corrections.index', 'search');
+        return request()->routeIs('articles.index', 'journals.index', 'archive.*', 'authors.*', 'people.*', 'categories.show', 'policies.index', 'corrections.index', 'search');
     }
 
     public static function canonical(string $url): string
@@ -46,7 +46,7 @@ final class PublicSeo
 
     public static function filteredListing(): bool
     {
-        if (! request()->routeIs('articles.index', 'journals.index', 'archive.index', 'authors.index', 'policies.index', 'corrections.index')) {
+        if (! request()->routeIs('articles.index', 'journals.index', 'archive.index', 'authors.index', 'people.index', 'policies.index', 'corrections.index')) {
             return false;
         }
 

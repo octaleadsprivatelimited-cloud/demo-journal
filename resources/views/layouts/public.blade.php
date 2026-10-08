@@ -18,6 +18,7 @@
         'name' => $siteName,
         'url' => url('/'),
         'description' => $pageDescription,
+        'keywords' => implode(', ', config('publication.seo_keywords', [])),
         'potentialAction' => [
             '@type' => 'SearchAction',
             'target' => route('search').'?q={search_term_string}',
@@ -58,7 +59,7 @@
     <script type="application/ld+json">{!! json_encode($structuredData ?? $defaultSchema, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) !!}</script>
     @stack('head')
 </head>
-<body class="site-shell antialiased">
+<body class="site-shell antialiased" data-clarity-mask="true">
     <a class="skip-link" href="#main-content">Skip to content</a>
     <div class="reading-progress" data-reading-progress aria-hidden="true"></div>
 
@@ -216,6 +217,7 @@
             <p>&copy; {{ now()->year }} {{ $siteName }}. All rights reserved.</p>
             <div>
                 <a href="https://www.octaleads.com" target="_blank" rel="noopener noreferrer">Developed by octaleads</a>
+                <a href="{{ route('policies.show', 'privacy') }}">Privacy</a>
                 <a href="{{ route('sitemap') }}">Sitemap</a>
                 <a href="{{ route('robots') }}">Robots</a>
             </div>
@@ -245,6 +247,7 @@
             </div>
         </div>
     </dialog>
+    @include('components.public.analytics')
     @stack('scripts')
 @include('components.error-popup')
 <script>{!! file_get_contents(resource_path('js/upload-guards.js')) !!}</script>

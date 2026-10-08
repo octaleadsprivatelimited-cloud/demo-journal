@@ -84,6 +84,25 @@ final class PublicSeoTest extends TestCase
             ->assertSee('Cardiology Research');
     }
 
+    public function test_homepage_describes_the_journal_topics_in_visible_copy_and_schema(): void
+    {
+        $response = $this->get('/')->assertOk()->assertSee('Explore open access cardiology research, clinical case reports and reviews in cardiovascular medicine.');
+        $this->assertStringContainsString('cardiology research', $this->schema($response->getContent())['keywords']);
+        $response->assertSee(route('policies.show', 'privacy'), false);
+    }
+
+    public function test_member_directory_pagination_and_filters_have_correct_indexing_metadata(): void
+    {
+        $this->get('/people?page=2')->assertOk()->assertSee('<link rel="canonical" href="'.url('/people').'?page=2">', false);
+        $this->get('/people?q=heart')->assertOk()->assertSee('<meta name="robots" content="noindex, follow">', false);
+    }
+
+    public function test_account_routes_are_not_indexed_and_robots_preserves_public_author_profiles(): void
+    {
+        $this->get('/login')->assertHeader('X-Robots-Tag', 'noindex, nofollow');
+        $this->get('/robots.txt')->assertOk()->assertSee('Disallow: /editor/', false)->assertSee('Disallow: /author/submissions', false)->assertDontSee('Disallow: /author/\n', false);
+    }
+
     private function schema(string $html): array
     {
         $this->assertSame(1, preg_match('/<script type="application\/ld\+json">(.*?)<\/script>/s', $html, $matches));

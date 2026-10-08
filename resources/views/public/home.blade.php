@@ -7,6 +7,7 @@
     <section class="home-intro">
         <div class="container">
             <h1 class="sr-only">{{ data_get($site, 'name', config('app.name')) }} — cardiology research and clinical case reports</h1>
+            <p class="home-research-summary">Explore open access cardiology research, clinical case reports and reviews in cardiovascular medicine.</p>
             <div class="issue-line">
                 <span>Current edition</span>
                 <strong>{{ now()->format('F Y') }}</strong>
@@ -56,8 +57,8 @@
             @else
                 <div class="editorial-welcome">
                     <p class="eyebrow">Singapore Journal of Cardiology</p>
-                    <h2>Serious thinking for a world in motion.</h2>
-                    <p>We publish rigorous, accessible work across research, culture, technology, and public life—made for readers who value depth over velocity.</p>
+                    <h2>Research for cardiovascular medicine.</h2>
+                    <p>Explore cardiology research, clinical case reports and reviews from the Singapore Journal of Cardiology.</p>
                     <div><a class="button button-primary" href="{{ route('articles.index') }}">Explore the journal</a><a class="button button-ghost" href="{{ route('about') }}">Our editorial mission</a></div>
                 </div>
             @endif
