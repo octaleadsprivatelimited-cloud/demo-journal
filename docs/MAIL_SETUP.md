@@ -8,6 +8,8 @@ Password registrations queue email verification immediately, before approval. Th
 
 The requested sender is a new Hostinger mailbox, `notifications@sjcjournal.com`. The editorial recipient remains `info@larixjournals.com`. Domain DNS is managed in GoDaddy. Mailbox creation, email DNS records and SMTP credentials must be completed before enabling delivery. The last production audit found the mailer set to `log`, so **external email delivery has not yet been verified**. Do not use a log fallback to claim successful inbox delivery.
 
+On 8 October 2026, Hostinger accepted domain ownership verification. GoDaddy's authoritative DNS serves the two Hostinger MX records (priorities 5 and 10), SPF, the three `hostingermail-{a,b,c}._domainkey` CNAMEs and an initial DMARC `p=none` policy. The mailbox creation form is prepared for `notifications@sjcjournal.com`; the owner must submit its password before SMTP can authenticate. The corrected scheduler runs successfully, and the guarded worker holds queued mail until SMTP is configured. An initial Super Admin owner still needs to be confirmed; every role requires approval.
+
 An ignored local `.env.mail` file is prepared for the mailbox owner to enter the new mailbox password privately. It is a staging file; Laravel does not load it automatically. Apply the completed settings to the private server `journal_app/.env`, outside `public_html`. Do not commit, upload publicly, or paste the password into chat.
 
 Expected settings, subject to confirmation from the mailbox provider:
