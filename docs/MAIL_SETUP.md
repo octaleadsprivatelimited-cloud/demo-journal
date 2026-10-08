@@ -12,6 +12,10 @@ On 8 October 2026, Hostinger accepted domain ownership verification. GoDaddy's a
 
 The ignored local `.env.mail` is a private staging file; Laravel does not load it automatically. The completed settings have been applied to server `journal_app/.env`, outside `public_html`. Credentials and configuration backups must remain private and must never be committed or uploaded under the web root.
 
+The initial Super Admin account has been created with an unknown random password and an unverified email address. Its setup email, **SJC Journal — Set up your Super Admin account**, arrived in the notifications inbox through the admin alias. The owner must use its private link to choose a website password, sign in as `admin@sjcjournal.com`, and verify the email before entering the dashboard. Setup links expire after 60 minutes; an expired password link can be replaced through `/forgot-password`, and email verification can be resent after signing in. No mailbox password is reused for the website account.
+
+The temporary mail-configuration cron was removed after mail delivery and initial account creation were confirmed. Its two private setup helpers were moved to the File Manager trash. Only the regular scheduler and guarded mail worker remain scheduled.
+
 Configured settings:
 
 ```dotenv
