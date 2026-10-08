@@ -7,11 +7,16 @@ namespace App\Services;
 use App\Models\User;
 use App\Notifications\AccountApplicationReceivedNotification;
 use App\Notifications\AccountApplicationStatusNotification;
+use Illuminate\Database\Eloquent\Collection;
 
 final class AccountApplicationNotifications
 {
     public function submitted(User $applicant): void
     {
+        if (! $applicant->hasVerifiedEmail()) {
+            $applicant->sendEmailVerificationNotification();
+        }
+
         $applicant->notify(new AccountApplicationStatusNotification($applicant, 'pending'));
         app(EditorialOfficeNotifications::class)->send(
             $this->approvers(),
@@ -32,7 +37,7 @@ final class AccountApplicationNotifications
         );
     }
 
-    private function approvers(): \Illuminate\Database\Eloquent\Collection
+    private function approvers(): Collection
     {
         return User::query()->active()->whereHas('roles', fn ($query) => $query->where('slug', 'super-admin'))->get();
     }

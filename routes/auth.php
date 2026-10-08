@@ -10,8 +10,16 @@ use App\Http\Controllers\Auth\GoogleAuthenticationController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\RegistrationVerificationController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/registration/verify-email/{id}/{hash}', [RegistrationVerificationController::class, 'verify'])
+    ->middleware(['signed', 'throttle:6,1'])->name('registration.verification.verify');
+Route::get('/registration/verification', [RegistrationVerificationController::class, 'show'])
+    ->name('registration.verification.notice');
+Route::post('/registration/verification', [RegistrationVerificationController::class, 'resend'])
+    ->middleware('throttle:3,1')->name('registration.verification.send');
 
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', [AuthenticatedSessionController::class, 'chooser'])->name('login');

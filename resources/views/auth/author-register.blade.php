@@ -21,7 +21,7 @@
         <div class="portal-field"><label for="password_confirmation">Confirm password</label><input class="portal-input" id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" required></div>
     </div>
     <div class="check-row"><input id="terms" name="terms" type="checkbox" value="1" required @checked(old('terms'))><label for="terms">I agree to the publication terms, research integrity standards, and privacy notice.</label></div><x-portal.field-error name="terms" />
-    <p class="portal-help">Your profile remains private and inactive until the website super-admin approves this application.</p>
+    <p class="portal-help">Use an email address you can access. Confirm it using the link emailed after signup. Your profile remains private and inactive until the website super-admin approves this application.</p>
     <button class="portal-button primary" type="submit" data-loading-text="Submitting application…">Submit author application</button>
     @include('auth._google-oauth', ['portal' => 'author'])
     <div class="auth-links"><span>Already approved? <a href="{{ route('author.login') }}">Author sign in</a></span><a href="{{ route('register') }}">Choose another account type</a></div>

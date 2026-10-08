@@ -14,6 +14,7 @@
         @isset($registrationRoute)<span>Need an account? <a href="{{ route($registrationRoute) }}">Create one</a></span>@endisset
         <a href="{{ route('login') }}">Choose another workspace</a>
     </div>
+    <p class="portal-help">Application awaiting approval? <a href="{{ route('registration.verification.notice') }}">Verify your email or request a fresh link</a>.</p>
 </form>
 
 @endif

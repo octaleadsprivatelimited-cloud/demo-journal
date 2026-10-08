@@ -114,6 +114,7 @@ final class GoogleAuthenticationController extends Controller
             return redirect()->route('registration.submitted')->with('application', [
                 'email' => $user->email,
                 'role' => Str::headline(self::PORTAL_ROLES[$portal]),
+                'email_verified' => $user->hasVerifiedEmail(),
             ]);
         }
 

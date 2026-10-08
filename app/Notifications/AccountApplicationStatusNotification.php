@@ -35,7 +35,10 @@ final class AccountApplicationStatusNotification extends Notification implements
         if ($this->status === 'pending') {
             return $mail->subject('Your '.$role.' account application was received')
                 ->line('Thank you for applying to '.config('publication.name').'.')
-                ->line('Your '.$role.' application is awaiting Super Admin approval. We will email you when a decision is made.');
+                ->line('Your '.$role.' application is awaiting Super Admin approval. We will email you when a decision is made.')
+                ->line($this->applicant->hasVerifiedEmail()
+                    ? 'Your email address has already been verified.'
+                    : 'Please confirm your email now using the separate verification message. Both email verification and Super Admin approval are required before access is granted.');
         }
 
         $approved = $this->status === 'active';
