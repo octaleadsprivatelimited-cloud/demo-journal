@@ -1,8 +1,20 @@
 @extends('layouts.portal')
 @section('title','My account')
 @section('page-title','My account')
-@section('page-description','Change your administrator sign-in email or password. Public website contact details are managed separately in Site settings.')
+@section('page-description','Manage your public profile, photo and administrator sign-in details.')
 @section('content')
+@unless($account->is_local_admin_bypass)
+<div class="portal-card"><div class="portal-card-head"><h2>Public profile</h2></div><div class="portal-card-body">
+<form class="portal-form" method="post" enctype="multipart/form-data" action="{{ route('admin.account.profile.update') }}" data-loading>
+@csrf @method('put')
+<div class="form-grid">
+<x-portal.profile-image :path="$account->profile_image_path" :name="$account->name" />
+@foreach(['name'=>'Full name','organization'=>'Organization','designation'=>'Designation'] as $field=>$label)
+<div class="portal-field"><label for="{{ $field }}">{{ $label }}</label><input class="portal-input" id="{{ $field }}" name="{{ $field }}" value="{{ old($field,$account->$field) }}" @required($field==='name')><x-portal.field-error :name="$field" /></div>
+@endforeach
+</div><button class="portal-button primary" type="submit">Save profile</button>
+</form></div></div>
+@endunless
 <div class="portal-card"><div class="portal-card-body">
 @if($account->is_local_admin_bypass)
 <p>You are using localhost demo access. Sign in with a real administrator account to change login credentials.</p>

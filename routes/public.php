@@ -34,6 +34,8 @@ Route::post('/article/{slug}/comments', [CommentController::class, 'store'])
     ->name('comments.store');
 
 Route::get('/authors', [AuthorController::class, 'index'])->name('authors.index');
+Route::get('/people', [PageController::class, 'people'])->name('people.index');
+Route::get('/people/{user}', [PageController::class, 'profile'])->whereNumber('user')->name('people.show');
 Route::get('/author/{slug}', [AuthorController::class, 'show'])
     ->where('slug', '(?!dashboard$|login$|register$|articles$|submissions$|reviews$|profile$|settings$)[a-z0-9]+(?:-[a-z0-9]+)*')
     ->name('authors.show');

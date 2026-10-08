@@ -90,10 +90,10 @@ class ArticleController extends PublicController
                 ->whereNull('parent_id')
                 ->approved()
                 ->with([
-                    'user:id,name,profile_image_path',
+                    'user:id,name,profile_image_path,status,is_active,email_verified_at',
                     'replies' => fn ($query) => $query
                         ->approved()
-                        ->with('user:id,name,profile_image_path')
+                        ->with('user:id,name,profile_image_path,status,is_active,email_verified_at')
                         ->oldest('approved_at'),
                 ])
                 ->oldest('approved_at')

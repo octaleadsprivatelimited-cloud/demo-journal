@@ -15,6 +15,7 @@
     </section>
     <section class="section">
         <div class="container">
+            <p><a class="text-link" href="{{ route('people.index') }}">View member profiles <x-public.icon name="arrow-right" /></a></p>
             <form class="directory-search" action="{{ route('authors.index') }}" method="get" role="search">
                 <label for="author-search">Find a contributor</label>
                 <div class="input-with-icon"><x-public.icon name="search" /><input id="author-search" name="q" type="search" value="{{ $term }}" placeholder="Search by name or institution"><button class="button button-primary" type="submit">Search</button></div>

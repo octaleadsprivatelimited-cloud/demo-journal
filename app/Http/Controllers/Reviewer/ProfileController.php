@@ -28,10 +28,13 @@ final class ProfileController extends Controller
             'expertise' => ['nullable', 'string', 'max:1000'],
             'research_interests' => ['nullable', 'string', 'max:2000'],
             'orcid' => ['nullable', 'regex:/^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$/'],
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
-        DB::transaction(function () use ($request, $data) {
+        $avatar = $request->file('avatar')?->store('reviewers/avatars', 'public');
+        DB::transaction(function () use ($request, $data, $avatar) {
             $user = $request->user()->newQuery()->lockForUpdate()->findOrFail($request->user()->id);
             $user->update(collect($data)->only(['name', 'organization', 'designation', 'phone'])->all() + [
+                'profile_image_path' => $avatar ?: $user->profile_image_path,
                 'reviewer_profile' => array_replace($user->reviewer_profile ?? [], collect($data)->only(['department', 'country', 'expertise', 'research_interests', 'orcid'])->all()),
             ]);
         });

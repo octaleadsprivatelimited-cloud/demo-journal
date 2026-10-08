@@ -33,6 +33,24 @@ class AccountController extends Controller
         return view('admin.email-templates', compact('templates'));
     }
 
+    public function updateProfile(Request $request)
+    {
+        abort_if($request->user()->is_local_admin_bypass, 403);
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'organization' => ['nullable', 'string', 'max:160'],
+            'designation' => ['nullable', 'string', 'max:120'],
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+        ]);
+        unset($data['avatar']);
+        if ($request->hasFile('avatar')) {
+            $data['profile_image_path'] = $request->file('avatar')->store('users/avatars', 'public');
+        }
+        $request->user()->update($data);
+
+        return back()->with('success', 'Public profile updated.');
+    }
+
     public function update(Request $request)
     {
         abort_if($request->user()->is_local_admin_bypass, 403, 'Use a real administrator account to change login credentials.');

@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements MustVerifyEmail
@@ -27,6 +28,15 @@ class User extends Authenticatable implements MustVerifyEmail
     ];
 
     protected $hidden = ['password', 'remember_token'];
+
+    protected static function booted(): void
+    {
+        static::updated(function (User $user): void {
+            if ($user->wasChanged('profile_image_path')) {
+                $user->author()->first()?->update(['avatar_path' => $user->profile_image_path]);
+            }
+        });
+    }
 
     /**
      * Get the attributes that should be cast.
@@ -122,12 +132,27 @@ class User extends Authenticatable implements MustVerifyEmail
                 ->whereHas('permissions', fn (Builder $query) => $query->where('slug', $permission))->exists();
         }
 
-
         return $this->roles()->whereHas('permissions', fn (Builder $query) => $query->where('slug', $permission))->exists();
     }
 
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', 'active')->where('is_active', true);
+    }
+
+    public function scopePublicProfile(Builder $query): Builder
+    {
+        return $query->active()->whereNotNull('email_verified_at')
+            ->whereNotNull('profile_image_path')->where('profile_image_path', '!=', '');
+    }
+
+    public function hasPublicProfile(): bool
+    {
+        return $this->isActive() && $this->hasVerifiedEmail() && filled($this->profile_image_path);
+    }
+
+    public function getProfileImageUrlAttribute(): ?string
+    {
+        return $this->profile_image_path ? Storage::disk('public')->url($this->profile_image_path) : null;
     }
 }

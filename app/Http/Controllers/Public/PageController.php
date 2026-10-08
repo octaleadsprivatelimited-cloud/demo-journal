@@ -7,7 +7,9 @@ use App\Models\Category;
 use App\Models\Setting;
 use App\Models\EditorialMember;
 use App\Models\IndexingService;
+use App\Models\User;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\Request;
 
 class PageController extends PublicController
 {
@@ -31,12 +33,13 @@ class PageController extends PublicController
 
     public function editorialBoard(): View
     {
+        $registeredEditors = User::publicProfile()->whereHas('roles', fn ($q) => $q->where('slug', 'editor'))->orderBy('name')->get();
         $records = EditorialMember::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
         if ($records->isNotEmpty()) {
             $chief = $records->first(fn ($member) => str_contains(strtolower($member->role), 'chief'));
             $editors = $records->where('group', 'editorial_board')->reject(fn ($member) => $chief?->is($member));
             $reviewers = $records->whereIn('group', ['reviewers','advisors','publisher_staff']);
-            return view('public.pages.editorial-board', $this->publicViewData(compact('chief','editors','reviewers')));
+            return view('public.pages.editorial-board', $this->publicViewData(compact('chief','editors','reviewers','registeredEditors')));
         }
         $members = Author::query()
             ->where('is_active', true)
@@ -53,7 +56,31 @@ class PageController extends PublicController
             'chief',
             'editors',
             'reviewers',
+            'registeredEditors',
         )));
+    }
+
+    public function people(Request $request): View
+    {
+        $term = trim((string) $request->query('q'));
+        $people = User::publicProfile()
+            ->when($term, function ($query) use ($term): void {
+                $like = '%'.addcslashes($term, '%_').'%';
+                $query->where(fn ($q) => $q->where('name', 'like', $like)
+                    ->orWhere('organization', 'like', $like)->orWhere('designation', 'like', $like));
+            })->orderBy('name')->paginate(18)->withQueryString();
+
+        return view('public.people.index', $this->publicViewData(compact('people', 'term')));
+    }
+
+    public function profile(User $user): View
+    {
+        abort_unless($user->hasPublicProfile(), 404);
+        $articles = $this->publishedArticles()
+            ->whereHas('authors', fn ($q) => $q->where('user_id', $user->id))
+            ->latest('published_at')->paginate(10);
+
+        return view('public.people.show', $this->publicViewData(compact('user', 'articles')));
     }
 
     public function policy(string $page): View

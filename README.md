@@ -59,6 +59,8 @@ New applications receive an email verification link immediately and remain signe
 
 Super Admins control users, applications, roles, permissions, and site settings. Admins operate publication content, Editors manage the editorial workflow, Reviewers access only assigned manuscripts, and Authors manage only their own work. There is no public Super Admin registration path.
 
+Registered users can upload a public profile photo from their role portal; administrators use My account. Approved users with verified email and an uploaded photo appear in Member profiles, linked from Contributors. Author bylines, editorial profiles and approved comment photos use the uploaded image. See [public profile photos](docs/PROFILE_PHOTOS_20261009.md) for the behavior and verification.
+
 ## Workflow email and Google sign-in
 
 The application queues both database and email notifications for submission receipts, new editorial submissions, reviewer assignments (including reassignment or changed due dates), completed reviewer reports, and article status decisions. Authors never receive confidential reviewer notes by email. Workflow updates include the manuscript title, ID, stage, applicable deadline, and a link to the relevant manuscript or review. Submission and publication events send one author notification per event. See the [8 October workflow verification](docs/WORKFLOW_VERIFICATION_20261008.md) for the tested journey and deployment scope.

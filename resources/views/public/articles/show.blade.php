@@ -225,14 +225,14 @@
                         @forelse($comments as $comment)
                             @php($commentName = $comment->user?->name ?: $comment->guest_name ?: 'Journal reader')
                             <article class="comment">
-                                <div class="comment-avatar" aria-hidden="true">{{ mb_substr($commentName, 0, 1) }}</div>
+                                <div class="comment-avatar" aria-hidden="true">@if($comment->user?->hasPublicProfile())<img src="{{ $comment->user->profile_image_url }}" alt="" width="44" height="44" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">@else{{ mb_substr($commentName, 0, 1) }}@endif</div>
                                 <div>
                                     <header><strong>{{ $commentName }}</strong><time datetime="{{ $comment->approved_at?->toIso8601String() ?? $comment->created_at->toIso8601String() }}">{{ ($comment->approved_at ?? $comment->created_at)->diffForHumans() }}</time></header>
                                     <p>{!! nl2br(e($comment->body)) !!}</p>
                                     @foreach($comment->replies as $reply)
                                         @php($replyName = $reply->user?->name ?: $reply->guest_name ?: 'Editorial team')
                                         <article class="comment comment-reply">
-                                            <div class="comment-avatar" aria-hidden="true">{{ mb_substr($replyName, 0, 1) }}</div>
+                                            <div class="comment-avatar" aria-hidden="true">@if($reply->user?->hasPublicProfile())<img src="{{ $reply->user->profile_image_url }}" alt="" width="34" height="34" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">@else{{ mb_substr($replyName, 0, 1) }}@endif</div>
                                             <div><header><strong>{{ $replyName }}</strong><time datetime="{{ $reply->approved_at?->toIso8601String() ?? $reply->created_at->toIso8601String() }}">{{ ($reply->approved_at ?? $reply->created_at)->diffForHumans() }}</time></header><p>{!! nl2br(e($reply->body)) !!}</p></div>
                                         </article>
                                     @endforeach

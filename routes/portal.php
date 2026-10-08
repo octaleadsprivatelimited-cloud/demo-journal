@@ -53,6 +53,7 @@ Route::middleware(['auth', 'active', 'verified'])->group(function (): void {
         Route::put('/pages/{page}', [Admin\JournalPageController::class, 'update'])->name('pages.update');
         Route::get('/email-templates', [Admin\AccountController::class, 'emailTemplates'])->middleware('role:admin,super-admin')->name('email-templates');
         Route::get('/account', [Admin\AccountController::class, 'edit'])->middleware('role:admin,super-admin')->name('account.edit');
+        Route::put('/account/profile', [Admin\AccountController::class, 'updateProfile'])->middleware(['role:admin,super-admin', 'throttle:20,1'])->name('account.profile.update');
         Route::put('/account', [Admin\AccountController::class, 'update'])->middleware(['role:admin,super-admin','throttle:6,1'])->name('account.update');
         Route::get('/', Admin\DashboardController::class)->middleware('role:admin,super-admin')->name('dashboard');
         Route::post('/articles/bulk', [Admin\ArticleController::class, 'bulk'])->middleware('throttle:10,1')->name('articles.bulk');
