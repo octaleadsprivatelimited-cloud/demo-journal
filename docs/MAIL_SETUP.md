@@ -6,13 +6,13 @@ Password registrations queue email verification immediately, before approval. Th
 
 ## Current Hostinger deployment
 
-The requested sender is a new Hostinger mailbox, `notifications@sjcjournal.com`. The editorial recipient remains `info@larixjournals.com`. Domain DNS is managed in GoDaddy. Mailbox creation, email DNS records and SMTP credentials must be completed before enabling delivery. The last production audit found the mailer set to `log`, so **external email delivery has not yet been verified**. Do not use a log fallback to claim successful inbox delivery.
+The production sender is the Hostinger mailbox `notifications@sjcjournal.com`; the editorial recipient remains `info@larixjournals.com`. Domain DNS is managed in GoDaddy. On 8 October 2026, SMTP authentication succeeded from Hostinger and a single authorized test email arrived in the sender mailbox inbox. Production uses authenticated SMTP over TLS, with credentials stored only in the private server environment.
 
-On 8 October 2026, Hostinger accepted domain ownership verification. GoDaddy's authoritative DNS serves the two Hostinger MX records (priorities 5 and 10), SPF, the three `hostingermail-{a,b,c}._domainkey` CNAMEs and an initial DMARC `p=none` policy. The mailbox creation form is prepared for `notifications@sjcjournal.com`; the owner must submit its password before SMTP can authenticate. The corrected scheduler runs successfully, and the guarded worker holds queued mail until SMTP is configured. An initial Super Admin owner still needs to be confirmed; every role requires approval.
+On 8 October 2026, Hostinger accepted domain ownership verification. GoDaddy's authoritative DNS serves the two Hostinger MX records (priorities 5 and 10), SPF, the three `hostingermail-{a,b,c}._domainkey` CNAMEs and an initial DMARC `p=none` policy. The owner created `notifications@sjcjournal.com` and confirmed `admin@sjcjournal.com` for the initial Super Admin login. The approved `admin@sjcjournal.com` alias delivers to the notifications inbox. The initial administrator must choose a website password and verify the email before accessing the dashboard; every subsequent role application requires Super Admin approval. The corrected scheduler runs successfully. At the owner’s request, 12 older contact notifications are preserved separately from new delivery.
 
-An ignored local `.env.mail` file is prepared for the mailbox owner to enter the new mailbox password privately. It is a staging file; Laravel does not load it automatically. Apply the completed settings to the private server `journal_app/.env`, outside `public_html`. Do not commit, upload publicly, or paste the password into chat.
+The ignored local `.env.mail` is a private staging file; Laravel does not load it automatically. The completed settings have been applied to server `journal_app/.env`, outside `public_html`. Credentials and configuration backups must remain private and must never be committed or uploaded under the web root.
 
-Expected settings, subject to confirmation from the mailbox provider:
+Configured settings:
 
 ```dotenv
 MAIL_MAILER=smtp
@@ -46,6 +46,6 @@ The Hostinger worker runs every minute through a guarded entry point:
 php /home/u709299470/domains/sjcjournal.com/journal_app/scripts/hostinger-mail-worker.php
 ```
 
-The entry point preserves queued messages while SMTP credentials are missing or the mailer is `log`. Once production SMTP is configured, it processes `default,mail` with a 50-second limit and three attempts. Keep that worker and `schedule:run` enabled. Both cron paths must use `domains/sjcjournal.com`; the old temporary domain folder no longer exists. Scheduled commands run in-process because this shared hosting installation disables `proc_open`.
+The entry point preserves queued messages while SMTP credentials are missing, the mailer is `log`, or `storage/framework/mail-paused` exists. This private hold file can pause processing during delivery review; remove it only after the review is complete. When enabled, the worker processes `default,mail` with a 50-second limit and three attempts. Historical contact notifications are held in `mail-before-smtp-20261008`; the regular worker does not process that queue. Preserve them until the owner requests delivery. Keep that worker and `schedule:run` enabled. Both cron paths must use `domains/sjcjournal.com`; the old temporary domain folder no longer exists. Scheduled commands run in-process because this shared hosting installation disables `proc_open`.
 
 Check `php artisan queue:failed` if delivery fails. After fixing the cause, retry only the affected failed job IDs; inspect recipients and avoid bulk replay of obsolete notices. Logs and backups of `.env` must remain private. After deploying new PHP classes, regenerate the production Composer class map; this installation uses an authoritative optimized map.

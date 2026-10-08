@@ -1,6 +1,8 @@
 <?php
 
 declare(strict_types=1);
+use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Support\Facades\Artisan;
 
 // Hostinger cron entry point. Keep queued messages until live delivery is configured.
 if (PHP_SAPI !== 'cli') {
@@ -8,9 +10,14 @@ if (PHP_SAPI !== 'cli') {
 }
 
 $base = dirname(__DIR__);
+if (is_file($base.'/storage/framework/mail-paused')) {
+    echo "Mail queue paused for delivery review.\n";
+    exit(0);
+}
+
 require $base.'/vendor/autoload.php';
 $app = require $base.'/bootstrap/app.php';
-$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel = $app->make(Kernel::class);
 $kernel->bootstrap();
 
 if (! $app->isProduction() || config('mail.default') !== 'smtp'
@@ -19,7 +26,7 @@ if (! $app->isProduction() || config('mail.default') !== 'smtp'
     exit(0);
 }
 
-exit(Illuminate\Support\Facades\Artisan::call('queue:work', [
+exit(Artisan::call('queue:work', [
     '--queue' => 'default,mail',
     '--stop-when-empty' => true,
     '--max-time' => 50,
