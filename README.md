@@ -1,20 +1,22 @@
 # Singapore Journal of Cardiology
 
-Singapore Journal of Cardiology is a production-oriented scholarly and professional publication platform built with Laravel 13, PHP 8.4, PostgreSQL, Redis, Blade, Tailwind CSS, and Laravel Sanctum. It supports public discovery, long-form reading, author submissions, editorial review, reviewer feedback, scheduled publishing, media, newsletters, contact management, SEO, analytics, and auditable role-based administration.
+Singapore Journal of Cardiology is a scholarly and professional publication platform built with Laravel 13, PHP 8.4, Blade, Tailwind CSS, vanilla JavaScript and Laravel Sanctum. The live [sjcjournal.com](https://sjcjournal.com) installation uses SQLite and queued SMTP email on Hostinger shared hosting; the Docker reference environment uses PostgreSQL and Redis. It supports public discovery, long-form reading, author submissions, editorial review, reviewer feedback, scheduled publishing, media, newsletters, contact management, SEO, analytics, and auditable role-based administration.
+
+See the [Tech Stack](docs/TECH_STACK.md) for locked versions and environment differences, and [Architecture](docs/ARCHITECTURE.md) for system diagrams, account approval, editorial flows and notification delivery.
 
 ## What is included
 
 - Premium responsive public publication pages, searchable article archive, categories, author profiles, sitemap, structured data, print and uploaded-PDF access.
 - Verified author accounts, draft autosave, co-authors, supporting documents, submission and revision history.
 - Editor and reviewer assignment, immutable reviews, controlled state transitions, deadlines, notifications, and an audit trail.
-- Super Admin, Admin, Editor, Reviewer, Author, and User roles enforced through middleware, policies, and server-side authorization.
+- Super Admin, Admin, Editor, Reviewer, Author, Contributor and legacy User roles enforced through middleware, policies, and server-side authorization.
 - Administrative article, taxonomy, author, user, media, enquiry, subscriber, settings, analytics, and audit-log management.
 - PostgreSQL-aware indexes and search abstraction, queued notifications, scheduled publication, Redis caching, and S3-compatible storage.
 - Docker images for PHP-FPM and Nginx, PostgreSQL and Redis services, a dedicated queue worker and scheduler, and a CI pipeline.
 
 ## Requirements
 
-The recommended path requires Docker Desktop or Docker Engine with Compose. A native installation requires PHP 8.4.1 or newer with `bcmath`, `ctype`, `fileinfo`, `gd`, `intl`, `mbstring`, `openssl`, `pdo_pgsql`, `tokenizer`, and `zip`; Composer 2; Node.js 22; PostgreSQL 15+; and Redis 7+.
+The recommended development path requires Docker Desktop or Docker Engine with Compose. A native installation mirroring that environment requires PHP 8.4.1 or newer with the required extensions including `bcmath`, `ctype`, `fileinfo`, `gd`, `intl`, `mbstring`, `openssl`, `pdo_pgsql`, `tokenizer`, and `zip`; Composer 2; Node.js 22.13+ within the 22.x line; PostgreSQL and Redis. Docker uses PostgreSQL 17 and Redis 7.4. The Hostinger installation instead uses SQLite with `pdo_sqlite` and its private runtime configuration; see the [environment comparison](docs/TECH_STACK.md#environment-differences).
 
 ## Docker quick start
 
@@ -116,10 +118,15 @@ Private keys belong only in the runtime secret store. Variables prefixed with `V
 
 ## Documentation
 
+- [Tech stack, locked versions and environment comparison](docs/TECH_STACK.md)
 - [Architecture and editorial workflow](docs/ARCHITECTURE.md)
-- [Production deployment](docs/DEPLOYMENT.md)
+- [Container/VPS deployment reference](docs/DEPLOYMENT.md)
 - [PostgreSQL, media, backup, and restore](docs/BACKUP_AND_RESTORE.md)
 - [REST API](docs/API.md)
+- [Hostinger mail configuration](docs/MAIL_SETUP.md)
+- [Author/editor/reviewer workflow verification](docs/WORKFLOW_VERIFICATION_20261008.md)
+- [Public member profile photos](docs/PROFILE_PHOTOS_20261009.md)
+- [GA4 and SEO configuration](docs/ANALYTICS_SEO_20261009.md)
 - [Security policy](SECURITY.md)
 
 ## License
