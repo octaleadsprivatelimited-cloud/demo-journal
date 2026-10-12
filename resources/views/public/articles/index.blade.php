@@ -23,7 +23,7 @@
 
     @if($featured->isNotEmpty() && !collect($filters)->filter()->count())
         <section class="featured-strip">
-            <div class="container">
+            <div class="container publication-container">
                 <div class="minor-heading"><h2>Editorial selections</h2><span>{{ now()->format('F Y') }}</span></div>
                 <div class="featured-strip-grid">
                     @foreach($featured as $article)<x-public.article-card :article="$article" :show-excerpt="$loop->first" />@endforeach
@@ -33,7 +33,7 @@
     @endif
 
     <section class="section archive-section">
-        <div class="container">
+        <div class="container publication-container">
             <form class="filter-panel" action="{{ $isJournal ? route('journals.index') : route('articles.index') }}" method="get" data-filter-form>
                 <div class="filter-search">
                     <label for="archive-q">Search publications</label>
@@ -52,7 +52,7 @@
             </div>
 
             @if($articles->isNotEmpty())
-                <div class="article-grid article-grid-three">
+                <div class="article-grid article-grid-two publication-grid">
                     @foreach($articles as $article)<x-public.article-card :article="$article" />@endforeach
                 </div>
                 <x-public.pagination :paginator="$articles" />

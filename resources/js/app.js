@@ -218,6 +218,7 @@ ready(() => {
         slider.addEventListener('focusin', () => { paused = true; schedule(); });
         document.addEventListener('visibilitychange', schedule);
         motion.addEventListener('change', () => { if (motion.matches) paused = true; schedule(); });
+        show(0);
         schedule();
     });
 });

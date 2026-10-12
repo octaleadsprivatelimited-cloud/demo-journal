@@ -36,10 +36,11 @@ class PageController extends PublicController
         $registeredEditors = User::publicProfile()->whereHas('roles', fn ($q) => $q->where('slug', 'editor'))->orderBy('name')->get();
         $records = EditorialMember::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
         if ($records->isNotEmpty()) {
-            $chief = $records->first(fn ($member) => str_contains(strtolower($member->role), 'chief'));
-            $editors = $records->where('group', 'editorial_board')->reject(fn ($member) => $chief?->is($member));
+            $chiefs = $records->where('group', 'editorial_board')->filter(fn ($member) => str_contains(strtolower($member->role), 'chief'))->values();
+            $chief = $chiefs->first();
+            $editors = $records->where('group', 'editorial_board')->reject(fn ($member) => $chiefs->contains(fn ($leader) => $leader->is($member)));
             $reviewers = $records->whereIn('group', ['reviewers','advisors','publisher_staff']);
-            return view('public.pages.editorial-board', $this->publicViewData(compact('chief','editors','reviewers','registeredEditors')));
+            return view('public.pages.editorial-board', $this->publicViewData(compact('chief','chiefs','editors','reviewers','registeredEditors')));
         }
         $members = Author::query()
             ->where('is_active', true)
@@ -48,12 +49,14 @@ class PageController extends PublicController
             ->orderBy('name')
             ->get();
 
-        $chief = $members->first(fn ($member) => str_contains(strtolower((string) $member->designation), 'chief'));
-        $editors = $members->filter(fn ($member) => $member->isNot($chief) && str_contains(strtolower((string) $member->designation), 'editor'));
-        $reviewers = $members->reject(fn ($member) => $member->is($chief) || $editors->contains(fn ($editor) => $editor->is($member)));
+        $chiefs = $members->filter(fn ($member) => str_contains(strtolower((string) $member->designation), 'chief'))->values();
+        $chief = $chiefs->first();
+        $editors = $members->filter(fn ($member) => ! $chiefs->contains(fn ($leader) => $leader->is($member)) && str_contains(strtolower((string) $member->designation), 'editor'));
+        $reviewers = $members->reject(fn ($member) => $chiefs->contains(fn ($leader) => $leader->is($member)) || $editors->contains(fn ($editor) => $editor->is($member)));
 
         return view('public.pages.editorial-board', $this->publicViewData(compact(
             'chief',
+            'chiefs',
             'editors',
             'reviewers',
             'registeredEditors',

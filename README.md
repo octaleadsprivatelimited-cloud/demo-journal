@@ -120,6 +120,7 @@ Private keys belong only in the runtime secret store. Variables prefixed with `V
 
 - [Tech stack, locked versions and environment comparison](docs/TECH_STACK.md)
 - [Architecture and editorial workflow](docs/ARCHITECTURE.md)
+- [Admin guide: workflow, staff, disciplines and homepage controls](docs/ADMIN_GUIDE.md)
 - [Container/VPS deployment reference](docs/DEPLOYMENT.md)
 - [PostgreSQL, media, backup, and restore](docs/BACKUP_AND_RESTORE.md)
 - [REST API](docs/API.md)

@@ -65,36 +65,37 @@
     @if($editors->isNotEmpty())
     <aside class="home-editors" aria-label="Editorial team">
         @foreach($editors->groupBy(fn($member) => str_contains(strtolower($member->role), 'chief') ? 'Editors-in-Chief' : 'Editors') as $heading => $members)
-        <div><h2>{{ $heading }}</h2>@foreach($members as $member)
-        <article class="home-editor"><div class="home-editor-photo">@if($member->photo_path)<img src="{{ Str::startsWith($member->photo_path,['http://','https://']) ? $member->photo_path : Storage::disk('public')->url($member->photo_path) }}" alt="{{ $member->name }}" loading="lazy">@else<span>{{ mb_substr($member->name,0,1) }}</span>@endif</div><div><h3><a href="{{ route('editorial-board') }}">{{ $member->name }}</a></h3><p>{{ $member->credentials }}</p><p>{{ $member->institution }}</p><p>{{ $member->country }}</p></div></article>
-        @endforeach</div>@endforeach
+            <x-public.editor-carousel :members="$members" :heading="$heading" />
+        @endforeach
+        <a class="text-link" href="{{ route('editorial-board') }}">Meet the full editorial board <x-public.icon name="arrow-right" /></a>
     </aside>
     @endif
             </div>
         </div>
     </section>
+    @if($editorSelections->isNotEmpty())
+        <section class="section home-selections" aria-labelledby="editor-selections-title">
+            <div class="container publication-container">
+                <div class="section-heading">
+                    <div><p class="eyebrow">Editor's selections</p><h2 id="editor-selections-title">Featured research</h2></div>
+                    <a class="text-link" href="{{ route('articles.index') }}">Explore the journal <x-public.icon name="arrow-right" /></a>
+                </div>
+                <div class="article-grid article-grid-two selection-grid">
+                    @foreach($editorSelections as $article)<x-public.article-card :article="$article" />@endforeach
+                </div>
+            </div>
+        </section>
+    @endif
     @if($latest->isNotEmpty())
         <section class="section section-latest">
-            <div class="container">
+            <div class="container publication-container">
                 <div class="section-heading">
                     <div><p class="eyebrow">Recently published</p><h2>New perspectives</h2></div>
                     <a class="text-link" href="{{ route('articles.index') }}">View all publications <x-public.icon name="arrow-right" /></a>
                 </div>
-                <div class="latest-grid">
-                    <div class="latest-primary">
-                        <x-public.article-card :article="$latest->first()" layout="vertical" />
-                    </div>
-                    <div class="latest-secondary">
-                        @foreach($latest->slice(1, 4) as $article)
-                            <x-public.article-card :article="$article" layout="horizontal" />
-                        @endforeach
-                    </div>
+                <div class="article-grid article-grid-three perspectives-grid">
+                    @foreach($latest as $article)<x-public.article-card :article="$article" />@endforeach
                 </div>
-                @if($latest->count() > 5)
-                    <div class="article-grid article-grid-two bordered-grid">
-                        @foreach($latest->slice(5) as $article)<x-public.article-card :article="$article" />@endforeach
-                    </div>
-                @endif
             </div>
         </section>
     @endif

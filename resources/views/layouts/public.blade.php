@@ -208,9 +208,12 @@
                 @endforeach
                 @if(data_get($site, 'whatsapp'))<a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', data_get($site, 'whatsapp')) }}" target="_blank" rel="noopener noreferrer">WhatsApp: {{ data_get($site, 'whatsapp') }}</a>@endif
                 @if (data_get($site ?? [], 'address'))<p>{{ data_get($site, 'address') }}</p>@endif
-                @foreach (collect(data_get($site ?? [], 'social', []))->filter() as $network => $url)
-                    <a href="{{ $url }}" target="_blank" rel="noopener noreferrer">{{ str($network)->headline() }}</a>
-                @endforeach
+                <div class="social-links" aria-label="Follow the journal">
+                    @foreach (collect(data_get($site ?? [], 'social', []))->filter() as $network => $url)
+                        @php($networkLabel = match($network) { 'youtube' => 'YouTube', 'linkedin' => 'LinkedIn', 'x', 'twitter' => 'X (Twitter)', default => str($network)->headline()->toString() })
+                        <a class="social-link" href="{{ $url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ $networkLabel }}" title="{{ $networkLabel }}"><x-public.social-icon :network="$network" /></a>
+                    @endforeach
+                </div>
             </div>
         </div>
         <div class="container footer-bottom">

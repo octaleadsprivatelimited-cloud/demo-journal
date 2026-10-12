@@ -20,7 +20,14 @@ class HomeController extends PublicController
 
         $latest = $this->publishedArticles()
             ->latest('published_at')
-            ->limit(7)
+            ->limit(6)
+            ->get();
+
+        $editorSelections = $this->publishedArticles()
+            ->where('is_featured', true)
+            ->latest('updated_at')
+            ->orderByDesc('id')
+            ->limit(2)
             ->get();
 
         $trending = $this->publishedArticles()
@@ -50,7 +57,6 @@ class HomeController extends PublicController
         $categories = Category::query()
             ->where('is_active', true)
             ->whereNull('parent_id')
-            ->whereHas('articles', fn ($query) => $query->published())
             ->withCount(['articles as published_articles_count' => fn ($query) => $query->published()])
             ->orderBy('sort_order')
             ->orderBy('name')
@@ -61,6 +67,7 @@ class HomeController extends PublicController
             'heroArticles',
             'editors',
             'latest',
+            'editorSelections',
             'trending',
             'authors',
             'categories',

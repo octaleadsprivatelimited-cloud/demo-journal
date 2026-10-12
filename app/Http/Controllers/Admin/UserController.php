@@ -62,6 +62,8 @@ final class UserController extends Controller
         $user = DB::transaction(function () use ($request): User {
             $user = User::query()->create($request->safe()->except(['roles', 'email_verified', 'biography', 'author_verified', 'password_confirmation']) + [
                 'email_verified_at' => $request->boolean('email_verified') ? now() : null, 'is_active' => $request->boolean('is_active'),
+                'status' => 'active',
+                'approved_by_id' => $request->user()->getKey(), 'approved_at' => now(),
             ]);
             $user->roles()->sync($request->input('roles', []));
             $this->syncAuthor($user, $request);
@@ -69,7 +71,11 @@ final class UserController extends Controller
             return $user;
         });
 
-        return redirect()->route('admin.users.edit', $user)->with('success', 'User created.');
+        if (! $user->hasVerifiedEmail()) {
+            $user->sendEmailVerificationNotification();
+        }
+
+        return redirect()->route('admin.users.edit', $user)->with('success', $user->hasVerifiedEmail() ? 'User created.' : 'User created. A verification email has been queued; portal access requires email verification.');
     }
 
     public function edit(User $user): View

@@ -3,9 +3,10 @@
 @section('page-description','Submissions, editorial decisions, production and publication in one record.')
 @section('page-actions')@if(auth()->user()->hasAnyRole('author','contributor'))<a class="portal-button primary" href="{{ route('author.articles.create') }}">Submit new manuscript</a>@endif @endsection
 @section('content')
+@include('workflow.guide')
 @if(auth()->user()->hasAnyRole('editor','admin','super-admin'))<p><a class="portal-button" href="{{ route('workflow.staff') }}">Editors & reviewers</a> @if(auth()->user()->hasRole('super-admin'))<a class="portal-button" href="{{ route('workflow.settings') }}">Workflow settings</a>@endif</p>@endif
 <p><a class="portal-button" href="{{ route('workflow.index',array_merge(request()->except('page'),['export'=>'csv'])) }}">Download filtered report</a></p>
-<div class="workflow-metrics">@foreach($counts as $stage=>$total)<a class="portal-card" href="{{ route('workflow.index',['stage'=>$stage]) }}"><small>{{ str($stage)->headline() }}</small><strong>{{ $total }}</strong></a>@endforeach</div>
+<div class="workflow-metrics">@foreach(config('workflow-guide.phases') as $phase)<a class="portal-card" href="{{ route('workflow.index',['stages'=>$phase['stages']]) }}"><small>{{ $phase['label'] }}</small><strong>{{ $counts->only($phase['stages'])->sum() }}</strong></a>@endforeach</div>
 <div class="portal-card"><div class="portal-card-body"><form method="get" class="workflow-filters">
 @foreach(['q'=>'Title or manuscript ID','author'=>'Author','reviewer'=>'Reviewer ID','type'=>'Article type','date'=>'Submission date'] as $key=>$label)<label>{{ $label }}<input class="portal-input" name="{{ $key }}" value="{{ request($key) }}" type="{{ $key==='date'?'date':'text' }}"></label>@endforeach
 <label>Current stage<select class="portal-select" name="stage"><option value="">All stages</option>@foreach(config('workflow.stages') as $stage)<option value="{{ $stage }}" @selected(request('stage')===$stage)>{{ str($stage)->headline() }}</option>@endforeach</select></label>

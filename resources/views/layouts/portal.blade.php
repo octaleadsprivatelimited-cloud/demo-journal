@@ -5,6 +5,7 @@
     <meta name="robots" content="noindex,nofollow"><title>@yield('title', 'Workspace') · {{ config('app.name') }}</title>
     @if(file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot'))) @vite(['resources/css/app.css', 'resources/js/app.js']) @endif
     <style>{!! file_get_contents(resource_path('css/portal.css')) !!}</style>
+    @if(request()->routeIs('workflow.*'))<style>{!! file_get_contents(resource_path('css/workflow-guide.css')) !!}</style>@endif
     @stack('head')
 </head>
 <body class="portal-body @if(auth()->check() && auth()->user()->hasAnyRole('admin','super-admin','editor')) admin-simple @endif">
