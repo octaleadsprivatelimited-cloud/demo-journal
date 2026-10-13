@@ -1,5 +1,5 @@
 @props(['members', 'heading'])
-<section class="editor-slider" data-hero-slider role="region" aria-roledescription="carousel" aria-label="{{ $heading }}">
+<section class="editor-slider" data-hero-slider data-hero-interval="1000" role="region" aria-roledescription="carousel" aria-label="{{ $heading }}">
     <h2>{{ $heading }}</h2>
     @foreach($members as $member)
         <article class="home-editor" data-hero-slide role="group" aria-roledescription="slide" aria-label="{{ $loop->iteration }} of {{ $loop->count }}">
@@ -16,12 +16,4 @@
             </div>
         </article>
     @endforeach
-    @if($members->count() > 1)
-        <div class="hero-controls editor-controls" data-hero-controls hidden>
-            <button type="button" data-hero-prev aria-label="Previous {{ $heading }} profile"><x-public.icon name="arrow-left" /></button>
-            <span data-hero-count aria-live="off">1 / {{ $members->count() }}</span>
-            <button type="button" data-hero-next aria-label="Next {{ $heading }} profile"><x-public.icon name="arrow-right" /></button>
-            <button type="button" data-hero-pause>Pause slideshow</button>
-        </div>
-    @endif
 </section>

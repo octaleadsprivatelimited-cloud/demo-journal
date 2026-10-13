@@ -30,7 +30,7 @@ DOI and indexing entries record evidence of work with external providers. The we
 
 Normal Admins cannot create or approve staff accounts. **Manuscript workflow → Editors & reviewers** manages existing staff profiles and availability; it now links Super Admins to account creation and applications.
 
-**Editorial board** manages public names, appointments, photos and display order. A board profile does not create a login or grant editorial access. To show a chief editor, use the Editorial board group, an Editor-in-Chief role label, Active status and the desired Sort order. All active chief editors appear on the board page; homepage profiles rotate with Previous, Next and Pause controls. Automatic rotation pauses for keyboard focus, pointer interaction and reduced-motion preferences.
+**Editorial board** manages public names, appointments, photos and display order. A board profile does not create a login or grant editorial access. To show a chief editor, use the Editorial board group, an Editor-in-Chief role label, Active status and the desired Sort order. All active chief editors appear on the board page. Both homepage editor groups rotate automatically every second without buttons or counters, returning to the first profile after the last. Rotation pauses while a profile has keyboard focus or pointer interaction, while the page is hidden, or when reduced motion is requested.
 
 ## Add or change disciplines
 

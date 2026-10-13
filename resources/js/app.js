@@ -194,30 +194,33 @@ ready(() => {
         const pause = slider.querySelector('[data-hero-pause]');
         const count = slider.querySelector('[data-hero-count]');
         const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+        const interval = Number(slider.dataset.heroInterval) || 7000;
         let current = 0;
         let paused = motion.matches;
         let hovering = false;
+        let focused = false;
         let timer;
         const show = (index) => {
             current = (index + slides.length) % slides.length;
             slides.forEach((slide, i) => { slide.hidden = i !== current; });
-            count.textContent = `${current + 1} / ${slides.length}`;
+            if (count) count.textContent = `${current + 1} / ${slides.length}`;
         };
         const schedule = () => {
             window.clearInterval(timer);
-            pause.textContent = paused ? 'Play slideshow' : 'Pause slideshow';
-            if (!paused && !hovering && !document.hidden) timer = window.setInterval(() => show(current + 1), 7000);
+            if (pause) pause.textContent = paused ? 'Play slideshow' : 'Pause slideshow';
+            if (!paused && !hovering && !focused && !document.hidden) timer = window.setInterval(() => show(current + 1), interval);
         };
-        controls.hidden = false;
-        slider.querySelector('[data-hero-prev]').addEventListener('click', () => { show(current - 1); schedule(); });
-        slider.querySelector('[data-hero-next]').addEventListener('click', () => { show(current + 1); schedule(); });
-        pause.addEventListener('click', () => { paused = !paused; schedule(); });
+        if (controls) controls.hidden = false;
+        slider.querySelector('[data-hero-prev]')?.addEventListener('click', () => { show(current - 1); schedule(); });
+        slider.querySelector('[data-hero-next]')?.addEventListener('click', () => { show(current + 1); schedule(); });
+        pause?.addEventListener('click', () => { paused = !paused; schedule(); });
         slider.addEventListener('mouseenter', () => { hovering = true; schedule(); });
         slider.addEventListener('mouseleave', () => { hovering = false; schedule(); });
-        // Keyboard focus stops rotation until the reader explicitly restarts it.
-        slider.addEventListener('focusin', () => { paused = true; schedule(); });
+        // Profiles resume when focus leaves; article slides retain their manual pause.
+        slider.addEventListener('focusin', () => { if (controls) paused = true; else focused = true; schedule(); });
+        slider.addEventListener('focusout', (event) => { if (!controls && !slider.contains(event.relatedTarget)) { focused = false; schedule(); } });
         document.addEventListener('visibilitychange', schedule);
-        motion.addEventListener('change', () => { if (motion.matches) paused = true; schedule(); });
+        motion.addEventListener('change', () => { if (!controls) paused = motion.matches; else if (motion.matches) paused = true; schedule(); });
         show(0);
         schedule();
     });
