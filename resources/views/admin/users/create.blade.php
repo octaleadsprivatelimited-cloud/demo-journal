@@ -1,1 +1,18 @@
-@extends('layouts.portal') @section('title','New user') @section('section','Audience & system') @section('eyebrow','Access control') @section('page-title','New user') @section('page-description','Super Admins can create editor and reviewer accounts here, or approve their registration applications under Users.') @section('content')<div class="portal-card"><div class="portal-card-body"><p>Select Editor or Reviewer under Roles. An active account created here is approved by you as Super Admin. Leave Email identity is verified unchecked so the person receives a verification link; they must verify before accessing their portal. Editorial board profiles are managed separately under Editorial board.</p>@include('admin.users._form')</div></div>@endsection
+@extends('layouts.portal')
+@section('title', $staffRole ? 'Add '.$staffRole->slug : 'New user')
+@section('section', 'People')
+@section('page-title', $staffRole ? 'Add '.$staffRole->slug : 'New user')
+@section('page-description', 'As Super Admin, you approve this account when you create it. The person must verify their email before signing in.')
+@section('page-actions')<a class="portal-button" href="{{ route('admin.users.index') }}">Back to People</a>@endsection
+@section('content')
+    <div class="portal-card admin-staff-form">
+        <div class="portal-card-body">
+            @if($staffRole)
+                @include('admin.users._staff-form')
+            @else
+                <p>Choose the account's roles below. Public Editorial board appointments are managed separately under Website.</p>
+                @include('admin.users._form')
+            @endif
+        </div>
+    </div>
+@endsection

@@ -1,52 +1,63 @@
 @extends('layouts.portal')
-@section('title','Dashboard')
-@section('section','Dashboard')
-@section('eyebrow','Journal administration')
-@section('page-title','Dashboard')
-@section('page-description','Manage articles, reviews and the information readers see on your website.')
+@section('title', 'Dashboard')
+@section('section', 'Dashboard')
+@section('page-title', 'Journal dashboard')
+@section('page-description', 'Manage manuscripts, people and your journal website.')
 @section('page-actions')
-<a class="portal-button" href="{{ route('home') }}">View website ↗</a>
-<a class="portal-button primary" href="{{ route('admin.articles.create') }}">Add article</a>
+    <a class="portal-button" href="{{ route('home') }}">View website ↗</a>
+    <a class="portal-button primary" href="{{ route('admin.articles.create') }}">Add article</a>
 @endsection
 @section('content')
 <div class="metric-grid">
- <a href="{{ route('admin.articles.index',['status'=>'published']) }}"><x-portal.metric label="Published articles" :value="$stats['published']" hint="Visible on the website" /></a>
- <a href="{{ route('admin.articles.index',['status'=>'draft']) }}"><x-portal.metric label="Draft articles" :value="$stats['drafts']" hint="Continue editing" /></a>
- <a href="{{ route('admin.submissions.index',['status'=>'pending']) }}"><x-portal.metric label="Awaiting decision" :value="$stats['pending']" hint="Review submissions" tone="gold" /></a>
- <a href="{{ route('admin.reviews.index') }}"><x-portal.metric label="Reviews due soon" :value="$stats['reviewsDue']" hint="Within seven days" tone="blue" /></a>
+    <a href="{{ route('admin.articles.index', ['status' => 'published']) }}"><x-portal.metric label="Published articles" :value="$stats['published']" hint="Visible on the website" /></a>
+    <a href="{{ route('admin.articles.index', ['status' => 'draft']) }}"><x-portal.metric label="Draft articles" :value="$stats['drafts']" hint="Continue editing" /></a>
+    <a href="{{ route('admin.submissions.index', ['status' => 'pending']) }}"><x-portal.metric label="Pending submissions" :value="$stats['pending']" hint="Awaiting a decision" tone="gold" /></a>
+    @if(auth()->user()->hasRole('super-admin'))
+        <a href="{{ route('admin.users.index', ['tab' => 'applications']) }}"><x-portal.metric label="Account approvals" :value="$stats['applications']" hint="Review registration requests" tone="blue" /></a>
+    @else
+        <a href="{{ route('admin.reviews.index') }}"><x-portal.metric label="Reviews due soon" :value="$stats['reviewsDue']" hint="Within seven days" tone="blue" /></a>
+    @endif
 </div>
-<section class="portal-card admin-workflow-guide" style="margin-bottom:20px">
- <div class="portal-card-head"><div><h2>Article workflow</h2><p>Follow these steps for every manuscript submitted by an author.</p></div><a class="portal-button small" href="{{ route('workflow.index') }}">Open workflow</a></div>
- <div class="portal-card-body"><div class="admin-flow-steps">
-  <a class="admin-flow-step" href="{{ route('admin.submissions.index',['status'=>'pending']) }}"><span class="admin-flow-number">1</span><strong>New submissions</strong><small>{{ $stats['pending'] }} waiting for an editorial check</small></a>
-  <a class="admin-flow-step" href="{{ route('workflow.index',['unassigned'=>1]) }}"><span class="admin-flow-number">2</span><strong>Assign an editor</strong><small>Open the manuscript and choose its handling editor</small></a>
-  <a class="admin-flow-step" href="{{ route('admin.assign-reviewer.index') }}"><span class="admin-flow-number">3</span><strong>Assign reviewers</strong><small>{{ $stats['underReview'] }} currently under review</small></a>
-  <a class="admin-flow-step" href="{{ route('workflow.index',['stages'=>['under_review','revision_submitted','editor_recheck','reviewer_recheck']]) }}"><span class="admin-flow-number">4</span><strong>Make a decision</strong><small>Assess completed reviews and revised manuscripts</small></a>
-  <a class="admin-flow-step" href="{{ route('admin.articles.index',['status'=>'published']) }}"><span class="admin-flow-number">5</span><strong>Publish</strong><small>{{ $stats['published'] }} visible on the website</small></a>
- </div></div>
+<section class="portal-card admin-quick-actions">
+    <div class="portal-card-head"><h2>Quick actions</h2></div>
+    <div class="portal-card-body admin-start-grid">
+        <a class="admin-start-card" href="{{ route('workflow.index') }}"><strong>Review manuscripts →</strong><span>Check submissions, assign staff and record decisions.</span></a>
+        @if(auth()->user()->hasRole('super-admin'))
+            <a class="admin-start-card" href="{{ route('admin.users.create', ['role' => 'editor']) }}"><strong>Add editor →</strong><span>Create an approved login and send email verification.</span></a>
+            <a class="admin-start-card" href="{{ route('admin.users.create', ['role' => 'reviewer']) }}"><strong>Add reviewer →</strong><span>Create an approved login for peer review.</span></a>
+            <a class="admin-start-card" href="{{ route('admin.pages.index') }}"><strong>Edit website →</strong><span>Update journal pages and policies.</span></a>
+        @else
+            <a class="admin-start-card" href="{{ route('admin.assign-reviewer.index') }}"><strong>Assign reviewers →</strong><span>Choose reviewers for submitted manuscripts.</span></a>
+            <a class="admin-start-card" href="{{ route('admin.articles.index') }}"><strong>Manage articles →</strong><span>Edit manuscripts and published articles.</span></a>
+            <a class="admin-start-card" href="{{ route('admin.contacts.index') }}"><strong>Read enquiries →</strong><span>{{ $stats['contacts'] }} new reader messages.</span></a>
+        @endif
+    </div>
 </section>
 <div class="dashboard-grid">
- <section class="portal-card">
-  <div class="portal-card-head"><div><h2>Submissions to review</h2><p>Open a submission to review it or assign a reviewer.</p></div><a class="portal-button small" href="{{ route('admin.assign-reviewer.index') }}">Assign reviewers</a></div>
-  @forelse($pendingSubmissions as $submission)
-   <a class="admin-queue-row" href="{{ route('admin.submissions.show',$submission) }}"><span class="admin-queue-main"><strong>{{ $submission->article?->title ?? 'Archived manuscript' }}</strong><small>{{ $submission->submitter?->name ?? 'System' }} · {{ $submission->submitted_at?->diffForHumans() }}</small></span><x-portal.status value="pending" /></a>
-  @empty<div class="portal-card-body"><x-portal.empty title="No pending submissions" message="New author submissions will appear here." /></div>@endforelse
- </section>
- <section class="portal-card">
-  <div class="portal-card-head"><div><h2>Review follow-up</h2><p>Assignments approaching their due date.</p></div><a class="portal-button small" href="{{ route('admin.reviews.index') }}">All reviews</a></div>
-  @forelse($reviewsNeedingAttention as $review)
-   <a class="admin-queue-row" href="{{ route('admin.reviews.show',$review) }}"><span class="admin-queue-main"><strong>{{ $review->article?->title ?? 'Archived manuscript' }}</strong><small>{{ $review->reviewer?->name ?? 'Unassigned' }} · Due {{ $review->due_at?->toFormattedDateString() }}</small></span><x-portal.status :value="$review->status" /></a>
-  @empty<div class="portal-card-body"><x-portal.empty title="No reviews due soon" message="Review assignments due within seven days will appear here." /></div>@endforelse
- </section>
+    <section class="portal-card">
+        <div class="portal-card-head"><h2>Submissions awaiting attention</h2><a class="portal-button small" href="{{ route('workflow.index') }}">All manuscripts</a></div>
+        @forelse($pendingSubmissions as $submission)
+            <a class="admin-queue-row" href="{{ route('admin.submissions.show', $submission) }}"><span class="admin-queue-main"><strong>{{ $submission->article?->title ?? 'Archived manuscript' }}</strong><small>{{ $submission->submitter?->name ?? 'System' }} · {{ $submission->submitted_at?->diffForHumans() }}</small></span><x-portal.status value="pending" /></a>
+        @empty
+            <div class="portal-card-body"><p class="admin-help-text">No submissions awaiting assessment.</p></div>
+        @endforelse
+    </section>
+    <section class="portal-card">
+        <div class="portal-card-head"><h2>Reviews due soon</h2><a class="portal-button small" href="{{ route('admin.reviews.index') }}">All reviews</a></div>
+        @forelse($reviewsNeedingAttention as $review)
+            <a class="admin-queue-row" href="{{ route('admin.reviews.show', $review) }}"><span class="admin-queue-main"><strong>{{ $review->article?->title ?? 'Archived manuscript' }}</strong><small>{{ $review->reviewer?->name ?? 'Unassigned' }} · Due {{ $review->due_at?->toFormattedDateString() }}</small></span><x-portal.status :value="$review->status" /></a>
+        @empty
+            <div class="portal-card-body"><p class="admin-help-text">No reviews due within seven days.</p></div>
+        @endforelse
+    </section>
 </div>
-<section class="portal-card" style="margin-top:20px">
- <div class="portal-card-head"><h2>Manage your website</h2></div>
- <div class="portal-card-body admin-start-grid">
-  <a class="admin-start-card" href="{{ route('admin.articles.index') }}"><strong>Articles →</strong><span>Edit, publish or move articles to trash.</span></a>
-  @if(auth()->user()->hasPermission('settings.manage'))<a class="admin-start-card" href="{{ route('admin.pages.index') }}"><strong>Pages & policies →</strong><span>Update the pages linked above the footer.</span></a>@endif
-  @if(auth()->user()->hasRole('super-admin'))<a class="admin-start-card" href="{{ route('admin.readiness.index','authors') }}"><strong>Author profiles →</strong><span>Edit contributor names and profile details.</span></a>@endif
-  <a class="admin-start-card" href="{{ route('admin.contacts.index') }}"><strong>Enquiries →</strong><span>{{ $stats['contacts'] }} new messages from your readers.</span></a>
- </div>
-</section>
-@if($stats['applications'] && auth()->user()->hasRole('super-admin'))<div class="portal-card" style="margin-top:20px"><div class="portal-card-body"><a href="{{ route('admin.users.index') }}">{{ $stats['applications'] }} account applications need approval →</a></div></div>@endif
+<details class="admin-help portal-card">
+    <summary>How publishing works — 6 steps</summary>
+    <ol class="admin-publishing-steps">
+        @foreach(array_slice(config('workflow-guide.phases'), 0, 6) as $phase)
+            <li><strong>{{ $phase['label'] }}</strong><p>{{ $phase['owner'] }}</p><p>{{ $phase['description'] }}</p></li>
+        @endforeach
+    </ol>
+    <p class="admin-help-text">Open a manuscript and read What happens next. The available actions follow its current stage.</p>
+</details>
 @endsection

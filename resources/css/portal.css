@@ -57,3 +57,22 @@
 .admin-flow-steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.admin-flow-step{display:flex;flex-direction:column;gap:6px;padding:14px;border:1px solid var(--portal-line);border-radius:8px;color:inherit;text-decoration:none;background:var(--portal-paper)}.admin-flow-step:hover{border-color:var(--portal-ink);transform:translateY(-1px)}.admin-flow-number{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--portal-ink);color:#fff;font-weight:700;font-size:.8rem}.admin-flow-step strong{font-size:.92rem}.admin-flow-step small{color:var(--portal-muted);line-height:1.4}@media(max-width:900px){.admin-flow-steps{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:520px){.admin-flow-steps{grid-template-columns:1fr}}
 
 .profile-image-control{display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap}.profile-image-control>div{flex:1;min-width:200px}.profile-image-preview{width:96px;height:96px;object-fit:cover;border-radius:50%;border:1px solid var(--portal-line)}.portal-account-avatar{width:38px;height:38px;object-fit:cover;border-radius:50%}
+
+/* Keep routine administration compact and let less-used tools stay folded. */
+.admin-simple .portal-sidebar .portal-nav-link{min-height:44px}
+.admin-simple .admin-nav-section summary{min-height:44px;padding:12px}
+.admin-quick-actions{margin-bottom:20px}.admin-quick-actions .admin-start-card{padding:16px;gap:5px}
+.admin-help{margin-top:20px;border-top:1px solid var(--portal-line)}
+.admin-help>summary{cursor:pointer;font-size:14px;font-weight:650;padding:16px 0}
+.admin-help>summary span,.admin-help-text{color:var(--portal-muted);font-size:13px;line-height:1.6}
+.admin-help.portal-card{padding:0 20px}.admin-help.portal-card>.admin-help-text{padding-bottom:16px}
+.admin-publishing-steps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;padding-left:22px}
+.admin-publishing-steps p{font-size:13px;color:var(--portal-muted);line-height:1.5;margin:6px 0}
+.admin-people-tabs,.admin-secondary-links{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px}
+.admin-secondary-links{margin:4px 0 16px}.admin-count{display:inline-grid;place-items:center;min-width:22px;min-height:22px;border-radius:12px;background:var(--portal-mint);color:var(--portal-ink);font-size:12px;padding:0 5px}
+.admin-staff-form{max-width:900px}.admin-staff-form .admin-help{margin-top:4px}
+.admin-staff-form .form-grid{align-items:start}.admin-staff-form .portal-field small{font-size:12px;color:var(--portal-muted);line-height:1.5}
+.admin-row-more summary{cursor:pointer;font-size:12px;min-height:36px;display:flex;align-items:center;padding:8px}
+.admin-row-more form{margin-top:4px}
+@media(max-width:820px){.admin-simple .portal-sidebar{overflow-y:auto;overscroll-behavior:contain}.admin-simple .portal-sidebar nav{flex:0 0 auto}.admin-simple .portal-sidebar-foot{margin-top:20px}}
+@media(max-width:600px){.admin-people-tabs .portal-button,.admin-secondary-links .portal-button{min-height:44px}.admin-staff-form .form-grid,.admin-publishing-steps{grid-template-columns:1fr}.admin-simple .portal-actions{flex-wrap:wrap;justify-content:flex-start}.admin-row-more summary{min-height:44px}}

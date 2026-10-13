@@ -8,6 +8,6 @@
             @endforeach
         </ol>
         <p>Emails and in-app notifications tell the relevant author, editor or reviewer when action is needed. Only the actions allowed at the current stage are available. DOI and indexing checks record work completed with the external provider.</p>
-        @if(auth()->user()->hasRole('super-admin'))<p><strong>Add staff:</strong> Users → New user → select Editor or Reviewer. Alternatively, approve a registered staff application under Users. Creating a public Editorial board profile does not create a login account.</p>@endif
+        @if(auth()->user()->hasRole('super-admin'))<p><strong>Add staff:</strong> People → Add editor or Add reviewer. Alternatively, open People → Account approvals to approve a registration. Creating a public Editorial board profile does not create a login account.</p>@endif
     </div>
 </details>

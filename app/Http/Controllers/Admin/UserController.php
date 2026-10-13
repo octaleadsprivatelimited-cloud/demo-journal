@@ -29,6 +29,7 @@ final class UserController extends Controller
         $baseQuery = User::query()->where('is_local_admin_bypass', false);
 
         return view('admin.users.index', [
+            'tab' => $request->input('tab') === 'applications' ? 'applications' : 'accounts',
             'applications' => (clone $baseQuery)->with('approver:id,name')->where('status', 'pending')->whereNotNull('requested_role')->oldest()->get(),
             'users' => $baseQuery
                 ->where('status', '!=', 'pending')
@@ -48,11 +49,15 @@ final class UserController extends Controller
         ]);
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
         Gate::authorize('create', User::class);
 
-        return view('admin.users.create', ['roles' => Role::query()->orderBy('name')->get()]);
+        $staffRole = in_array($request->input('role'), ['editor', 'reviewer'], true)
+            ? Role::query()->where('slug', $request->input('role'))->firstOrFail()
+            : null;
+
+        return view('admin.users.create', ['roles' => Role::query()->orderBy('name')->get(), 'staffRole' => $staffRole]);
     }
 
     public function store(UserRequest $request): RedirectResponse
