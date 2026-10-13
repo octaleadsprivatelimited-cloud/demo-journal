@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Mail\AzureEmailTransport;
 use App\Models\User;
 use App\Services\Contracts\ArticleSearch;
 use App\Services\Contracts\DoiProvider;
@@ -10,13 +11,17 @@ use App\Services\ManualDoiProvider;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Queue\Events\JobExceptionOccurred;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use RuntimeException;
+use Symfony\Component\Mailer\Exception\UnexpectedResponseException;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -57,7 +62,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        \Illuminate\Support\Facades\Mail::extend('azure', fn (array $config) => new \App\Mail\AzureEmailTransport($config['endpoint'] ?? ''));
+        // Permanent SMTP rejections must not be resent automatically as if transient.
+        Queue::exceptionOccurred(static function (JobExceptionOccurred $event): void {
+            if ($event->job->getQueue() === 'mail'
+                && $event->exception instanceof UnexpectedResponseException
+                && in_array($event->exception->getCode(), [550, 551, 552, 553, 554], true)) {
+                $event->job->fail($event->exception);
+            }
+        });
+
+        Mail::extend('azure', fn (array $config) => new AzureEmailTransport($config['endpoint'] ?? ''));
 
         Model::preventLazyLoading(! app()->isProduction());
 

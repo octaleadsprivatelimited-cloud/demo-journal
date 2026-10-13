@@ -13,12 +13,15 @@ use App\Models\User;
 use App\Notifications\AccountApplicationReceivedNotification;
 use App\Notifications\AccountApplicationStatusNotification;
 use App\Notifications\ArticleSubmittedNotification;
-use App\Notifications\ContactSubmissionReceivedNotification;
 use App\Notifications\ContactSubmissionReceiptNotification;
+use App\Notifications\ContactSubmissionReceivedNotification;
 use App\Notifications\QueuedVerifyEmail;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Mail\Mailer;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
+use Symfony\Component\Mailer\Transport\Smtp\SmtpTransport;
 use Tests\TestCase;
 
 final class JournalMailNotificationTest extends TestCase
@@ -44,7 +47,8 @@ final class JournalMailNotificationTest extends TestCase
             $this->assertSame(['mail'], $notification->via($notifiable));
             $mail = $notification->toMail($notifiable);
             $this->assertSame('visitor@example.test', $mail->replyTo[0][0]);
-            $this->assertStringContainsString('Please help with my manuscript submission.', (string) $mail->render());
+            $this->assertStringNotContainsString('Please help with my manuscript submission.', (string) $mail->render());
+            $this->assertStringContainsString('/admin/contact-submissions/', $mail->actionUrl);
 
             return $channels === ['mail'] && $notifiable->routes['mail'] === 'info@larixjournals.com';
         });
@@ -66,6 +70,27 @@ final class JournalMailNotificationTest extends TestCase
         $this->post(route('contact.store'), array_merge($this->contactPayload(), ['company_website' => 'https://spam.test']))->assertSessionHasErrors('company_website');
         $this->assertDatabaseCount('contact_submissions', 0);
         Notification::assertNothingSent();
+    }
+
+    public function test_contact_emails_do_not_repeat_visitor_content_that_can_trigger_smtp_spam_rejection(): void
+    {
+        $payload = $this->contactPayload();
+        $payload['name'] = 'Visitor https://untrusted.example.test';
+        $payload['subject'] = 'Unsolicited offer https://untrusted.example.test';
+        $payload['message'] = 'Visitor content and links https://untrusted.example.test must stay in the admin inbox.';
+        $this->post(route('contact.store'), $payload)->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('contact_submissions', ['subject' => $payload['subject'], 'message' => $payload['message']]);
+
+        foreach ([ContactSubmissionReceivedNotification::class, ContactSubmissionReceiptNotification::class] as $class) {
+            Notification::assertSentOnDemand($class, function ($notification, $channels, $notifiable) use ($payload): bool {
+                $mail = $notification->toMail($notifiable);
+                $this->assertStringNotContainsString($payload['subject'], $mail->subject);
+                $this->assertStringNotContainsString('untrusted.example.test', (string) $mail->render());
+                $this->assertStringContainsString('Enquiry reference:', (string) $mail->render());
+
+                return true;
+            });
+        }
     }
 
     public function test_role_applications_send_receipts_and_office_alerts_while_remaining_pending(): void
@@ -150,12 +175,12 @@ final class JournalMailNotificationTest extends TestCase
     public function test_smtp_authentication_errors_do_not_expose_credentials(): void
     {
         config()->set('mail.default', 'smtp');
-        $transport = \Mockery::mock(\Symfony\Component\Mailer\Transport\Smtp\SmtpTransport::class);
+        $transport = \Mockery::mock(SmtpTransport::class);
         $transport->shouldReceive('start')->once()->andThrow(new \RuntimeException('smtp-password-sensitive'));
         $transport->shouldReceive('stop')->once();
-        $mailer = \Mockery::mock(\Illuminate\Mail\Mailer::class);
+        $mailer = \Mockery::mock(Mailer::class);
         $mailer->shouldReceive('getSymfonyTransport')->once()->andReturn($transport);
-        \Illuminate\Support\Facades\Mail::shouldReceive('mailer')->with('smtp')->once()->andReturn($mailer);
+        Mail::shouldReceive('mailer')->with('smtp')->once()->andReturn($mailer);
 
         $this->artisan('mail:check --authenticate')
             ->expectsOutputToContain('SMTP check failed (RuntimeException)')

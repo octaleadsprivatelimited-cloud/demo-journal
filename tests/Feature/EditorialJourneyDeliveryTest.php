@@ -84,7 +84,9 @@ final class EditorialJourneyDeliveryTest extends TestCase
         $this->as($editor)->get(route('workflow.show', $article))->assertForbidden();
         $this->get(route('articles.show', $article))->assertNotFound();
 
-        $this->as($this->super)->get(route('admin.dashboard'))->assertOk()->assertSee(route('workflow.index', ['unassigned' => 1]), false);
+        $this->as($this->super)->get(route('admin.dashboard'))->assertOk()
+            ->assertSee(route('workflow.index'), false)
+            ->assertSee(route('admin.submissions.show', $article->submissions()->firstOrFail()), false);
         $this->get(route('workflow.index', ['unassigned' => 1]))->assertOk()->assertSee($article->title);
         $this->post(route('workflow.assignment', $article), ['editor_id' => $editor->id, 'comments' => 'Assign the handling editor.'])
             ->assertRedirect()->assertSessionHasNoErrors();

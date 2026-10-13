@@ -27,9 +27,10 @@ final class ContactSubmissionReceiptNotification extends Notification implements
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)->markdown('notifications::email', ['templateType' => 'contact'])
-            ->subject('We received your enquiry: '.$this->submission->subject)
-            ->greeting('Hello '.$this->submission->name.',')
+            ->subject('Your journal enquiry was received')
+            ->greeting('Hello,')
             ->line('Thank you for contacting '.config('publication.name').'.')
+            ->line('Enquiry reference: #'.$this->submission->getKey())
             ->line('Your enquiry has been recorded. Our editorial team will review it and respond.');
     }
 }

@@ -7,8 +7,8 @@ namespace App\Notifications;
 use App\Models\ContactSubmission;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\AnonymousNotifiable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class ContactSubmissionReceivedNotification extends Notification implements ShouldQueue
@@ -29,13 +29,12 @@ class ContactSubmissionReceivedNotification extends Notification implements Shou
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)->markdown('notifications::email', ['templateType' => 'contact'])
-            ->subject('New contact enquiry: '.$this->submission->subject)
+            ->subject('New journal enquiry #'.$this->submission->getKey())
             ->greeting('Hello '.($notifiable->name ?? 'Editorial office').',')
-            ->replyTo($this->submission->email, $this->submission->name)
-            ->line($this->submission->name.' submitted a new contact enquiry.')
-            ->line('Email: '.$this->submission->email)
-            ->line('Category: '.($this->submission->category ?: 'General'))
-            ->line('Message: '.$this->submission->message)
+            ->replyTo($this->submission->email)
+            ->line('A new enquiry has been received through the journal contact form.')
+            ->line('Enquiry reference: #'.$this->submission->getKey())
+            ->line('Read the message and sender details in the admin inbox. The full enquiry is saved there for the editorial team.')
             ->action('View enquiry', rtrim((string) config('app.url'), '/').'/admin/contact-submissions/'.$this->submission->getKey());
     }
 
