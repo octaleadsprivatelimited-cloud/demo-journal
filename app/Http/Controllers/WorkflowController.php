@@ -57,10 +57,10 @@ class WorkflowController extends Controller
         $activities = WorkflowActivity::where('article_id', $article->id)->when(! $editor, fn ($q) => $q->where('author_visible', true))->with('actor')->latest('id')->get();
         $files = WorkflowFile::where('article_id', $article->id)->when(! $editor, fn ($q) => $q->whereNotIn('purpose', ['report', 'edited_manuscript']))->with('uploader')->latest()->get();
         $reviews = $article->reviews()->with('reviewer')->when(! $editor, fn ($q) => $q->where('status', 'completed'))->get();
-        $reviewers = $editor ? User::active()->whereHas('roles', fn ($q) => $q->where('slug', 'reviewer'))->withCount(['reviews as active_reviews_count' => fn ($q) => $q->whereIn('status', ['assigned', 'in_progress']), 'reviews as completed_reviews_count' => fn ($q) => $q->where('status', 'completed')])->get() : collect();
+        $reviewers = $editor ? User::active()->whereNotNull('email_verified_at')->whereHas('roles', fn ($q) => $q->where('slug', 'reviewer'))->withCount(['reviews as active_reviews_count' => fn ($q) => $q->whereIn('status', ['assigned', 'in_progress']), 'reviews as completed_reviews_count' => fn ($q) => $q->where('status', 'completed')])->get() : collect();
         $actions = $this->workflow->actions($article, $request->user());
 
-        return view('workflow.show', compact('article', 'editor', 'activities', 'files', 'reviews', 'reviewers', 'actions') + ['issues' => JournalIssue::with('volume')->get(), 'services' => IndexingService::all(), 'editors' => $this->workflow->isAdmin($request->user()) ? User::active()->whereHas('roles', fn ($q) => $q->where('slug', 'editor'))->get() : collect()]);
+        return view('workflow.show', compact('article', 'editor', 'activities', 'files', 'reviews', 'reviewers', 'actions') + ['issues' => JournalIssue::with('volume')->get(), 'services' => IndexingService::all(), 'editors' => $this->workflow->isAdmin($request->user()) ? User::active()->whereNotNull('email_verified_at')->whereHas('roles', fn ($q) => $q->where('slug', 'editor'))->get() : collect()]);
     }
 
     public function action(Request $request, Article $article)
@@ -87,7 +87,7 @@ class WorkflowController extends Controller
         abort_unless($this->workflow->isAdmin($request->user()), 403);
         $v = $request->validate(['editor_id' => ['required', 'exists:users,id'], 'owner_id' => ['nullable', 'exists:users,id'], 'comments' => ['required', 'string', 'max:5000']]);
         $editor = User::findOrFail($v['editor_id']);
-        abort_unless($editor->isActive() && $editor->hasRole('editor'), 422);
+        abort_unless($editor->isActive() && $editor->hasVerifiedEmail() && $editor->hasRole('editor'), 422, 'Select an active editor with a verified email address.');
         DB::transaction(function () use ($article, $v, $request) {
             $a = Article::whereKey($article->id)->lockForUpdate()->firstOrFail();
             $a->assigned_editor_id = $v['editor_id'];

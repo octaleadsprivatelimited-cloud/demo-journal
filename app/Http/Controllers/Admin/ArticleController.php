@@ -80,8 +80,8 @@ final class ArticleController extends Controller
         $article->load(['category', 'creator:id,name,email', 'assignedEditor:id,name,email', 'authors', 'tags', 'seoMetadata', 'versions.creator:id,name', 'submissions.version', 'submissions.reviews.reviewer:id,name']);
 
         return view('admin.articles.show', ['article' => $article,
-            'editors' => User::query()->active()->whereHas('roles', fn ($query) => $query->whereIn('slug', ['editor', 'admin', 'super-admin']))->orderBy('name')->get(['id', 'name']),
-            'reviewers' => User::query()->active()->whereHas('roles', fn ($query) => $query->whereIn('slug', ['reviewer', 'editor', 'admin', 'super-admin']))->orderBy('name')->get(['id', 'name'])]);
+            'editors' => User::query()->active()->whereNotNull('email_verified_at')->whereHas('roles', fn ($query) => $query->whereIn('slug', ['editor', 'admin', 'super-admin']))->orderBy('name')->get(['id', 'name']),
+            'reviewers' => User::query()->active()->whereNotNull('email_verified_at')->whereHas('roles', fn ($query) => $query->whereIn('slug', ['reviewer', 'editor', 'admin', 'super-admin']))->orderBy('name')->get(['id', 'name'])]);
     }
 
     public function edit(Article $article): View
@@ -230,7 +230,7 @@ final class ArticleController extends Controller
     private function assignEditor(Article $article, int $userId): bool
     {
         $editor = User::query()->active()->findOrFail($userId);
-        if (! $editor->hasAnyRole('editor', 'admin', 'super-admin')) {
+        if (! $editor->hasVerifiedEmail() || ! $editor->hasAnyRole('editor', 'admin', 'super-admin')) {
             throw new DomainException('The selected user is not eligible to edit articles.');
         }
 

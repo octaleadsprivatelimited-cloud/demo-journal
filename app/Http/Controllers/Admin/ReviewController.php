@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 final class ReviewController extends Controller
@@ -29,7 +30,7 @@ final class ReviewController extends Controller
         Gate::authorize('view', $review);
 
         return view('admin.reviews.show', ['review' => $review->load(['article', 'submission', 'reviewer:id,name,email', 'assignedBy:id,name', 'comments.user:id,name']),
-            'reviewers' => User::query()->active()->whereHas('roles', fn ($q) => $q->whereIn('slug', ['reviewer', 'editor', 'admin', 'super-admin']))->orderBy('name')->get(['id', 'name'])]);
+            'reviewers' => User::query()->active()->whereNotNull('email_verified_at')->whereHas('roles', fn ($q) => $q->whereIn('slug', ['reviewer', 'editor', 'admin', 'super-admin']))->orderBy('name')->get(['id', 'name'])]);
     }
 
     public function update(ReviewRequest $request, Review $review): RedirectResponse
@@ -39,6 +40,12 @@ final class ReviewController extends Controller
         $data = $request->validated();
         if (! $request->filled('reviewer_id')) {
             unset($data['reviewer_id']);
+        }
+        if (isset($data['reviewer_id']) && (int) $data['reviewer_id'] !== $review->reviewer_id) {
+            $reviewer = User::findOrFail($data['reviewer_id']);
+            if (! $reviewer->isActive() || ! $reviewer->hasVerifiedEmail() || ! $reviewer->hasAnyRole('reviewer', 'editor', 'admin', 'super-admin')) {
+                throw ValidationException::withMessages(['reviewer_id' => 'Select an active reviewer with a verified email address.']);
+            }
         }
 
         $review->update($data);

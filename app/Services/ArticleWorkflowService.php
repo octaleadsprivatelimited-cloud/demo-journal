@@ -111,7 +111,7 @@ class ArticleWorkflowService
                 throw new DomainException('A reviewer can only be assigned to a submitted article.');
             }
 
-            if (! $reviewer->isActive() || ! data_get($reviewer->reviewer_profile, 'available', true) || ! $reviewer->hasAnyRole('reviewer', 'editor', 'admin', 'super-admin')) {
+            if (! $reviewer->isActive() || ! $reviewer->hasVerifiedEmail() || ! data_get($reviewer->reviewer_profile, 'available', true) || ! $reviewer->hasAnyRole('reviewer', 'editor', 'admin', 'super-admin')) {
                 throw new DomainException('The selected user is not eligible to review articles.');
             }
 

@@ -228,7 +228,7 @@ class ManuscriptWorkflowService
             }
             if ($action === 'assign_reviewer') {
                 $reviewer = User::findOrFail($v['reviewer_id']);
-                $this->require($reviewer->isActive() && $reviewer->hasRole('reviewer') && data_get($reviewer->reviewer_profile, 'available', true), 'Select an active, available reviewer.');
+                $this->require($reviewer->isActive() && $reviewer->hasVerifiedEmail() && $reviewer->hasRole('reviewer') && data_get($reviewer->reviewer_profile, 'available', true), 'Select an active, available reviewer with a verified email address.');
                 $this->require(! $article->isOwnedBy($reviewer), 'An author cannot review their own manuscript.');
                 $sid = $data['current_submission_id'] ?? null;
                 $this->require(! $article->reviews()->where('submission_id', $sid)->where('reviewer_id', $reviewer->id)->whereIn('status', ['assigned', 'in_progress', 'completed'])->exists(), 'This reviewer already has an invitation or review in this round.');

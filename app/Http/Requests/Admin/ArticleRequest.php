@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin;
 
+use App\Models\Article;
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 
 final class ArticleRequest extends FormRequest
@@ -31,7 +33,18 @@ final class ArticleRequest extends FormRequest
             'excerpt' => ['nullable', 'string', 'max:1000'], 'abstract' => ['nullable', 'string', 'max:10000'],
             'content' => ['required', 'string', 'max:1000000'], 'category_id' => ['nullable', 'exists:categories,id'],
             'journal_issue_id' => ['nullable', 'exists:journal_issues,id'],
-            'created_by_id' => ['required', 'exists:users,id'], 'assigned_editor_id' => ['nullable', 'exists:users,id'],
+            'created_by_id' => ['required', 'exists:users,id'],
+            'assigned_editor_id' => ['nullable', 'exists:users,id', function (string $attribute, mixed $value, \Closure $fail): void {
+                $article = $this->route('article');
+                // Editing metadata may retain an existing assignment without granting new access.
+                if ($article instanceof Article && (int) $value === $article->assigned_editor_id) {
+                    return;
+                }
+                $editor = User::find($value);
+                if (! $editor?->isActive() || ! $editor->hasVerifiedEmail() || ! $editor->hasAnyRole('editor', 'admin', 'super-admin')) {
+                    $fail('Select an active editor with a verified email address.');
+                }
+            }],
             'authors' => ['nullable', 'array', 'max:20'], 'authors.*' => ['integer', 'distinct', 'exists:authors,id'],
             'tags' => ['nullable', 'array', 'max:30'], 'tags.*' => ['integer', 'distinct', 'exists:tags,id'],
             'keywords' => ['nullable', 'array', 'max:30'], 'keywords.*' => ['string', 'max:80'],

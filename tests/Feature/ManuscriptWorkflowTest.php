@@ -350,6 +350,107 @@ class ManuscriptWorkflowTest extends TestCase
         $this->actingAs($this->author)->get(route('author.submissions.index'))->assertOk()->assertSee('In Review');
     }
 
+    public function test_staff_assignment_choices_exclude_approved_but_unverified_accounts(): void
+    {
+        $this->editor->update(['email_verified_at' => null]);
+        $this->reviewer->update(['email_verified_at' => null]);
+
+        $this->actingAs($this->admin)->get(route('workflow.show', $this->article))->assertOk()
+            ->assertViewHas('editors', fn ($users) => ! $users->contains('id', $this->editor->id))
+            ->assertViewHas('reviewers', fn ($users) => ! $users->contains('id', $this->reviewer->id));
+        $this->get(route('admin.articles.show', $this->article))->assertOk()
+            ->assertViewHas('editors', fn ($users) => ! $users->contains('id', $this->editor->id))
+            ->assertViewHas('reviewers', fn ($users) => ! $users->contains('id', $this->reviewer->id));
+        $this->get(route('admin.assign-reviewer.show', $this->article))->assertOk()
+            ->assertViewHas('reviewers', fn ($users) => ! $users->contains('id', $this->reviewer->id));
+    }
+
+    public function test_unverified_editor_cannot_be_assigned_by_posting_their_id(): void
+    {
+        $this->article->update(['assigned_editor_id' => null]);
+        $this->editor->update(['email_verified_at' => null]);
+
+        $this->actingAs($this->admin)->post(route('workflow.assignment', $this->article), [
+            'editor_id' => $this->editor->id, 'comments' => 'Attempt to assign an unverified editor.',
+        ])->assertUnprocessable();
+
+        $this->assertNull($this->article->fresh()->assigned_editor_id);
+        $this->assertDatabaseCount('workflow_activities', 0);
+        Notification::assertNothingSent();
+    }
+
+    public function test_legacy_assignment_actions_also_reject_unverified_staff(): void
+    {
+        $this->article->update(['assigned_editor_id' => null, 'status' => ArticleStatus::Submitted]);
+        $this->editor->update(['email_verified_at' => null]);
+        $this->reviewer->update(['email_verified_at' => null]);
+        $this->actingAs($this->admin)->post(route('admin.articles.action', $this->article), [
+            'action' => 'assign_editor', 'user_id' => $this->editor->id,
+        ])->assertSessionHasErrors('action');
+        $this->post(route('admin.articles.action', $this->article), [
+            'action' => 'assign_reviewer', 'user_id' => $this->reviewer->id,
+        ])->assertSessionHasErrors('action');
+
+        $this->assertNull($this->article->fresh()->assigned_editor_id);
+        $this->assertDatabaseCount('reviews', 0);
+        Notification::assertNothingSent();
+    }
+
+    public function test_legacy_review_reassignment_cannot_bypass_email_verification(): void
+    {
+        $review = Review::factory()->create([
+            'article_id' => $this->article->id, 'reviewer_id' => $this->reviewer->id,
+            'assigned_by_id' => $this->admin->id, 'status' => ReviewStatus::Assigned,
+        ]);
+        $unverified = $this->person('reviewer');
+        $unverified->update(['email_verified_at' => null]);
+
+        $this->actingAs($this->admin)->put(route('admin.reviews.update', $review), [
+            'status' => 'assigned', 'reviewer_id' => $unverified->id,
+        ])->assertSessionHasErrors('reviewer_id');
+
+        $this->assertSame($this->reviewer->id, $review->fresh()->reviewer_id);
+        Notification::assertNothingSent();
+    }
+
+    public function test_article_metadata_cannot_create_an_unverified_editor_assignment(): void
+    {
+        $this->editor->update(['email_verified_at' => null]);
+        $count = Article::count();
+        $this->actingAs($this->admin)->post(route('admin.articles.store'), [
+            'title' => 'Verified staff assignment regression', 'content' => 'Editorial draft content.',
+            'publication_type' => 'research', 'created_by_id' => $this->author->id,
+            'assigned_editor_id' => $this->editor->id,
+        ])->assertSessionHasErrors('assigned_editor_id');
+
+        $this->assertSame($count, Article::count());
+        Notification::assertNothingSent();
+    }
+
+    public function test_unverified_reviewer_cannot_receive_a_workflow_invitation(): void
+    {
+        $this->article->update(['status' => ArticleStatus::Submitted]);
+        $submission = $this->article->submissions()->create([
+            'submitted_by_id' => $this->author->id, 'round' => 1,
+            'status' => SubmissionStatus::Pending, 'submitted_at' => now(),
+        ]);
+        $this->article->workflow()->create([
+            'stage' => 'reviewer_assignment', 'data' => ['current_submission_id' => $submission->id],
+        ]);
+        $this->reviewer->update(['email_verified_at' => null]);
+
+        $this->actingAs($this->admin)->post(route('workflow.action', $this->article), [
+            'action' => 'assign_reviewer', 'reviewer_id' => $this->reviewer->id,
+            'deadline' => now()->addDays(21)->toDateString(),
+            'invitation_deadline' => now()->addDays(7)->toDateString(),
+            'editor_message' => 'This invitation must not be sent before verification.',
+        ])->assertSessionHasErrors('workflow');
+
+        $this->assertDatabaseCount('reviews', 0);
+        $this->assertDatabaseCount('workflow_activities', 0);
+        Notification::assertNothingSent();
+    }
+
     public function test_accepting_a_revision_invitation_keeps_current_round_review_status_consistent(): void
     {
         $this->reachReview();

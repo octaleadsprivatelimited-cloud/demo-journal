@@ -35,7 +35,7 @@ class ReviewerAssignmentController extends Controller
         $article->load(['workflow', 'reviews.reviewer']);
         $round = $article->workflow ? data_get($article->workflow->data, 'current_submission_id') : $article->submissions()->latest('round')->value('id');
         $assigned = $article->reviews()->where('submission_id', $round)->whereIn('status', ['assigned', 'in_progress', 'completed'])->pluck('reviewer_id');
-        $reviewers = User::active()->whereHas('roles', fn ($q) => $q->where('slug', 'reviewer'))
+        $reviewers = User::active()->whereNotNull('email_verified_at')->whereHas('roles', fn ($q) => $q->where('slug', 'reviewer'))
             ->where('id', '!=', $article->created_by_id)->whereNotIn('id', $article->authors()->whereNotNull('user_id')->pluck('user_id'))
             ->whereNotIn('id', $assigned)->withCount(['reviews as active_reviews_count' => fn ($q) => $q->whereIn('status', ['assigned', 'in_progress'])])->orderBy('name')->get()
             ->filter(fn ($user) => data_get($user->reviewer_profile, 'available', true));
