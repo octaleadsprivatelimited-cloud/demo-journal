@@ -1,4 +1,20 @@
-# End-to-end verification — 4 September 2026
+# End-to-end verification history
+
+## 14 October 2026 — production inspection and assignment repair
+
+The live site is `https://sjcjournal.com`. Safari authenticated the real Super Admin account and opened People, the manuscript list, a submission record, its workflow and reviewer assignment screen. Public author/editor/reviewer registration, login and verification resend pages responded successfully. Production has one verified Super Admin, one verified author and an active editor/reviewer whose email is still unverified. That staff account cannot use its workspace until verification is completed; the audit did not mark it verified or change its existing manuscript/review assignment.
+
+The inspection exposed a missing verification check on new staff assignments. Commit `d165cf1` fixes workflow, legacy and article metadata assignment paths and hides unverified staff from new assignment choices. Six regression cases cover selectors, direct editor/reviewer requests, legacy actions, review reassignment and metadata creation. The relevant isolated test run passed **47 tests with 896 assertions**, including actual serialized database-queue notifications throughout the editorial journey. Tests used their own database, rather than the production journal database.
+
+The eight runtime files were deployed on Hostinger at `2026-10-13T21:04:03Z` (14 October in India). Successful-release, repeated-launcher and rollback rehearsals preserved fixture records, mail and configuration. The private production completion report confirms every updated source checksum, the restored regular mail worker, unchanged private environment, and unchanged record counts: 5 users, 40 articles, 1 submission and 1 review. The live homepage and authenticated workflow pages rendered successfully after deployment. The 12 original contact notices remain held, 12 older failed mail notices remain held, 36 failed publication jobs remain retained, and 21 redundant pending publication jobs remain in their held maintenance queue. No historical messages were retried, deleted or pruned.
+
+The earlier three labelled verification/approval/submission **template delivery tests** are present in the notifications inbox and carry DKIM signatures; Hostinger delivery logs show Delivered. Those emails created no real account or manuscript. They establish transport and template delivery, rather than a complete live registration-to-review journey.
+
+**Fresh live transactional journey: pending.** The owner authorized three dedicated author/editor/reviewer email aliases into the notifications inbox, plus normal test office alerts. The aliases are created and Safari registration forms are prepared. Creating the passwords, accepting the terms and submitting these applications require the owner to complete the credential handoff. At this checkpoint there are no new test applications, no verification emails for these aliases and no test manuscript. Verification, Super Admin approval, role sign-ins, author submission and editor/reviewer notification links still require live transactional validation after registration. The test manuscript must remain unpublished, existing journal records must remain unchanged, and older queues must stay held.
+
+## 4 September 2026 — archived local audit
+
+The following results describe the local environment as inspected on that date; the historical production boundary below is not the current Hostinger deployment status.
 
 ## Verified locally
 
