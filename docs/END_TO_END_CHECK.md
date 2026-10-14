@@ -1,5 +1,15 @@
 # End-to-end verification history
 
+## 14 October 2026 — compact Journal and Latest cards deployed
+
+Source revision `d2a500a` was deployed through the authenticated larixitsolutions Hostinger session in Safari at `2026-10-14T09:49:04Z` (3:19 PM India time). The release updated only the publication stylesheet, the shared article-card view and the Journal/Latest listing view. Highlighted and regular cards now share equal columns, a 2:1 image ratio, 20-pixel titles limited to three visible lines, compact summaries and aligned author/PDF details. Full titles remain in the link text and tooltip. The verified local layout adapts to three, two and one columns.
+
+The release checked source checksums against the reviewed baseline and backed up the three replaced files. Successful-release, repeat-launch and rollback rehearsals passed in isolated containers. The private production report confirms all **118 stored/public files (53,540,424 bytes)** have the same content fingerprint before and after deployment. Private configuration and journal record counts remained unchanged: 6 users, 40 articles, 1 submission and 1 review.
+
+The 12 original pending mail notices remain held, 12 older failed mail notices remain held, 21 redundant pending publication jobs remain in their held maintenance queue, and 36 failed publication jobs remain retained. The complete older-job fingerprint matches the earlier release. No historical messages were retried, deleted or pruned. The launcher restored the reviewed regular mail worker; no additional cron job was created.
+
+After the hosting-cache refresh, both `https://sjcjournal.com/journals` and `https://sjcjournal.com/articles` returned the updated markup over verified HTTPS, with 2 highlighted cards and 12 regular cards on the first page. Safari opened both live pages and visually confirmed the equal highlighted-card sizes and aligned details. Private deployment reports and Safari screenshots remain outside version control. This layout release does not complete the still-pending live account-to-publication transaction audit described below.
+
 ## 14 October 2026 — production inspection and assignment repair
 
 The live site is `https://sjcjournal.com`. Safari authenticated the real Super Admin account and opened People, the manuscript list, a submission record, its workflow and reviewer assignment screen. Public author/editor/reviewer registration, login and verification resend pages responded successfully. At the initial inspection, production had one verified Super Admin, one verified author and an active editor/reviewer whose email was unverified. The audit did not mark that account verified or change its existing manuscript/review assignment. A later authenticated People inspection showed that staff account verified.
