@@ -24,7 +24,7 @@
             <span aria-hidden="true">•</span>
             <time datetime="{{ optional($publishedAt)->toDateString() }}">{{ optional($publishedAt)->format('M j, Y') }}</time>
         </div>
-        <h3><a class="article-card-primary" href="{{ route('articles.show', $article->slug) }}">{{ $article->title }}</a></h3>
+        <h3><a class="article-card-primary" href="{{ route('articles.show', $article->slug) }}" title="{{ $article->title }}">{{ $article->title }}</a></h3>
         @if($showExcerpt && ($article->excerpt || $article->subtitle))
             <p>{{ Illuminate\Support\Str::limit($article->excerpt ?: $article->subtitle, $layout === 'horizontal' ? 180 : 145) }}</p>
         @endif

@@ -22,11 +22,11 @@
     </section>
 
     @if($featured->isNotEmpty() && !collect($filters)->filter()->count())
-        <section class="featured-strip">
+        <section class="featured-strip publication-featured">
             <div class="container publication-container">
                 <div class="minor-heading"><h2>Editorial selections</h2><span>{{ now()->format('F Y') }}</span></div>
-                <div class="featured-strip-grid">
-                    @foreach($featured as $article)<x-public.article-card :article="$article" :show-excerpt="$loop->first" />@endforeach
+                <div class="featured-strip-grid publication-card-grid">
+                    @foreach($featured as $article)<x-public.article-card :article="$article" />@endforeach
                 </div>
             </div>
         </section>
@@ -52,7 +52,7 @@
             </div>
 
             @if($articles->isNotEmpty())
-                <div class="article-grid article-grid-two publication-grid">
+                <div class="article-grid article-grid-three publication-grid publication-card-grid">
                     @foreach($articles as $article)<x-public.article-card :article="$article" />@endforeach
                 </div>
                 <x-public.pagination :paginator="$articles" />
