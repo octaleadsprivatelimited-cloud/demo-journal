@@ -1,5 +1,5 @@
-/* Shared public layout: fluid containers use the available screen width on every page. */
-:root{--container:100%;--reading:100%;--site-gutter:24px;--section-space:32px}
+/* Shared public layout: desktop pages leave 4 cm of space on each side. */
+:root{--container:100%;--reading:100%;--site-gutter:4cm;--section-space:32px}
 body{overflow-x:visible;line-height:1.5}
 .site-shell p,.article-content,.journal-information .article-body{font-family:var(--font-sans)}
 .container,.publication-container,.container-reading-wide{width:calc(100% - var(--site-gutter)*2);max-width:none;margin-inline:auto}
@@ -157,6 +157,7 @@ a:hover{text-decoration:underline;text-underline-offset:4px}
 .article-byline p,.article-dates{font-size:.9rem;line-height:1.6}
 
 @media(max-width:1200px){
+ :root{--site-gutter:24px}
  .utility-bar,.primary-nav{display:none}
  .site-header,.site-header.is-compact{top:0;border-bottom:1px solid var(--line)}
  .masthead{min-height:76px;gap:8px;padding-block:8px;display:grid;grid-template-columns:44px minmax(0,1fr) 92px}
