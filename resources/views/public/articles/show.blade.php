@@ -131,12 +131,10 @@
             </aside>
 
             <div class="article-body-column">
-                @if($article->abstract)
-                    <section class="article-abstract" aria-labelledby="abstract-heading">
-                        <p class="eyebrow" id="abstract-heading">Abstract</p>
-                        <p>{{ $article->abstract }}</p>
-                    </section>
-                @endif
+                <section class="article-abstract" id="abstract" aria-labelledby="abstract-heading">
+                    <h2 class="eyebrow" id="abstract-heading">Abstract</h2>
+                    <p>{{ $article->abstract ?: 'A separate abstract is not available for this article. Read the full paper below.' }}</p>
+                </section>
 
                 <div class="article-mobile-tools">
                     <button class="button button-outline" type="button" data-share-native data-share-title="{{ $article->title }}" data-share-url="{{ route('articles.show', $article->slug) }}"><x-public.icon name="share" /> Share</button>
@@ -145,7 +143,7 @@
                 </div>
 
                 @if(Str::startsWith((string) $article->article_number, 'SJC-LEGACY-') && $article->pdf_path && $article->pdf_download_enabled && data_get($site, 'features.pdf_downloads', true))
-                    <section class="article-fulltext" aria-labelledby="full-article-heading">
+                    <section class="article-fulltext" id="full-paper" aria-labelledby="full-article-heading">
                         <div class="fulltext-heading"><h2 id="full-article-heading">Full article</h2><a class="text-link" href="{{ route('articles.pdf', ['slug'=>$article->slug, 'inline'=>1]) }}" target="_blank" rel="noopener">Open full screen ↗</a></div>
                         <p>The complete article, including figures, tables and references.</p>
                         <div class="article-pdf-reader" data-pdf-reader="{{ route('articles.pdf', ['slug'=>$article->slug, 'inline'=>1]) }}">
@@ -163,7 +161,7 @@
                     </section>
                 @endif
 
-                <div class="article-content" data-article-content>
+                <div class="article-content" @unless(Str::startsWith((string) $article->article_number, 'SJC-LEGACY-') && $article->pdf_path && $article->pdf_download_enabled && data_get($site, 'features.pdf_downloads', true)) id="full-paper" @endunless data-article-content>
                     {!! $article->content !!}
                 </div>
 

@@ -37,11 +37,14 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Refuse to boot Laravel's Artisan test runner against a live database.
+     * Refuse to boot either test entry point against a live database.
      */
     private function preventUnsafeTestExecution(): void
     {
-        if (! $this->app->runningInConsole() || ! in_array('test', $_SERVER['argv'] ?? [], true)) {
+        $arguments = $_SERVER['argv'] ?? [];
+        $runner = basename($arguments[0] ?? '');
+        if (! $this->app->runningInConsole()
+            || (! in_array('test', $arguments, true) && ! in_array($runner, ['phpunit', 'phpunit.phar', 'pest'], true))) {
             return;
         }
 

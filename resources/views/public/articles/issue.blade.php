@@ -4,14 +4,14 @@
 @section('description', $issue->title ?: 'Published articles in this journal issue.')
 
 @section('content')
-<main class="section">
+<section class="section archive-issue">
     <div class="container">
         <x-public.breadcrumbs :items="['Archive' => route('archive.index'), 'Issue '.$issue->number => null]"/>
         <header class="page-heading">
             <p class="eyebrow">{{ $issue->publication_date?->format('F Y') }}</p>
-            <div style="display:flex;gap:1.5rem;align-items:flex-start">
+            <div class="issue-heading">
                 @if($issue->cover_image_path)
-                    <img src="{{ Storage::disk('public')->url($issue->cover_image_path) }}" alt="Cover for Issue {{ $issue->number }}" style="width:120px;height:160px;object-fit:cover">
+                    <img src="{{ Storage::disk('public')->url($issue->cover_image_path) }}" alt="Cover for Issue {{ $issue->number }}" width="120" height="160" loading="lazy" data-image-fallback="{{ asset('assets/editorial-placeholder.svg') }}">
                 @endif
                 <div>
                     <h1>Volume {{ $issue->volume->number }}, Issue {{ $issue->number }}</h1>
@@ -33,5 +33,5 @@
         </div>
         <x-public.pagination :paginator="$articles"/>
     </div>
-</main>
+</section>
 @endsection

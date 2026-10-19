@@ -6,16 +6,16 @@
 @section('content')
     <section class="home-intro">
         <div class="container">
-            <h1 class="sr-only">{{ data_get($site, 'name', config('app.name')) }} — cardiology research and clinical case reports</h1>
+            <h1 class="home-title">Singapore Journal of Cardiology</h1>
             <p class="home-research-summary">Explore open access cardiology research, clinical case reports and reviews in cardiovascular medicine.</p>
             <div class="issue-line">
-                <span>Current edition</span>
-                <strong>{{ now()->format('F Y') }}</strong>
+                @if($latest->isNotEmpty())<span>Latest publication</span>
+                <strong>{{ $latest->first()->published_at->format('F Y') }}</strong>@endif
                 <span class="issue-rule"></span>
                 <a href="{{ route('archive.index') }}">Browse the archive <x-public.icon name="arrow-right" /></a>
             </div>
 
-            <div class="home-hero-layout">
+            <div class="home-hero-layout home-hero-single">
             @if($heroArticles->isNotEmpty())
                 <div class="hero-slider" data-hero-slider role="region" aria-roledescription="carousel" aria-label="Featured and latest articles">
                 @foreach($heroArticles as $featured)
@@ -62,14 +62,7 @@
                     <div><a class="button button-primary" href="{{ route('articles.index') }}">Explore the journal</a><a class="button button-ghost" href="{{ route('about') }}">Our editorial mission</a></div>
                 </div>
             @endif
-    @if($editors->isNotEmpty())
-    <aside class="home-editors" aria-label="Editorial team">
-        @foreach($editors->groupBy(fn($member) => str_contains(strtolower($member->role), 'chief') ? 'Editors-in-Chief' : 'Editors') as $heading => $members)
-            <x-public.editor-carousel :members="$members" :heading="$heading" />
-        @endforeach
-        <a class="text-link" href="{{ route('editorial-board') }}">Meet the full editorial board <x-public.icon name="arrow-right" /></a>
-    </aside>
-    @endif
+
             </div>
         </div>
     </section>
@@ -90,12 +83,28 @@
         <section class="section section-latest">
             <div class="container publication-container">
                 <div class="section-heading">
-                    <div><p class="eyebrow">Recently published</p><h2>New perspectives</h2></div>
+                    <div><p class="eyebrow">Recently published</p><h2>Latest articles</h2></div>
                     <a class="text-link" href="{{ route('articles.index') }}">View all publications <x-public.icon name="arrow-right" /></a>
                 </div>
                 <div class="article-grid article-grid-three perspectives-grid">
                     @foreach($latest as $article)<x-public.article-card :article="$article" />@endforeach
                 </div>
+            </div>
+        </section>
+    @endif
+
+    @if($editors->isNotEmpty())
+        <section class="section home-editorial" aria-label="Editorial team">
+            <div class="container">
+                @foreach(['Editors-in-Chief' => $editors->filter(fn($member) => str_contains(strtolower($member->role), 'chief')), 'Editors' => $editors->reject(fn($member) => str_contains(strtolower($member->role), 'chief'))] as $heading => $members)
+                    @if($members->isNotEmpty())
+                        <section class="editor-group" aria-label="{{ $heading }}">
+                            <div class="minor-heading"><h2>{{ $heading }}</h2></div>
+                            <div class="editor-grid">@foreach($members as $member)<x-public.editor-card :member="$member" />@endforeach</div>
+                        </section>
+                    @endif
+                @endforeach
+                <a class="text-link" href="{{ route('editorial-board') }}">Meet the full editorial board <x-public.icon name="arrow-right" /></a>
             </div>
         </section>
     @endif

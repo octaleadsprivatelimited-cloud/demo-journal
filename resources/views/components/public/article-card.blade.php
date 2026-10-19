@@ -16,24 +16,18 @@
     </a>
     <div class="article-card-body">
         <div class="article-kicker">
-            @if($article->category)
-                <a href="{{ route('categories.show', $article->category->slug) }}">{{ $article->category->name }}</a>
-            @else
-                <span>Journal</span>
-            @endif
-            <span aria-hidden="true">•</span>
-            <time datetime="{{ optional($publishedAt)->toDateString() }}">{{ optional($publishedAt)->format('M j, Y') }}</time>
+            @if($article->category)<a href="{{ route('categories.show', $article->category->slug) }}">{{ $article->category->name }}</a>@else<span>Journal</span>@endif
         </div>
         <h3><a class="article-card-primary" href="{{ route('articles.show', $article->slug) }}" title="{{ $article->title }}">{{ $article->title }}</a></h3>
-        @if($showExcerpt && ($article->excerpt || $article->subtitle))
-            <p>{{ Illuminate\Support\Str::limit($article->excerpt ?: $article->subtitle, $layout === 'horizontal' ? 180 : 145) }}</p>
-        @endif
         <div class="article-card-meta">
-            @if($article->authors->isNotEmpty())
-                <span>By {!! $article->authors->take(2)->map(fn($author) => '<a href="'.e(route('authors.show', $author->slug)).'">'.e($author->name).'</a>')->implode(', ') !!}</span>
-            @endif
-            <span class="reading-time">@if(Str::startsWith((string) $article->article_number, 'SJC-LEGACY-'))Full article @else<x-public.icon name="clock" /> {{ $readingTime }} min read @endif</span>
-            @if($publicPdfEnabled)<a class="article-pdf-icon" href="{{ route('articles.pdf', $article->slug) }}" aria-label="Download {{ $article->title }} as PDF" title="Download PDF"><x-public.icon name="pdf" /></a>@endif
+            @if($article->authors->isNotEmpty())<p class="article-authors">By {!! $article->authors->map(fn($author) => '<a href="'.e(route('authors.show', $author->slug)).'">'.e($author->name).'</a>')->implode(', ') !!}</p>@endif
+            <time datetime="{{ optional($publishedAt)->toDateString() }}">{{ optional($publishedAt)->format('F j, Y') }}</time>
+        </div>
+        @if($showExcerpt && ($article->excerpt || $article->subtitle))<p>{{ Illuminate\Support\Str::limit($article->excerpt ?: $article->subtitle, $layout === 'horizontal' ? 180 : 145) }}</p>@endif
+        <div class="article-actions" aria-label="Read {{ $article->title }}">
+            <a href="{{ route('articles.show', $article->slug) }}#abstract">Abstract <x-public.icon name="arrow-right" /></a>
+            <a href="{{ route('articles.show', $article->slug) }}#full-paper">Full Paper <x-public.icon name="arrow-right" /></a>
+            @if($publicPdfEnabled)<a class="article-pdf-icon" href="{{ route('articles.pdf', $article->slug) }}" aria-label="Download {{ $article->title }} as PDF" title="Download PDF"><x-public.icon name="pdf" /><span>PDF</span></a>@endif
         </div>
     </div>
 </article>

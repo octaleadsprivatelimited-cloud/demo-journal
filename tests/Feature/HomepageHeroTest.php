@@ -13,7 +13,7 @@ class HomepageHeroTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_hero_contains_only_selected_published_articles_in_editorial_order(): void
+    public function test_hero_contains_only_selected_published_articles_in_newest_first_order(): void
     {
         $featured = Article::factory()->published()->create(['is_featured' => true, 'published_at' => now()->subDays(4)]);
         $latest = Article::factory()->published()->create(['is_featured' => false, 'is_homepage_latest' => true]);
@@ -24,7 +24,7 @@ class HomepageHeroTest extends TestCase
         $deleted->delete();
 
         $this->get('/')->assertOk()
-            ->assertViewHas('heroArticles', fn ($articles) => $articles->modelKeys() === [$featured->id, $latest->id])
+            ->assertViewHas('heroArticles', fn ($articles) => $articles->modelKeys() === [$latest->id, $featured->id])
             ->assertSee('data-hero-slider', false)->assertSee('data-hero-next', false);
     }
 

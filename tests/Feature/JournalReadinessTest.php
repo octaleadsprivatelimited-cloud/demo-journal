@@ -66,7 +66,7 @@ final class JournalReadinessTest extends TestCase
         IndexingService::query()->create(['name' => 'Verified Index', 'status' => 'verified', 'official_url' => 'https://example.test/index', 'is_active' => true]);
         IndexingService::query()->create(['name' => 'Unverified Index', 'status' => 'pending_verification', 'is_active' => true]);
 
-        $this->get(route('editorial-board'))->assertOk()->assertSeeText('Dr Ada Editor');
+        $this->get(route('editorial-board'))->assertOk()->assertSeeText('Dr. Ada Editor');
         $this->get(route('policies.show', 'indexing'))->assertOk()->assertSeeText('Verified Index')->assertDontSeeText('Unverified Index');
     }
 

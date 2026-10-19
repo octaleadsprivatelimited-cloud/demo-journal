@@ -4,28 +4,29 @@ namespace App\Http\Controllers\Public;
 
 use App\Models\Author;
 use App\Models\Category;
+use App\Models\EditorialMember;
 use Illuminate\Contracts\View\View;
 
 class HomeController extends PublicController
 {
     public function __invoke(): View
     {
-        $editors = \App\Models\EditorialMember::where('is_active', true)->where('group', 'editorial_board')->orderBy('sort_order')->get();
+        $editors = EditorialMember::publicDirectory('editorial_board');
         $heroArticles = $this->publishedArticles()
             ->where(fn ($query) => $query->where('is_featured', true)->orWhere('is_homepage_latest', true))
-            ->orderByDesc('is_featured')
             ->latest('published_at')
             ->orderByDesc('id')
             ->get();
 
         $latest = $this->publishedArticles()
             ->latest('published_at')
+            ->orderByDesc('id')
             ->limit(6)
             ->get();
 
         $editorSelections = $this->publishedArticles()
             ->where('is_featured', true)
-            ->latest('updated_at')
+            ->latest('published_at')
             ->orderByDesc('id')
             ->limit(2)
             ->get();

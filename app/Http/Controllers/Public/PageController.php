@@ -34,7 +34,7 @@ class PageController extends PublicController
     public function editorialBoard(): View
     {
         $registeredEditors = User::publicProfile()->whereHas('roles', fn ($q) => $q->where('slug', 'editor'))->orderBy('name')->get();
-        $records = EditorialMember::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
+        $records = EditorialMember::publicDirectory();
         if ($records->isNotEmpty()) {
             $chiefs = $records->where('group', 'editorial_board')->filter(fn ($member) => str_contains(strtolower($member->role), 'chief'))->values();
             $chief = $chiefs->first();

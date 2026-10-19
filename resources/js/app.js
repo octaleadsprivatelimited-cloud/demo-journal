@@ -16,6 +16,8 @@ ready(() => {
         if (!menuButton || !mobileMenu) return;
         menuButton.setAttribute('aria-expanded', 'false');
         mobileMenu.hidden = true;
+        const label = menuButton.querySelector('[data-menu-label]');
+        if (label) label.textContent = 'Open navigation';
     };
     const closeAccountMenu = () => {
         if (!accountButton || !accountMenu) return;
@@ -27,6 +29,8 @@ ready(() => {
         closeAccountMenu();
         menuButton.setAttribute('aria-expanded', String(opening));
         mobileMenu.hidden = !opening;
+        const label = menuButton.querySelector('[data-menu-label]');
+        if (label) label.textContent = opening ? 'Close navigation' : 'Open navigation';
     });
     accountButton?.addEventListener('click', () => {
         const opening = accountButton.getAttribute('aria-expanded') !== 'true';
@@ -34,7 +38,11 @@ ready(() => {
         accountButton.setAttribute('aria-expanded', String(opening));
         accountMenu.hidden = !opening;
     });
-    window.addEventListener('resize', () => { if (window.innerWidth > 860) { closeMobileMenu(); closeAccountMenu(); } }, { passive: true });
+    mobileMenu?.addEventListener('click', (event) => { if (event.target.closest('a')) closeMobileMenu(); });
+    document.addEventListener('click', (event) => {
+        if (!header?.contains(event.target)) { closeMobileMenu(); closeAccountMenu(); }
+    });
+    window.addEventListener('resize', () => { if (window.innerWidth > 1200) { closeMobileMenu(); closeAccountMenu(); } }, { passive: true });
 
     let searchCloseTimer;
     const openSearch = () => {
@@ -45,7 +53,7 @@ ready(() => {
         searchDialog.classList.remove('is-closing');
         if (!searchDialog.open && typeof searchDialog.showModal === 'function') searchDialog.showModal();
         else searchDialog.setAttribute('open', '');
-        window.setTimeout(() => searchInput?.focus(), 30);
+        searchInput?.focus();
     };
     const closeSearch = () => {
         if (!searchDialog?.open) return;
@@ -66,10 +74,13 @@ ready(() => {
         if (event.key === '/' && !typing && !event.metaKey && !event.ctrlKey && !event.altKey) {
             event.preventDefault(); openSearch();
         }
-        if (event.key === 'Escape') closeMobileMenu();
+        if (event.key === 'Escape') {
+            if (menuButton?.getAttribute('aria-expanded') === 'true') { closeMobileMenu(); menuButton.focus(); }
+            if (accountButton?.getAttribute('aria-expanded') === 'true') { closeAccountMenu(); accountButton.focus(); }
+        }
     });
 
-    const desktopHeader = window.matchMedia('(min-width: 861px)');
+    const desktopHeader = window.matchMedia('(min-width: 1201px)');
     const navBrand = header?.querySelector('[data-nav-brand]');
     const upperHeader = header ? [...header.querySelectorAll('.utility-bar, .masthead')] : [];
     const updateHeader = () => {

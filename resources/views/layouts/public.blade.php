@@ -56,6 +56,7 @@
         </style>
     @endif
     <style>{!! file_get_contents(resource_path('css/journal-pages.css')) !!}</style>
+    <style>{!! file_get_contents(resource_path('css/public-layout.css')) !!}</style>
     <script type="application/ld+json">{!! json_encode($structuredData ?? $defaultSchema, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) !!}</script>
     @stack('head')
 </head>
@@ -88,11 +89,14 @@
         </div>
         <div class="container masthead">
             <button class="icon-button mobile-menu-button" type="button" aria-expanded="false" aria-controls="mobile-navigation" data-menu-toggle>
-                <span class="sr-only">Open navigation</span>
-                <x-public.icon name="menu" />
+                <span class="sr-only" data-menu-label>Open navigation</span>
+                <span data-menu-open-icon><x-public.icon name="menu" /></span>
+                <span data-menu-close-icon><x-public.icon name="close" /></span>
             </button>
             <a class="brand" href="{{ route('home') }}" aria-label="{{ $siteName }} home">
-                <img class="larix-logo" src="{{ asset('assets/larix-logo-transparent.png') }}" alt="Larix International — Your Global Research Partner" width="200" height="80">
+                <img class="larix-logo" src="{{ asset('assets/larix-logo-small.png') }}" alt="Larix International" width="480" height="192">
+                <img class="journal-mobile-mark" src="{{ asset('assets/journal-mark.svg') }}" alt="" width="32" height="32">
+                <span class="journal-identity"><strong>{{ $siteName }}</strong><small>Cardiovascular research &amp; clinical practice</small></span>
             </a>
             <div class="masthead-actions">
                 <button class="icon-button mobile-account-button" type="button" aria-label="Open account options" aria-expanded="false" aria-controls="mobile-account-menu" data-account-toggle><x-public.icon name="user" /></button>
@@ -135,11 +139,12 @@
                 <a href="{{ route('about') }}" @class(['is-active' => request()->routeIs('about')])>About</a>
                 <a href="{{ route('contact') }}" @class(['is-active' => request()->routeIs('contact*')])>Contact</a>
                 @if (data_get($site, 'features.author_registration', true) && Route::has('author.register'))
-                    <a class="nav-cta" href="{{ route('author.register') }}">Submit your work <x-public.icon name="arrow-up-right" /></a>
+                    <a class="nav-cta" href="{{ route('author.register') }}">Submit Manuscript <x-public.icon name="arrow-up-right" /></a>
                 @endif
             </div>
         </nav>
         <nav class="mobile-nav" id="mobile-navigation" aria-label="Mobile navigation" hidden data-mobile-menu>
+            <a href="{{ route('home') }}">Home</a>
             <a href="{{ route('journals.index') }}">Journal</a>
             <a href="{{ route('articles.index') }}">Latest publications</a>
             <a href="{{ route('archive.index') }}">Archive</a>
@@ -150,7 +155,7 @@
             <a href="{{ route('about') }}">About the journal</a>
             <a href="{{ route('editorial-board') }}">Editorial board</a>
             <a href="{{ route('contact') }}">Contact</a>
-            @if (data_get($site, 'features.author_registration', true) && Route::has('author.register'))<a class="button button-primary" href="{{ route('author.register') }}">Submit your work</a>@endif
+            @if (data_get($site, 'features.author_registration', true) && Route::has('author.register'))<a class="button button-primary" href="{{ route('author.register') }}">Submit Manuscript</a>@endif
         </nav>
     </header>
 
@@ -168,64 +173,7 @@
         @yield('content')
     </main>
 
-    @include('public.pages.footer-guidance')
-
-    <footer class="site-footer">
-        @if(data_get($site, 'features.newsletter', true))
-            <div class="container footer-lead">
-                <div>
-                    <p class="eyebrow light">Ideas worth returning to</p>
-                    <h2>Read slowly. Think deeply.<br>Stay intellectually restless.</h2>
-                </div>
-                <x-public.newsletter source="footer" />
-            </div>
-        @endif
-        <div class="container footer-grid">
-            <div class="footer-brand">
-                <a class="brand brand-inverse" href="{{ route('home') }}">
-                    <img class="larix-logo" src="{{ asset('assets/larix-logo-transparent.png') }}" alt="Larix International — Your Global Research Partner" width="200" height="80">
-                </a>
-                <p>{{ data_get($site ?? [], 'description') }}</p>
-            </div>
-            <div>
-                <h3>Explore</h3>
-                <a href="{{ route('articles.index') }}">All articles</a>
-                <a href="{{ route('categories.index') }}">Disciplines</a>
-                <a href="{{ route('authors.index') }}">Contributors</a>
-                <a href="{{ route('search') }}">Advanced search</a>
-            </div>
-            <div>
-                <h3>Journal</h3>
-                <a href="{{ route('about') }}">Our mission</a>
-                <a href="{{ route('editorial-board') }}">Editorial board</a>
-                <a href="{{ route('contact') }}">Contact</a>
-                @if (data_get($site, 'features.author_registration', true) && Route::has('author.register'))<a href="{{ route('author.register') }}">Author submissions</a>@endif
-            </div>
-            <div>
-                <h3>Contact &amp; follow</h3>
-                @foreach(data_get($site, 'contact_emails', array_filter([data_get($site, 'contact_email')])) as $email)
-                    <a href="mailto:{{ $email }}">{{ $email }}</a>
-                @endforeach
-                @if(data_get($site, 'whatsapp'))<a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', data_get($site, 'whatsapp')) }}" target="_blank" rel="noopener noreferrer">WhatsApp: {{ data_get($site, 'whatsapp') }}</a>@endif
-                @if (data_get($site ?? [], 'address'))<p>{{ data_get($site, 'address') }}</p>@endif
-                <div class="social-links" aria-label="Follow the journal">
-                    @foreach (collect(data_get($site ?? [], 'social', []))->filter() as $network => $url)
-                        @php($networkLabel = match($network) { 'youtube' => 'YouTube', 'linkedin' => 'LinkedIn', 'x', 'twitter' => 'X (Twitter)', default => str($network)->headline()->toString() })
-                        <a class="social-link" href="{{ $url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ $networkLabel }}" title="{{ $networkLabel }}"><x-public.social-icon :network="$network" /></a>
-                    @endforeach
-                </div>
-            </div>
-        </div>
-        <div class="container footer-bottom">
-            <p>&copy; {{ now()->year }} {{ $siteName }}. All rights reserved.</p>
-            <div>
-                <a href="https://www.octaleads.com" target="_blank" rel="noopener noreferrer">Developed by octaleads</a>
-                <a href="{{ route('policies.show', 'privacy') }}">Privacy</a>
-                <a href="{{ route('sitemap') }}">Sitemap</a>
-                <a href="{{ route('robots') }}">Robots</a>
-            </div>
-        </div>
-    </footer>
+    @include('public.partials.footer')
 
     <dialog class="search-dialog" data-search-dialog aria-labelledby="search-dialog-title">
         <div class="search-dialog-inner">

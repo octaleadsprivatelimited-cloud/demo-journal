@@ -24,15 +24,24 @@ class ArticleController extends PublicController
 {
     public function archive(Request $request): View
     {
+        $request->validate(['year' => ['nullable', 'integer', 'min:1800', 'max:'.now()->addYear()->year]]);
         $year = $request->integer('year') ?: null;
-        $volumes = JournalVolume::query()->with(['issues' => fn ($query) => $query->withCount(['articles' => fn ($q) => $q->published()])])->when($year, fn ($query) => $query->where('year', $year))->orderByDesc('year')->paginate(12)->withQueryString();
-        $years = JournalVolume::query()->distinct()->orderByDesc('year')->pluck('year');
-        $articleYears = $this->publishedArticles()->get()->groupBy(fn ($article) => $article->published_at->year)->sortKeysDesc();
-        return view('public.articles.archive', $this->publicViewData(compact('volumes','years','year','articleYears')));
+        $volumes = JournalVolume::query()->with(['issues' => fn ($query) => $query
+            ->where(fn ($q) => $q->whereNull('publication_date')->orWhereDate('publication_date', '<=', today()))
+            ->withCount('articles')->reorder()->orderByDesc('publication_date')->orderByDesc('id')])
+            ->orderByDesc('year')->get()->groupBy('year');
+        $articleYears = $this->publishedArticles()->latest('published_at')->orderByDesc('id')->get()
+            ->groupBy(fn ($article) => $article->published_at->year);
+        $availableYears = $volumes->keys()->merge($articleYears->keys())->unique()->sortDesc()->values();
+        $years = $availableYears->isEmpty() ? collect() : collect(range($availableYears->max(), $availableYears->min()));
+        $archiveYears = $year ? collect([$year]) : $years;
+
+        return view('public.articles.archive', $this->publicViewData(compact('volumes', 'years', 'year', 'articleYears', 'archiveYears')));
     }
 
     public function issue(JournalIssue $issue): View
     {
+        abort_if($issue->publication_date?->isFuture(), 404);
         $issue->load('volume');
         $articles = $issue->articles()->with(['authors','category','tags'])->paginate(20);
         return view('public.articles.issue', $this->publicViewData(compact('issue','articles')));

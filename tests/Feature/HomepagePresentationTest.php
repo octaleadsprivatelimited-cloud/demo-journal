@@ -36,14 +36,14 @@ class HomepagePresentationTest extends TestCase
         $this->get(route('articles.index'))->assertOk()->assertSee('publication-grid')->assertSee('publication-container');
     }
 
-    public function test_all_active_chief_editors_have_automatic_homepage_rotation_and_board_profiles(): void
+    public function test_all_active_chief_editors_have_static_homepage_and_board_profiles(): void
     {
         foreach (['First chief', 'Second chief', 'Third chief'] as $index => $name) {
             EditorialMember::create(['name' => $name, 'group' => 'editorial_board', 'role' => 'Editor-in-Chief', 'sort_order' => $index, 'is_active' => true]);
         }
         EditorialMember::create(['name' => 'Inactive chief', 'group' => 'editorial_board', 'role' => 'Editor-in-Chief', 'is_active' => false]);
         $this->get('/')->assertOk()->assertSee('First chief')->assertSee('Second chief')->assertSee('Third chief')
-            ->assertSee('data-hero-interval="1000"', false)->assertDontSee('Next Editors-in-Chief profile')
+            ->assertDontSee('data-hero-interval="1000"', false)->assertSee('editor-grid', false)->assertDontSee('Next Editors-in-Chief profile')
             ->assertDontSee('editor-controls')->assertDontSee('Inactive chief');
         $this->get(route('editorial-board'))->assertOk()
             ->assertViewHas('chiefs', fn ($chiefs) => $chiefs->count() === 3)
