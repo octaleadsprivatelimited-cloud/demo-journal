@@ -70,9 +70,23 @@ class Article extends Model
         return 'title';
     }
 
+    protected function shouldRegenerateSlugOnSourceChange(): bool
+    {
+        // Editing a title must not invalidate open forms or established article links.
+        return false;
+    }
+
     public function getRouteKeyName(): string
     {
         return 'slug';
+    }
+
+    public function draftVersion(): string
+    {
+        $attributes = $this->getRawOriginal();
+        ksort($attributes);
+
+        return hash('sha256', json_encode($attributes, JSON_THROW_ON_ERROR));
     }
 
     public function workflow(): HasOne

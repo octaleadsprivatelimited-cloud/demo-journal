@@ -14,7 +14,9 @@ use App\Models\Review;
 use App\Models\Role;
 use App\Models\Submission;
 use App\Models\User;
+use App\Models\WorkflowFile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 final class ArchivedEditorialRecordTest extends TestCase
@@ -93,6 +95,33 @@ final class ArchivedEditorialRecordTest extends TestCase
             ->assertOk()
             ->assertSee($article->title)
             ->assertSee('Archived manuscript');
+    }
+
+    public function test_direct_workflow_file_links_for_archived_articles_return_not_found(): void
+    {
+        Storage::fake('local');
+        $author = $this->roleUser('author', ['articles.submit']);
+        $reviewer = $this->roleUser('reviewer', ['articles.review']);
+        [$article, $submission] = $this->archivedEditorialRecord($author, $reviewer);
+        $path = 'workflow/'.$article->id.'/retained-manuscript.pdf';
+        Storage::disk('local')->put($path, '%PDF-1.4 retained manuscript');
+        $file = WorkflowFile::create([
+            'article_id' => $article->id,
+            'uploaded_by_id' => $author->id,
+            'purpose' => 'manuscript',
+            'path' => $path,
+            'original_name' => 'retained-manuscript.pdf',
+            'mime_type' => 'application/pdf',
+            'checksum' => hash('sha256', '%PDF-1.4 retained manuscript'),
+            'size' => strlen('%PDF-1.4 retained manuscript'),
+            'round' => $submission->round,
+        ]);
+
+        $this->actingAs($author)->get(route('workflow.download', $file))->assertNotFound();
+        $this->actingAs($reviewer)->get(route('reviewer.files.download', $file))->assertNotFound();
+
+        Storage::disk('local')->assertExists($path);
+        $this->assertDatabaseHas('workflow_files', ['id' => $file->id, 'path' => $path]);
     }
 
     /** @return array{Article, Submission, Review} */

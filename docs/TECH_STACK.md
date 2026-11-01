@@ -1,6 +1,6 @@
 # Singapore Journal of Cardiology — Tech Stack
 
-Repository snapshot: **10 October 2026**. Website: [sjcjournal.com](https://sjcjournal.com). This document describes the implemented application and distinguishes the live Hostinger deployment from the Docker reference environment.
+Dependency snapshot: **30 October 2026**. Website: [sjcjournal.com](https://sjcjournal.com). Hosting details describe the recorded installation, rather than a fresh live-account inspection. This document distinguishes that Hostinger deployment from the Docker reference environment.
 
 ## Stack at a glance
 
@@ -37,7 +37,8 @@ Versions below come from [composer.lock](../composer.lock) and [package-lock.jso
 | `league/flysystem-aws-s3-v3` | 3.35.3 | Optional S3-compatible storage adapter |
 | `phpunit/phpunit` | 12.5.33 | PHP unit and feature tests |
 | `laravel/pint` | 1.30.5 | PHP formatting checks |
-| `vite` | 8.2.2 | Frontend asset build |
+| `symfony/http-foundation` / `symfony/mime` | 8.1.10 | HTTP request handling and MIME processing |
+| `vite` | 8.2.4 | Frontend asset build |
 | `laravel-vite-plugin` | 3.2.0 | Laravel asset manifest integration |
 | `tailwindcss` / `@tailwindcss/vite` | 4.3.3 | CSS utilities and build plugin |
 | `pdfjs-dist` | 6.3.289 | In-page PDF reader and worker |
@@ -83,12 +84,12 @@ Docker publishes the website on loopback port **8080 by default**, configurable 
 
 ## Quality checks
 
-The [CI workflow](../.github/workflows/ci.yml) installs locked dependencies, audits Composer packages, runs migrations and PHP tests against a dedicated PostgreSQL test database, checks Pint formatting, builds frontend assets and builds the production Docker target. The Docker `test` service uses an isolated in-memory SQLite database.
+The [CI workflow](../.github/workflows/ci.yml) installs locked dependencies, audits Composer packages, runs migrations against a dedicated PostgreSQL test database, checks Pint formatting, runs PHP and JavaScript tests, builds frontend assets and builds the production Docker target. The PHP suite and Docker `test` service use the isolated in-memory SQLite database enforced by phpunit.xml; the current workflow does not execute the feature suite against PostgreSQL.
 
-The analytics JavaScript tests are a separate Node test suite; the current CI workflow does not invoke them. They can be run with:
+The Node test suite covers account-menu behavior, autosave version handling and analytics consent. CI invokes it after installing npm dependencies. Run it locally with:
 
 ```bash
-node --test tests/JavaScript/public-analytics.test.mjs
+npm test
 ```
 
 For development setup and the full check commands, see the [README](../README.md). For system structure and business flows, see [Architecture](ARCHITECTURE.md). For current feature/deployment evidence, see [Workflow verification](WORKFLOW_VERIFICATION_20261008.md), [Profile photos](PROFILE_PHOTOS_20261009.md), [Mail setup](MAIL_SETUP.md) and [Analytics and SEO](ANALYTICS_SEO_20261009.md).

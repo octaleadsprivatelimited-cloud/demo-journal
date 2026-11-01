@@ -12,7 +12,8 @@ trait HasUniqueSlug
     public static function bootHasUniqueSlug(): void
     {
         static::saving(function (Model $model): void {
-            if ($model->getAttribute('slug') && ! $model->isDirty($model->getSlugSourceColumn())) {
+            if ($model->getAttribute('slug') && (! $model->isDirty($model->getSlugSourceColumn())
+                || ($model->exists && ! $model->shouldRegenerateSlugOnSourceChange()))) {
                 return;
             }
 
@@ -37,5 +38,10 @@ trait HasUniqueSlug
     protected function getSlugSourceColumn(): string
     {
         return 'name';
+    }
+
+    protected function shouldRegenerateSlugOnSourceChange(): bool
+    {
+        return true;
     }
 }

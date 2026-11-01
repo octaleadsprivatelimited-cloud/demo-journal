@@ -98,11 +98,12 @@ For public local uploads, run `php artisan storage:link`. Set `MEDIA_DISK=s3` fo
 docker compose run --rm test
 docker compose run --rm app vendor/bin/pint --test
 docker run --rm -v "$PWD:/app" -w /app node:22-alpine npm ci
+docker run --rm -v "$PWD:/app" -w /app node:22-alpine npm test
 docker run --rm -v "$PWD:/app" -w /app node:22-alpine npm run build
 docker compose config --quiet
 ```
 
-The dedicated test service always uses an isolated in-memory SQLite database. As a safety boundary, the application refuses to start Laravel's Artisan test runner unless both the testing environment and an isolated test database are configured. CI additionally runs the migration and feature suite against a dedicated PostgreSQL test database so database-specific behavior is covered.
+The dedicated test service always uses an isolated in-memory SQLite database. As a safety boundary, the application refuses to start Laravel's Artisan test runner unless both the testing environment and an isolated test database are configured. CI additionally validates migrations against a dedicated PostgreSQL test database; phpunit.xml forces the feature suite to use in-memory SQLite, so PostgreSQL-specific feature behavior requires a separate test configuration. CI also runs the JavaScript regressions with `npm test`.
 
 ## Configuration map
 

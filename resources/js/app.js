@@ -5,10 +5,10 @@ const ready = (callback) => {
 
 ready(() => {
     const header = document.querySelector('[data-site-header]');
-    const menuButton = document.querySelector('[data-menu-toggle]');
-    const mobileMenu = document.querySelector('[data-mobile-menu]');
-    const accountButton = document.querySelector('[data-account-toggle]');
-    const accountMenu = document.querySelector('[data-account-menu]');
+    const menuButton = header?.querySelector('[data-menu-toggle]');
+    const mobileMenu = header?.querySelector('[data-mobile-menu]');
+    const accountButton = header?.querySelector('[data-account-toggle]');
+    const accountMenu = header?.querySelector('[data-account-menu]');
     const searchDialog = document.querySelector('[data-search-dialog]');
     const searchInput = document.querySelector('[data-search-input]');
 

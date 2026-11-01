@@ -1,12 +1,16 @@
 .git
 .github
+.codex
+output
+tmp
 .env
 .env.*
 !.env.example
 node_modules
 vendor
 storage/*.key
-storage/app/public
+storage/app/**
+!storage/app/.gitignore
 storage/framework/cache/*
 storage/framework/sessions/*
 storage/framework/views/*
@@ -15,8 +19,3 @@ README.md
 docker-compose*.yml
 npm-debug.log*
 .phpunit.cache
-
-storage/app/backups
-storage/app/private
-
-storage/app/imports

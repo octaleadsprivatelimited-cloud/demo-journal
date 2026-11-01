@@ -28,6 +28,7 @@ final class AutosaveArticleRequest extends FormRequest
     {
         return [
             'updated_at' => ['nullable', 'date'],
+            'draft_version' => ['nullable', 'string', 'max:64'],
             'title' => ['sometimes', 'required', 'string', 'max:240'],
             'subtitle' => ['sometimes', 'nullable', 'string', 'max:300'],
             'excerpt' => ['sometimes', 'nullable', 'string', 'max:1000'],

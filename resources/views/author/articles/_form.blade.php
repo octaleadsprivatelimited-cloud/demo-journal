@@ -1,5 +1,12 @@
 @php $editing=isset($article); $uploadedPurposes=$editing?\App\Models\WorkflowFile::where('article_id',$article->id)->pluck('purpose')->all():[]; $revising=$editing&&in_array($article->workflow?->stage,['minor_revision','major_revision']); $details=old('author_details',$editing?$article->authors->map(fn($a)=>$a->only(['name','email','organization','department','country','orcid']))->all():[['name'=>auth()->user()->name,'email'=>auth()->user()->email,'organization'=>auth()->user()->organization]]);$details=$details?:[['name'=>auth()->user()->name,'email'=>auth()->user()->email]]; @endphp
-<form method="post" class="portal-form" enctype="multipart/form-data" action="{{ $editing?route('author.articles.update',$article):route('author.articles.store') }}" data-manuscript-wizard @if($editing) data-autosave="{{ route('author.articles.autosave',$article) }}" @endif>@csrf @if($editing)@method('put')<input type="hidden" name="updated_at" value="{{ $article->updated_at->toISOString() }}">@endif
+@php
+    $restoringDraftInput = session()->hasOldInput();
+    $draftVersion = $editing ? ($restoringDraftInput ? old('draft_version') : $article->draftVersion()) : '';
+    $draftVersion = is_string($draftVersion) && preg_match('/\A[a-f0-9]{64}\z/', $draftVersion) === 1 ? $draftVersion : '';
+    $draftTimestamp = $editing ? ($restoringDraftInput ? old('updated_at') : $article->updated_at->toISOString()) : '';
+    $draftTimestamp = is_string($draftTimestamp) ? $draftTimestamp : '';
+@endphp
+<form method="post" class="portal-form" enctype="multipart/form-data" action="{{ $editing?route('author.articles.update',$article):route('author.articles.store') }}" data-manuscript-wizard @if($editing) data-autosave="{{ route('author.articles.autosave',$article) }}" @endif>@csrf @if($editing)@method('put')<input type="hidden" name="updated_at" value="{{ $draftTimestamp }}"><input type="hidden" name="draft_version" value="{{ $draftVersion }}">@endif
 @if($editing)<p class="portal-help" data-autosave-status role="status" aria-live="polite">Article details autosave. Use Save draft for authors and files; confirm declarations when submitting.</p>@endif
 <nav class="workflow-tabs" aria-label="Submission steps">@foreach(['Article details','Authors','Files','Declarations','Review & submit'] as $i=>$label)<button type="button" class="portal-button" data-wizard-goto="{{ $i }}">{{ $i+1 }}. {{ $label }}</button>@endforeach</nav>
 <section class="portal-card" data-wizard-step><div class="portal-card-head"><h2>1. Article details</h2></div><div class="portal-card-body portal-form">

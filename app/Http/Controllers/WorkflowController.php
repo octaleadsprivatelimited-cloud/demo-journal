@@ -73,6 +73,7 @@ class WorkflowController extends Controller
     public function download(Request $request, WorkflowFile $file)
     {
         $article = $file->article;
+        abort_if($article === null, 404);
         $staff = $this->workflow->canEdit($request->user(), $article);
         $owner = $article->created_by_id === $request->user()->id;
         $reviewer = $article->reviews()->where('reviewer_id', $request->user()->id)->whereIn('status', ['in_progress', 'completed'])->whereHas('submission', fn ($q) => $q->where('round', $file->round))->exists();

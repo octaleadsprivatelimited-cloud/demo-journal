@@ -6,6 +6,7 @@ namespace Tests\Unit;
 
 use App\Enums\ArticleStatus;
 use App\Models\Article;
+use App\Models\Category;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -36,5 +37,26 @@ class ArticleModelTest extends TestCase
         ]);
 
         $this->assertEquals([$visible->getKey()], Article::query()->published()->pluck('id')->all());
+    }
+
+    public function test_article_slugs_stay_stable_when_draft_or_published_titles_change(): void
+    {
+        foreach ([ArticleStatus::Draft, ArticleStatus::Published] as $status) {
+            $article = Article::factory()->create(['status' => $status, 'title' => 'Original '.$status->value.' title']);
+            $slug = $article->slug;
+
+            $article->update(['title' => 'Corrected '.$status->value.' title']);
+
+            $this->assertSame($slug, $article->fresh()->slug);
+        }
+    }
+
+    public function test_other_slugged_entities_keep_their_existing_rename_behavior(): void
+    {
+        $category = Category::factory()->create(['name' => 'Original category']);
+
+        $category->update(['name' => 'Renamed category']);
+
+        $this->assertSame('renamed-category', $category->fresh()->slug);
     }
 }
