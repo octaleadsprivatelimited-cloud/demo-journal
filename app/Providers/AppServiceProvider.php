@@ -30,6 +30,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        if (filled(config('hosting.public_path'))) {
+            $this->app->usePublicPath((string) config('hosting.public_path'));
+        }
+
         $this->preventUnsafeTestExecution();
 
         $this->app->bind(ArticleSearch::class, DatabaseArticleSearch::class);

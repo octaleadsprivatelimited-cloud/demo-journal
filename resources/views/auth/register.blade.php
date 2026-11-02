@@ -1,6 +1,6 @@
 @extends('layouts.portal')
 @section('title', 'Create your account')
-@section('auth-eyebrow', 'Welcome to Singapore Journal of Cardiology')
+@section('auth-eyebrow', 'Welcome to '.app(\App\Services\PublicationSettings::class)->site()['name'])
 @section('page-title', 'Find your role')
 @section('page-description', 'One thoughtful step is all it takes to get started.')
 @section('content')

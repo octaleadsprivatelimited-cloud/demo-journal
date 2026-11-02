@@ -8,6 +8,10 @@ class RobotsController extends PublicController
 {
     public function __invoke(): Response
     {
+        if (! config('publication.indexing_enabled', true)) {
+            return response("User-agent: *\nDisallow: /\n", 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
+        }
+
         $content = implode("\n", [
             'User-agent: *',
             'Allow: /',

@@ -1,5 +1,7 @@
 <?php
 
+$journal = require __DIR__.'/journal.php';
+
 return [
 
     /*
@@ -13,7 +15,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Singapore Journal of Cardiology'),
+    'name' => env('APP_NAME', $journal['name']),
 
     /*
     |--------------------------------------------------------------------------

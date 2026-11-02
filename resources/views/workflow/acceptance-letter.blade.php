@@ -8,7 +8,7 @@ h1 { font-size:17pt; margin:0; } h2 { font-size:14pt; color:#208ac3; margin:0 0 
 p { margin:0 0 14pt; } .field { margin-bottom:13pt; } .title { font-size:12pt; font-weight:bold; }
 footer { position:fixed; bottom:-37pt; font-size:8pt; color:#607185; border-top:1pt solid #ddd; width:100%; padding-top:8pt; }
 </style></head><body>
-<footer>Larix Journals · Singapore Journal of Cardiology · ISSN {{ config('workflow.issn') }}</footer>
+<footer>{{ config('journal.publisher_name') }} · {{ config('workflow.journal') }} · ISSN {{ config('workflow.issn') }}</footer>
 <header><img class="logo" src="{{ $logo }}" alt="Larix International"><h1>{{ config('workflow.journal') }}</h1><div>ISSN {{ config('workflow.issn') }}</div></header>
 <h2>Acceptance letter</h2>
 <div class="field"><div class="label">Manuscript ID</div><strong>{{ $article->workflow->manuscript_id }}</strong></div>

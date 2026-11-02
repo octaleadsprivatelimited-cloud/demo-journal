@@ -2,12 +2,15 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">
 @php
     $site = $site ?? [];
-    $siteName = data_get($site, 'name', config('app.name', 'Singapore Journal of Cardiology'));
+    $siteName = data_get($site, 'name', config('app.name'));
     $pageTitle = trim($__env->yieldContent('title'));
     $pageDescription = \App\Services\PublicSeo::description(trim($__env->yieldContent('description')) ?: data_get($site ?? [], 'description'));
     $canonicalUrl = \App\Services\PublicSeo::canonical(trim($__env->yieldContent('canonical')) ?: url()->current());
     $socialImage = trim($__env->yieldContent('image')) ?: asset('assets/larix-logo-transparent.png');
     $robots = trim($__env->yieldContent('robots')) ?: (\App\Services\PublicSeo::filteredListing() ? 'noindex, follow' : 'index, follow, max-image-preview:large');
+    if (!config('publication.indexing_enabled', true)) {
+        $robots = 'noindex, nofollow';
+    }
     if (\App\Services\PublicSeo::paginated() && request()->integer('page') > 1) {
         $pageTitle .= ' — Page '.request()->integer('page');
     }
@@ -96,7 +99,7 @@
             <a class="brand" href="{{ route('home') }}" aria-label="{{ $siteName }} home">
                 <img class="larix-logo" src="{{ asset('assets/larix-logo-small.png') }}" alt="Larix International" width="480" height="192">
                 <img class="journal-mobile-mark" src="{{ asset('assets/journal-mark.svg') }}" alt="" width="32" height="32">
-                <span class="journal-identity"><strong>{{ $siteName }}</strong><small>Cardiovascular research &amp; clinical practice</small></span>
+                <span class="journal-identity"><strong>{{ $siteName }}</strong><small>{{ config('journal.masthead_summary') }}</small></span>
             </a>
             <div class="masthead-actions">
                 <button class="icon-button mobile-account-button" type="button" aria-label="Open account options" aria-expanded="false" aria-controls="mobile-account-menu" data-account-toggle><x-public.icon name="user" /></button>
@@ -134,7 +137,7 @@
                 <a href="{{ route('archive.index') }}" @class(['is-active' => request()->routeIs('archive.*')])>Archive</a>
                 <a href="{{ route('categories.index') }}" @class(['is-active' => request()->routeIs('categories.*')])>Disciplines</a>
                 <a href="{{ route('authors.index') }}" @class(['is-active' => request()->routeIs('authors.*')])>Contributors</a>
-                <details class="nav-dropdown" @if(request()->routeIs('resources')) open @endif><summary @class(['is-active' => request()->routeIs('resources')])>Resources</summary><div class="nav-dropdown-menu"><a href="/author-resources/guidelines.pdf" download>Guidelines</a><a href="/author-resources/copyright-form.pdf" download>Copyright form</a><a href="/author-resources/cover-letter.pdf" download>Cover letter</a><a href="{{ route('resources') }}">All resources</a></div></details>
+                <details class="nav-dropdown" @if(request()->routeIs('resources')) open @endif><summary @class(['is-active' => request()->routeIs('resources')])>Resources</summary><div class="nav-dropdown-menu">@foreach(app(\App\Services\PublicationSettings::class)->resources() as [$resourceTitle, $resourceFile, $resourceUrl])<a href="{{ $resourceUrl }}" download>{{ $resourceTitle }}</a>@endforeach<a href="{{ route('resources') }}">All resources</a></div></details>
                 @if (data_get($site, 'features.pdf_downloads', true))<a href="{{ route('downloads') }}" @class(['is-active' => request()->routeIs('downloads')])>Downloads</a>@endif
                 <a href="{{ route('about') }}" @class(['is-active' => request()->routeIs('about')])>About</a>
                 <a href="{{ route('contact') }}" @class(['is-active' => request()->routeIs('contact*')])>Contact</a>

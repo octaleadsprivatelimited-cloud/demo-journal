@@ -125,7 +125,7 @@ class WorkflowController extends Controller
             $stage = match ($a->status->value) {
                 'published' => 'published','draft' => 'draft',default => 'submitted'
             };
-            $id = 'SJC-'.now()->year.'-'.str_pad($this->workflow->sequence('manuscript-'.now()->year), 4, '0', STR_PAD_LEFT);
+            $id = config('journal.abbreviation', 'SJC').'-'.now()->year.'-'.str_pad($this->workflow->sequence('manuscript-'.now()->year), 4, '0', STR_PAD_LEFT);
             $w = ManuscriptWorkflow::create(['article_id' => $a->id, 'manuscript_id' => $id, 'stage' => $stage, 'data' => ['legacy_status' => $a->status->value, 'current_submission_id' => $a->submissions()->latest('round')->value('id')]]);
             if ($a->pdf_path && Storage::disk('local')->exists($a->pdf_path)) {
                 WorkflowFile::create(['article_id' => $a->id, 'uploaded_by_id' => $request->user()->id, 'purpose' => 'manuscript', 'path' => $a->pdf_path, 'original_name' => basename($a->pdf_path), 'mime_type' => 'application/pdf', 'checksum' => hash('sha256', Storage::disk('local')->get($a->pdf_path)), 'size' => Storage::disk('local')->size($a->pdf_path), 'round' => 0]);

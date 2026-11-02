@@ -59,4 +59,16 @@ class ArticleModelTest extends TestCase
 
         $this->assertSame('renamed-category', $category->fresh()->slug);
     }
+
+    public function test_truncating_long_titles_keeps_generated_article_urls_readable_and_unique(): void
+    {
+        $title = str_repeat('a', 219).' evidence';
+        $first = Article::factory()->published()->create(['title' => $title]);
+        $second = Article::factory()->published()->create(['title' => $title]);
+
+        $this->assertSame(str_repeat('a', 219), $first->slug);
+        $this->assertSame(str_repeat('a', 219).'-2', $second->slug);
+        $this->get(route('articles.show', $first->slug))->assertOk();
+        $this->get(route('articles.show', $second->slug))->assertOk();
+    }
 }

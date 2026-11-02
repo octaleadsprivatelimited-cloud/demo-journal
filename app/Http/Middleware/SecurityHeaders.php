@@ -85,7 +85,8 @@ final class SecurityHeaders
             $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }
 
-        if ($request->routeIs('admin.*', 'editor.*', 'reviewer.*', 'author.*', 'login', 'register', 'password.*', 'verification.*')) {
+        if (! config('publication.indexing_enabled', true)
+            || $request->routeIs('admin.*', 'editor.*', 'reviewer.*', 'author.*', 'login', 'register', 'password.*', 'verification.*')) {
             $response->headers->set('X-Robots-Tag', 'noindex, nofollow');
         }
 

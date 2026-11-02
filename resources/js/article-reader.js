@@ -1,5 +1,8 @@
-import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
-import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?worker&url';
+// Keep both contexts on the compatibility build: PDF.js uses newer JavaScript
+// methods while parsing and painting, including inside its separate worker.
+import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist/legacy/build/pdf.mjs';
+import workerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?worker&url';
+import { readPageText } from './pdf-reader-text.js';
 GlobalWorkerOptions.workerSrc = workerUrl;
 
 export async function mountReader(root) {
@@ -27,8 +30,7 @@ export async function mountReader(root) {
             canvas.style.height = `${viewport.height}px`;
             canvas.setAttribute('aria-label', `Article page ${current} of ${pdf.numPages}`);
             await page.render({canvasContext: canvas.getContext('2d'), viewport, transform: ratio === 1 ? null : [ratio,0,0,ratio,0,0]}).promise;
-            const content = await page.getTextContent();
-            text.textContent = content.items.map(item => item.str + (item.hasEOL ? '\n' : ' ')).join('');
+            text.textContent = await readPageText(page);
             status.textContent = `Page ${current} of ${pdf.numPages}`;
             root.dataset.renderedPage = String(current);
         } catch {

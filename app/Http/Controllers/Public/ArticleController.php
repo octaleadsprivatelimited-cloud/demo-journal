@@ -124,7 +124,7 @@ class ArticleController extends PublicController
     {
         $article = $this->findPublishedArticle($slug);
 
-        if (Str::startsWith((string) $article->article_number, 'SJC-LEGACY-') && $article->pdf_path && $article->pdf_download_enabled && $this->featureEnabled('pdf_downloads')) {
+        if (Str::startsWith((string) $article->article_number, config('journal.abbreviation', 'SJC').'-LEGACY-') && $article->pdf_path && $article->pdf_download_enabled && $this->featureEnabled('pdf_downloads')) {
             return redirect()->route('articles.pdf', ['slug'=>$article->slug, 'inline'=>1]);
         }
 
@@ -158,7 +158,7 @@ class ArticleController extends PublicController
 
     private function generatedReadingPdf(Article $article): string
     {
-        $heading = [$article->title, $article->subtitle, 'Singapore Journal of Cardiology · '.($article->published_at ?? $article->created_at)->format('F j, Y')];
+        $heading = [$article->title, $article->subtitle, data_get($this->siteSettings(), 'name', config('publication.name')).' · '.($article->published_at ?? $article->created_at)->format('F j, Y')];
         $body = trim(preg_replace('/\s+/', ' ', strip_tags((string) $article->content)) ?? '');
         $lines = array_filter(array_merge($heading, [''], explode("\n", wordwrap($body, 88, "\n", true))));
         $pages = array_chunk(array_values($lines), 42) ?: [['Journal reading edition']];

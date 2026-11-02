@@ -1,13 +1,13 @@
 @extends('layouts.public')
 
-@section('title', 'Cardiology Research')
+@section('title', config('journal.home_title'))
 @section('description', data_get($site, 'description'))
 
 @section('content')
     <section class="home-intro">
         <div class="container">
-            <h1 class="home-title">Singapore Journal of Cardiology</h1>
-            <p class="home-research-summary">Explore open access cardiology research, clinical case reports and reviews in cardiovascular medicine.</p>
+            <h1 class="home-title">{{ data_get($site, 'name', config('publication.name')) }}</h1>
+            <p class="home-research-summary">{{ config('journal.home_summary') }}</p>
             <div class="issue-line">
                 @if($latest->isNotEmpty())<span>Latest publication</span>
                 <strong>{{ $latest->first()->published_at->format('F Y') }}</strong>@endif
@@ -56,9 +56,9 @@
                 </div>
             @else
                 <div class="editorial-welcome">
-                    <p class="eyebrow">Singapore Journal of Cardiology</p>
-                    <h2>Research for cardiovascular medicine.</h2>
-                    <p>Explore cardiology research, clinical case reports and reviews from the Singapore Journal of Cardiology.</p>
+                    <p class="eyebrow">{{ data_get($site, 'name', config('publication.name')) }}</p>
+                    <h2>{{ config('journal.home_empty_title') }}</h2>
+                    <p>{{ config('journal.home_empty_summary') }}</p>
                     <div><a class="button button-primary" href="{{ route('articles.index') }}">Explore the journal</a><a class="button button-ghost" href="{{ route('about') }}">Our editorial mission</a></div>
                 </div>
             @endif

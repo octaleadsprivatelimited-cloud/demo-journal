@@ -1,9 +1,11 @@
 <?php
 
+$journal = require __DIR__.'/journal.php';
+
 return [
-    'journal' => 'Singapore Journal of Cardiology', 'issn' => '27374025',
-    'manuscript_format' => env('WORKFLOW_MANUSCRIPT_FORMAT', 'SJC-{year}-{sequence}'),
-    'article_format' => env('WORKFLOW_ARTICLE_FORMAT', 'SJC-{year}-V{volume}-I{issue}-A{sequence}'),
+    'journal' => env('APP_NAME', $journal['name']), 'issn' => $journal['issn'],
+    'manuscript_format' => env('WORKFLOW_MANUSCRIPT_FORMAT', $journal['abbreviation'].'-{year}-{sequence}'),
+    'article_format' => env('WORKFLOW_ARTICLE_FORMAT', $journal['abbreviation'].'-{year}-V{volume}-I{issue}-A{sequence}'),
     'deadlines' => ['invitation' => 7, 'review' => 21, 'minor' => 14, 'major' => 30, 'proof' => 7],
     'stages' => ['draft', 'submitted', 'initial_check', 'plagiarism_check', 'editorial_screening', 'reviewer_assignment', 'under_review', 'minor_revision', 'major_revision', 'revision_submitted', 'editor_recheck', 'reviewer_recheck', 'accepted', 'copyediting', 'proofing', 'author_corrections', 'final_proof_approved', 'metadata_verified', 'article_id_generated', 'doi_pending', 'doi_submitted', 'doi_registered', 'ready_to_publish', 'published', 'indexing', 'indexed', 'archived', 'returned', 'rejected'],
     'actions' => [

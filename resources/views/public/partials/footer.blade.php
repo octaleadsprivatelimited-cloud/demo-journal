@@ -3,7 +3,7 @@
         <div class="footer-intro">
             <div class="footer-brand">
                 <a class="footer-journal-name" href="{{ route('home') }}">{{ $siteName }}</a>
-                <p>Open access cardiology research, clinical case reports and reviews in cardiovascular medicine.</p>
+                <p>{{ config('journal.footer_summary') }}</p>
             </div>
             @if(data_get($site, 'features.newsletter', true))
                 <div class="footer-signup"><h2>Journal updates</h2><x-public.newsletter source="footer" :compact="true" /></div>
@@ -50,7 +50,7 @@
         </nav>
         <div class="footer-bottom">
             <p>&copy; {{ now()->year }} {{ $siteName }}. All rights reserved.</p>
-            <div><a href="{{ route('sitemap') }}">Sitemap</a><a href="https://www.octaleads.com" target="_blank" rel="noopener noreferrer">Developed by octaleads</a></div>
+            <div>@if(config('publication.indexing_enabled', true))<a href="{{ route('sitemap') }}">Sitemap</a>@endif<a href="https://www.octaleads.com" target="_blank" rel="noopener noreferrer">Developed by octaleads</a></div>
         </div>
     </div>
 </footer>

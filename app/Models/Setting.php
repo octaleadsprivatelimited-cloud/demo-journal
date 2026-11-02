@@ -124,7 +124,7 @@ class Setting extends Model
         ],
         'publication' => [
             'journal.abbreviation' => ['label' => 'Standard journal abbreviation', 'type' => 'text', 'rules' => ['nullable', 'string', 'max:80'], 'default' => null, 'public' => true],
-            'journal.issn' => ['label' => 'Print ISSN (CLIENT INPUT REQUIRED)', 'type' => 'text', 'rules' => ['nullable', 'regex:/^\d{4}-\d{3}[\dXx]$/'], 'default' => null, 'public' => true],
+            'journal.issn' => ['label' => 'ISSN (CLIENT INPUT REQUIRED)', 'type' => 'text', 'rules' => ['nullable', 'regex:/^\d{4}-\d{3}[\dXx]$/'], 'default' => null, 'public' => true],
             'journal.eissn' => ['label' => 'Electronic ISSN (CLIENT INPUT REQUIRED)', 'type' => 'text', 'rules' => ['nullable', 'regex:/^\d{4}-\d{3}[\dXx]$/'], 'default' => null, 'public' => true],
             'journal.publisher_name' => ['label' => 'Publisher name (CLIENT INPUT REQUIRED)', 'type' => 'text', 'rules' => ['nullable', 'string', 'max:180'], 'default' => null, 'public' => true],
             'journal.publisher_address' => ['label' => 'Publisher address (CLIENT INPUT REQUIRED)', 'type' => 'textarea', 'rules' => ['nullable', 'string', 'max:1000'], 'default' => null, 'public' => true],
@@ -210,13 +210,27 @@ class Setting extends Model
     /** @return array<string, array<string, array<string, mixed>>>|array<string, array<string, mixed>> */
     public static function definitions(?string $group = null): array
     {
-        return $group === null ? self::DEFINITIONS : (self::DEFINITIONS[$group] ?? []);
+        $definitions = self::DEFINITIONS;
+        $definitions['general']['site.name']['default'] = config('publication.name');
+        $definitions['general']['site.description']['default'] = config('publication.description');
+
+        if (config('journal.profile') !== 'sjc') {
+            $definitions['general']['site.tagline']['default'] = config('publication.tagline');
+        }
+
+        foreach (config('journal.metadata', []) as $key => $value) {
+            if (isset($definitions['publication']['journal.'.$key])) {
+                $definitions['publication']['journal.'.$key]['default'] = $value;
+            }
+        }
+
+        return $group === null ? $definitions : ($definitions[$group] ?? []);
     }
 
     /** @return array<string, mixed>|null */
     public static function definition(string $key): ?array
     {
-        foreach (self::DEFINITIONS as $group => $definitions) {
+        foreach (self::definitions() as $group => $definitions) {
             if (isset($definitions[$key])) {
                 return ['group' => $group, ...$definitions[$key]];
             }

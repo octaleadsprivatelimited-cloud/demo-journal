@@ -1,7 +1,7 @@
 @extends('layouts.public')
 
 @section('title', 'Downloads')
-@section('description', 'Download available journal articles and reading editions from Singapore Journal of Cardiology.')
+@section('description', 'Download available journal articles and reading editions from '.data_get($site, 'name', config('publication.name')).'.')
 
 @section('content')
     <section class="downloads-hero">

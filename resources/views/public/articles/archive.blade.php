@@ -1,10 +1,10 @@
 @extends('layouts.public')
 @section('title', 'Archives')
-@section('description', 'Explore past cardiology publications by year, volume and issue in the Singapore Journal of Cardiology archive.')
+@section('description', config('journal.archive_description'))
 @section('content')
 <section class="page-hero"><div class="container">
     <x-public.breadcrumbs :items="['Archives' => null]" />
-    <div class="page-hero-grid"><div><p class="eyebrow">Singapore Journal of Cardiology</p><h1>Archives</h1></div><p>Browse published research by year and issue. Articles appear from newest to oldest.</p></div>
+    <div class="page-hero-grid"><div><p class="eyebrow">{{ data_get($site, 'name', config('publication.name')) }}</p><h1>Archives</h1></div><p>Browse published research by year and issue. Articles appear from newest to oldest.</p></div>
 </div></section>
 <section class="section archive-content"><div class="container">
     @if($years->isNotEmpty())

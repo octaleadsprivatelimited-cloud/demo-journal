@@ -40,7 +40,7 @@ return [
 
         'public' => [
             'driver' => 'local',
-            'root' => storage_path('app/public'),
+            'root' => env('PUBLIC_DISK_ROOT', storage_path('app/public')),
             'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
             'visibility' => 'public',
             'throw' => true,
@@ -73,8 +73,8 @@ return [
     |
     */
 
-    'links' => [
-        public_path('storage') => storage_path('app/public'),
+    'links' => env('PUBLIC_DISK_ROOT') ? [] : [
+        rtrim((string) env('APP_PUBLIC_PATH', public_path()), '/').'/storage' => storage_path('app/public'),
     ],
 
 ];

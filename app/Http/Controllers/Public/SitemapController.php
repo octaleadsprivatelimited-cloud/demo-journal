@@ -10,6 +10,8 @@ class SitemapController extends PublicController
 {
     public function __invoke(): Response
     {
+        abort_unless(config('publication.indexing_enabled', true), 404);
+
         $articles = $this->publishedArticles()
             ->latest('updated_at')
             ->limit(50000)

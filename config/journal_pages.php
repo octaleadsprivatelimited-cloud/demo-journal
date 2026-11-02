@@ -25,7 +25,7 @@ return json_decode(<<<'JSON'
     "group": "journal",
     "route": null,
     "legacy_key": "policy.aims_scope",
-    "draft": "## Purpose and coverage\n\nDefine the journal’s cardiology focus, intended readership, covered topics and work outside its scope.\n\n## Procedure and responsibilities\n\nAdd the approved steps, responsible roles and any documented exceptions.\n\n## Questions and review\n\nSpecify the journal contact and review date after approval."
+    "draft": "## Purpose and coverage\n\nDefine the journal’s subject focus, intended readership, covered topics and work outside its scope.\n\n## Procedure and responsibilities\n\nAdd the approved steps, responsible roles and any documented exceptions.\n\n## Questions and review\n\nSpecify the journal contact and review date after approval."
   },
   "editorial-board": {
     "number": 4,

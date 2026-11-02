@@ -11,6 +11,7 @@ use App\Http\Controllers\Public\PageController;
 use App\Http\Controllers\Public\RobotsController;
 use App\Http\Controllers\Public\SearchController;
 use App\Http\Controllers\Public\SitemapController;
+use App\Http\Controllers\Public\SjnrLegacyRedirectController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
@@ -71,3 +72,8 @@ Route::get('/newsletter/unsubscribe/{token}', [NewsletterController::class, 'uns
 
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 Route::get('/robots.txt', RobotsController::class)->name('robots');
+
+Route::get('/storage/{legacyDirectory}/{legacyFile}', SjnrLegacyRedirectController::class)
+    ->whereIn('legacyDirectory', ['live', 'topeditors', 'editor', 'index'])
+    ->where('legacyFile', '.+');
+Route::fallback(SjnrLegacyRedirectController::class);

@@ -1,9 +1,21 @@
 @extends('layouts.public')
 
+@php($aboutState = \App\Services\JournalPages::state('about'))
+
 @section('title', 'About the journal')
-@section('description', 'Learn about our editorial mission, standards, and commitment to clear, consequential ideas.')
+@section('description', $aboutState['published'] && filled($aboutState['content']) ? config('publication.description') : 'Learn about our editorial mission, standards, and commitment to clear, consequential ideas.')
 
 @section('content')
+    @if($aboutState['published'] && filled($aboutState['content']))
+        <section class="section journal-information">
+            <div class="container">
+                <x-public.breadcrumbs :items="['About' => null]" />
+                <header class="page-heading"><p class="eyebrow">About the journal</p><h1>{{ data_get($site, 'name', config('app.name')) }}</h1></header>
+                <article class="prose article-body">{!! Str::markdown($aboutState['content'], ['html_input' => 'strip', 'allow_unsafe_links' => false]) !!}</article>
+                <a class="text-link" href="{{ route('editorial-board') }}">Meet our editorial board <x-public.icon name="arrow-right" /></a>
+            </div>
+        </section>
+    @else
     <section class="about-hero">
         <div class="container">
             <x-public.breadcrumbs :items="['About' => null]" />
@@ -42,4 +54,5 @@
         </div>
     </section>
     <section class="section about-cta"><div class="container"><div><p class="eyebrow">Join the conversation</p><h2>Bring us a question worth pursuing.</h2></div><div><p>We welcome original scholarship, essays, reviews, and field notes that meet our editorial standards.</p>@if(data_get($site, 'features.author_registration', true) && Route::has('author.register'))<a class="button button-primary" href="{{ route('author.register') }}">Submit your work</a>@else<a class="button button-primary" href="{{ route('contact') }}">Contact the editors</a>@endif</div></div></section>
+    @endif
 @endsection

@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Models\Setting;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 final class PublicationSettings
@@ -43,10 +44,10 @@ final class PublicationSettings
                 'address' => $lookup('contact.address'),
                 'logo' => $defaults['logo'],
                 'journal' => [
-                    'abbreviation' => $lookup('journal.abbreviation'), 'issn' => $lookup('journal.issn'),
-                    'eissn' => $lookup('journal.eissn'), 'publisher_name' => $lookup('journal.publisher_name'),
-                    'publisher_address' => $lookup('journal.publisher_address'), 'country' => $lookup('journal.country'),
-                    'subject_areas' => $lookup('journal.subject_areas'), 'frequency' => $lookup('journal.frequency'),
+                    'abbreviation' => $lookup('journal.abbreviation', data_get($defaults, 'journal.abbreviation')), 'issn' => $lookup('journal.issn', data_get($defaults, 'journal.issn')),
+                    'eissn' => $lookup('journal.eissn', data_get($defaults, 'journal.eissn')), 'publisher_name' => $lookup('journal.publisher_name', data_get($defaults, 'journal.publisher_name')),
+                    'publisher_address' => $lookup('journal.publisher_address', data_get($defaults, 'journal.publisher_address')), 'country' => $lookup('journal.country', data_get($defaults, 'journal.country')),
+                    'subject_areas' => $lookup('journal.subject_areas', data_get($defaults, 'journal.subject_areas')), 'frequency' => $lookup('journal.frequency', data_get($defaults, 'journal.frequency')),
                     'publication_history' => $lookup('journal.publication_history'),
                 ],
                 'social' => [
@@ -85,19 +86,27 @@ final class PublicationSettings
         return (bool) data_get($this->site(), 'features.'.$feature, false);
     }
 
+    /** @return array<int, array<int, string>> */
+    public function resources(): array
+    {
+        return collect(config('journal.resources', []))
+            ->filter(fn ($resource) => ! isset($resource[4]) || Storage::disk('public')->exists($resource[4]))
+            ->values()->all();
+    }
+
     /** @return array<string, mixed> */
     private function defaults(): array
     {
         return [
-            'name' => config('publication.name', config('app.name', 'Singapore Journal of Cardiology')),
+            'name' => config('publication.name', config('app.name')),
             'tagline' => config('publication.tagline', 'Independent ideas. Enduring perspective.'),
-            'description' => 'Read cardiology research, clinical case reports and cardiovascular medicine reviews in Singapore Journal of Cardiology, an open access journal.',
+            'description' => config('publication.description'),
             'contact_email' => config('publication.contact_email', config('mail.from.address')),
             'phone' => null,
             'address' => null,
             'logo' => null,
             'social' => [],
-            'journal' => [],
+            'journal' => config('journal.metadata', []),
             'features' => [
                 'comments' => (bool) config('publication.features.comments', true),
                 'author_registration' => (bool) config('publication.features.author_registration', true),

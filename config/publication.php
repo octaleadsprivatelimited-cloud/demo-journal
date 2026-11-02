@@ -2,10 +2,14 @@
 
 declare(strict_types=1);
 
+$journal = require __DIR__.'/journal.php';
+
 return [
-    'name' => env('APP_NAME', 'Singapore Journal of Cardiology'),
-    'seo_keywords' => ['cardiology research', 'cardiovascular medicine', 'clinical case reports', 'cardiology reviews'],
-    'tagline' => env('PUBLICATION_TAGLINE', 'Ideas with evidence. Research with consequence.'),
+    'name' => env('APP_NAME', $journal['name']),
+    'description' => $journal['description'],
+    'seo_keywords' => $journal['seo_keywords'],
+    'tagline' => env('PUBLICATION_TAGLINE', $journal['tagline']),
+    'indexing_enabled' => (bool) env('SEARCH_INDEXING_ENABLED', true),
     'sitemap_base_url' => rtrim((string) env('SITEMAP_BASE_URL', env('APP_URL', 'http://localhost')), '/'),
     'contact_email' => env('CONTACT_NOTIFICATION_EMAIL', env('MAIL_FROM_ADDRESS')),
     'account_notification_email' => env('ACCOUNT_NOTIFICATION_EMAIL', env('CONTACT_NOTIFICATION_EMAIL', env('MAIL_FROM_ADDRESS'))),

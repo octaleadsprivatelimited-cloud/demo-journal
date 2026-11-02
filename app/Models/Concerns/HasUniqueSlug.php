@@ -18,7 +18,7 @@ trait HasUniqueSlug
             }
 
             $source = (string) $model->getAttribute($model->getSlugSourceColumn());
-            $base = Str::limit(Str::slug($source), 220, '');
+            $base = rtrim(Str::limit(Str::slug($source), 220, ''), '-');
             $base = $base !== '' ? $base : Str::lower(Str::random(10));
             $slug = $base;
             $suffix = 2;
