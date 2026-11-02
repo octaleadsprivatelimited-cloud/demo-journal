@@ -89,7 +89,10 @@ final class PublicationSettings
     /** @return array<int, array<int, string>> */
     public function resources(): array
     {
-        return collect(config('journal.resources', []))
+        $resources = Setting::value('journal.resources', config('journal.resources', []));
+
+        return collect(is_array($resources) ? $resources : config('journal.resources', []))
+            ->filter(fn ($resource) => is_array($resource) && count($resource) >= 4)
             ->filter(fn ($resource) => ! isset($resource[4]) || Storage::disk('public')->exists($resource[4]))
             ->values()->all();
     }

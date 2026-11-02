@@ -94,6 +94,14 @@ The collector is `scripts/import/sjc_public.py`; the target-specific CLI helper 
 
 The live import completed with 39 new articles, 176 new author records and 38 covers; the article count rose from nine to 48. All 39 copied article pages returned successfully, all 39 PDF hashes matched the source downloads, and every source article appeared in the paginated listing. The temporary import cron was removed and its staging helper now returns HTTP 404. Email remains paused.
 
+## SJC editorial board and public information
+
+The additional public-information copy reviewed 234 source URLs: 45 journal-page entries, seven editorial profiles, 176 contributor profiles, three resource PDFs, six categories and the source homepage selections. The preview now shows the seven SJC board members with their portraits, the source About content, two featured articles, five selected latest articles, source categories, public office address/phone/WhatsApp and three resource downloads. Contributor profiles on SJC contain names and publications but no additional biographies or portraits to transfer.
+
+The source has no published body text on 44 policy entries. Eighteen existing SJNR guidance pages were retained where richer published content already existed; the remaining empty entries keep their unpublished states. SJNR identity, ISSN, search-indexing controls, email configuration, accounts and all 48 articles were retained. Previous board records remain inactive, and a private rollback snapshot was saved before changes in `journal_app/storage/app/private/deployment/before-sjc-pages-20261102-101806.json`.
+
+`scripts/import/sjc_pages.py` collects this public snapshot; `scripts/hostinger-import-sjc-pages.php` applies the guarded import. The resource page and navigation now read the imported `journal.resources` setting before profile defaults. Verification passed for 57 public page requests, all seven board profiles/photos, all six source categories, both homepage featured selections, and byte-identical copies of all three source PDFs. Eight journal-profile feature tests passed with 92 assertions. The temporary import cron and HTTP-denied input directory were removed after success; the removed helper returns HTTP 404.
+
 ## Hostinger email
 
 Email configuration was deferred at the user's request. No mailbox, paid email subscription, MX change or delivery test was completed. `storage/framework/mail-paused` remains present and no mail-worker cron was added. The intended future mailbox is `notifications@sjnrjournal.com`; addresses in the preview are placeholders until that mailbox is active. Account verification, password-reset delivery and notification delivery require the later email setup.

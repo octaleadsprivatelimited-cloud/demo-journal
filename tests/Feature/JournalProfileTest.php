@@ -141,6 +141,21 @@ final class JournalProfileTest extends TestCase
         $this->get('/sitemap.xml')->assertOk();
     }
 
+    public function test_imported_resources_replace_profile_downloads_in_the_page_and_navigation(): void
+    {
+        $this->useSjnrProfile();
+        Storage::fake('public');
+        Storage::disk('public')->put('imports/sjc-pages/guidelines.pdf', '%PDF-1.4');
+        Setting::put('journal.resources', [
+            ['Copied guidelines', 'guidelines.pdf', '/storage/imports/sjc-pages/guidelines.pdf', 'Imported author guidance.', 'imports/sjc-pages/guidelines.pdf'],
+            ['Unavailable form', 'missing.pdf', '/storage/missing.pdf', 'Not yet imported.', 'missing.pdf'],
+        ], 'publication', false);
+
+        $this->get('/resources')->assertOk()->assertSee('Copied guidelines')
+            ->assertSee('/storage/imports/sjc-pages/guidelines.pdf', false)->assertDontSee('Unavailable form');
+        $this->get('/')->assertOk()->assertSee('/storage/imports/sjc-pages/guidelines.pdf', false);
+    }
+
     private function useSjnrProfile(): void
     {
         $profile = config('journal_profiles.sjnr');
