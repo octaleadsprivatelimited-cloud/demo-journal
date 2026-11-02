@@ -86,6 +86,14 @@ The embedded article reader uses matching compatibility builds of PDF.js and its
 
 The local non-secret deployment reference is `.env.sjnr.example`. Generated credentials are stored separately in the private local handover, never in this document or Git. Existing deployment archives are initial-install artifacts and should not be reapplied over an initialized site's `.env` or storage. For future asset updates, replace only the built files while retaining `public_html/storage` and private application storage.
 
+## Additional SJC public collection
+
+At the owner's request, the public collection from `https://sjcjournal.com` is also copied into the preview: 39 articles, 39 PDF downloads and 38 cover images, retaining the existing nine SJNR articles. The resulting collection has 48 publications. Each copied article credits the original Singapore Journal of Cardiology publication and links to its source; the PDFs retain their original journal identity and copyright notices.
+
+The collector is `scripts/import/sjc_public.py`; the target-specific CLI helper is `scripts/hostinger-import-sjc-public.php`. The helper validates the complete source inventory and file hashes before writing, refuses unrelated DOI/URL collisions, preserves existing accounts and records, and uses a private completion marker to prevent duplicate imports. A temporary HTTP-denied staging directory supplies public source files during deployment and is removed afterward. The import's permanent provenance and completion records remain in private application storage and database settings.
+
+The live import completed with 39 new articles, 176 new author records and 38 covers; the article count rose from nine to 48. All 39 copied article pages returned successfully, all 39 PDF hashes matched the source downloads, and every source article appeared in the paginated listing. The temporary import cron was removed and its staging helper now returns HTTP 404. Email remains paused.
+
 ## Hostinger email
 
 Email configuration was deferred at the user's request. No mailbox, paid email subscription, MX change or delivery test was completed. `storage/framework/mail-paused` remains present and no mail-worker cron was added. The intended future mailbox is `notifications@sjnrjournal.com`; addresses in the preview are placeholders until that mailbox is active. Account verification, password-reset delivery and notification delivery require the later email setup.
