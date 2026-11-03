@@ -24,6 +24,40 @@ class ArticleWorkflowService
 {
     public function __construct(private readonly ArticleVersionService $versions) {}
 
+    public function canPublishEditorialDraft(Article $article, User $actor): bool
+    {
+        return $actor->isActive()
+            && $actor->hasAnyRole('admin', 'super-admin')
+            && $actor->can('publish', $article)
+            && $article->status === ArticleStatus::Draft
+            && ! $article->workflow()->exists()
+            && ! $article->submissions()->exists()
+            && ! $article->submitted_at
+            && ($article->creator?->hasAnyRole('editor', 'admin', 'super-admin') ?? false);
+    }
+
+    public function publishEditorialDraft(Article $article, User $actor, ?string $note = null): Article
+    {
+        return DB::transaction(function () use ($article, $actor, $note): Article {
+            $article = Article::query()->lockForUpdate()->findOrFail($article->getKey());
+            if (! $this->canPublishEditorialDraft($article, $actor)) {
+                throw new DomainException('Only an administrator may publish an unsubmitted staff-owned editorial draft. Submitted manuscripts must follow their review workflow.');
+            }
+            if (trim($article->title) === '' || trim(strip_tags((string) $article->content)) === '') {
+                throw new DomainException('Save an article title and content before publishing.');
+            }
+
+            $article->forceFill([
+                'status' => ArticleStatus::Published,
+                'published_at' => now(),
+                'scheduled_for' => null,
+            ])->save();
+            ArticleStatusChanged::dispatch($article, ArticleStatus::Draft, ArticleStatus::Published, $actor, $note ?? 'Staff editorial draft published by an administrator');
+
+            return $article->refresh();
+        });
+    }
+
     public function submit(Article $article, User $actor, ?string $coverLetter = null): Submission
     {
         return DB::transaction(function () use ($article, $actor, $coverLetter): Submission {

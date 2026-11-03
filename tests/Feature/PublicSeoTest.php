@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Models\Article;
+use App\Models\Setting;
+use App\Services\PublicSeo;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -34,6 +36,65 @@ final class PublicSeoTest extends TestCase
         $schema = $this->schema($response->getContent());
         $this->assertSame('heart failure, cardiac rehabilitation', $schema['keywords']);
         $this->assertSame('Singapore Journal of Cardiology', $schema['isPartOf']['isPartOf']['isPartOf']['name']);
+    }
+
+    public function test_verified_sjc_import_citations_keep_the_original_journal_and_publication_date_on_sjnr(): void
+    {
+        $this->useSjnrProfile();
+        [$article, $source] = $this->copiedSjcArticle();
+        Setting::put('import.sjc.article.'.$source['id'], $source, 'imports', false);
+
+        $response = $this->get(route('articles.show', $article->slug))->assertOk()
+            ->assertSee('<meta name="citation_journal_title" content="Singapore Journal of Cardiology">', false)
+            ->assertSee('<meta name="citation_issn" content="2737-4025">', false)
+            ->assertSee('<meta name="citation_publication_date" content="2022/06/30">', false)
+            ->assertSee('<meta name="citation_doi" content="10.5281/zenodo.12345">', false)
+            ->assertSee('<link rel="canonical" href="'.route('articles.show', $article->slug).'">', false)
+            ->assertSee('Published in Singapore Journal of Cardiology.')
+            ->assertSee('Singapore Journal of Cardiology, 2022. https://doi.org/10.5281/zenodo.12345')
+            ->assertDontSee('<meta name="citation_journal_title" content="Singapore Journal of Nursing Research">', false)
+            ->assertDontSee('<meta name="citation_issn" content="2737-4637">', false);
+        $schema = $this->schema($response->getContent());
+        $this->assertSame('Singapore Journal of Cardiology', $schema['isPartOf']['isPartOf']['isPartOf']['name']);
+        $this->assertSame('2737-4025', $schema['isPartOf']['isPartOf']['isPartOf']['issn']);
+        $this->assertSame('Singapore Journal of Cardiology', $schema['publisher']['name']);
+        $this->assertSame('https://sjcjournal.com', $schema['publisher']['url']);
+        $this->assertSame($source['source_url'], $schema['isBasedOn']);
+        $this->assertStringStartsWith('2022-06-30', $schema['datePublished']);
+    }
+
+    public function test_import_like_numbers_do_not_override_the_journal_without_matching_private_provenance(): void
+    {
+        $this->useSjnrProfile();
+        [$article, $source] = $this->copiedSjcArticle();
+        $site = ['name' => 'Singapore Journal of Nursing Research', 'journal' => ['issn' => '2737-4637']];
+        $this->assertSame($site['name'], PublicSeo::articleJournal($article, $site)['name']);
+
+        foreach ([
+            ['source_url' => 'https://unrelated.example/article/'.$source['slug']],
+            ['id' => str_repeat('b', 20)],
+            ['source_journal' => 'Another journal'],
+            ['source_issn' => '9999-9999'],
+            ['pdf' => ['sha256' => str_repeat('c', 64)]],
+        ] as $overrides) {
+            Setting::put('import.sjc.article.'.$source['id'], array_replace($source, $overrides), 'imports', false);
+            $identity = PublicSeo::articleJournal($article, $site);
+            $this->assertSame($site['name'], $identity['name']);
+            $this->assertSame('2737-4637', $identity['issn']);
+            $this->assertNull($identity['source_url']);
+        }
+        Setting::put('import.sjc.article.'.$source['id'], $source, 'imports', true);
+        $this->assertSame($site['name'], PublicSeo::articleJournal($article, $site)['name']);
+    }
+
+    public function test_original_sjnr_articles_keep_nursing_citations(): void
+    {
+        $this->useSjnrProfile();
+        $article = Article::factory()->published()->create(['article_number' => 'SJNR-LEGACY-8']);
+        $this->get(route('articles.show', $article->slug))->assertOk()
+            ->assertSee('<meta name="citation_journal_title" content="Singapore Journal of Nursing Research">', false)
+            ->assertSee('<meta name="citation_issn" content="2737-4637">', false)
+            ->assertDontSee('"isBasedOn"', false);
     }
 
     public function test_paginated_lists_have_their_own_canonicals_without_tracking_parameters(): void
@@ -108,5 +169,49 @@ final class PublicSeoTest extends TestCase
         $this->assertSame(1, preg_match('/<script type="application\/ld\+json">(.*?)<\/script>/s', $html, $matches));
 
         return json_decode($matches[1], true, 512, JSON_THROW_ON_ERROR);
+    }
+
+    private function useSjnrProfile(): void
+    {
+        $profile = config('journal_profiles.sjnr');
+        config([
+            'journal' => ['profile' => 'sjnr', ...$profile],
+            'app.name' => $profile['name'],
+            'publication.name' => $profile['name'],
+            'publication.description' => $profile['description'],
+            'workflow.journal' => $profile['name'],
+            'workflow.issn' => $profile['issn'],
+        ]);
+        // Historical migrations seed SJC defaults into the isolated test DB.
+        Setting::putDefined('site.name', $profile['name']);
+        Setting::putDefined('journal.issn', $profile['issn']);
+        Setting::putDefined('journal.eissn', null);
+    }
+
+    private function copiedSjcArticle(): array
+    {
+        $slug = 'copied-cardiology-publication';
+        $identity = substr(hash('sha256', '/article/'.$slug), 0, 20);
+        $hash = str_repeat('a', 64);
+        $article = Article::factory()->published()->create([
+            'title' => 'Copied cardiology publication',
+            'article_number' => 'SJNR-LEGACY-SJC-'.$identity,
+            'pdf_path' => 'articles/sjc-copy/'.$identity.'-'.$hash.'.pdf',
+            'doi' => '10.5281/zenodo.12345',
+            'published_at' => '2022-06-30 00:00:00',
+            'excerpt' => 'Read the complete published article, including its figures, tables and references.',
+            'abstract' => null,
+        ]);
+
+        return [$article, [
+            'id' => $identity,
+            'slug' => $slug,
+            'source_url' => 'https://sjcjournal.com/article/'.$slug,
+            'source_journal' => 'Singapore Journal of Cardiology',
+            'source_issn' => '2737-4025',
+            'published_date' => '2022-06-30',
+            'doi' => $article->doi,
+            'pdf' => ['sha256' => $hash],
+        ]];
     }
 }

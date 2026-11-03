@@ -5,7 +5,8 @@
     $imageUrl = $article->featured_image_path
         ? (Illuminate\Support\Str::startsWith($article->featured_image_path, ['http://', 'https://']) ? $article->featured_image_path : Illuminate\Support\Facades\Storage::disk(config('publication.uploads.disk', 'public'))->url($article->featured_image_path))
         : asset('assets/larix-logo-transparent.png');
-    $articleDescription = \App\Services\PublicSeo::articleDescription($article, data_get($site, 'name', config('app.name')));
+    $citationJournal = \App\Services\PublicSeo::articleJournal($article, $site);
+    $articleDescription = \App\Services\PublicSeo::articleDescription($article, $citationJournal['name']);
     $articleKeywords = collect($article->keywords)->merge($seo?->focus_keywords ?? [])->merge($article->tags->pluck('name'))->filter()->unique()->values();
     $citationVolume = $article->journalIssue?->volume?->number ?: $article->volume;
     $citationIssue = $article->journalIssue?->number ?: $article->issue;
@@ -19,11 +20,12 @@
         'dateModified' => optional($article->updated_at)->toIso8601String(),
         'mainEntityOfPage' => $seo?->canonical_url ?: route('articles.show', $article->slug),
         'author' => $article->authors->map(fn($author) => ['@type' => 'Person', 'name' => $author->name, 'url' => route('authors.show', $author->slug)])->values()->all(),
-        'publisher' => ['@type' => 'Organization', 'name' => data_get($site, 'name'), 'url' => route('home')],
+        'publisher' => ['@type' => 'Organization', 'name' => $citationJournal['name'], 'url' => $citationJournal['source_url'] ? 'https://sjcjournal.com' : route('home')],
         'articleSection' => $article->category?->name,
         'keywords' => $articleKeywords->join(', '),
         'identifier' => $article->doi ? 'https://doi.org/'.$article->doi : $article->public_id,
-        'isPartOf' => array_filter(['@type' => 'PublicationIssue', 'issueNumber' => $article->journalIssue?->number ?? $article->issue, 'isPartOf' => array_filter(['@type' => 'PublicationVolume', 'volumeNumber' => $article->journalIssue?->volume?->number ?? $article->volume, 'isPartOf' => array_filter(['@type' => 'Periodical', 'name' => data_get($site, 'name'), 'issn' => data_get($site, 'journal.issn') ?: data_get($site, 'journal.eissn')])])]),
+        'isPartOf' => array_filter(['@type' => 'PublicationIssue', 'issueNumber' => $article->journalIssue?->number ?? $article->issue, 'isPartOf' => array_filter(['@type' => 'PublicationVolume', 'volumeNumber' => $article->journalIssue?->volume?->number ?? $article->volume, 'isPartOf' => array_filter(['@type' => 'Periodical', 'name' => $citationJournal['name'], 'issn' => $citationJournal['issn'] ?: $citationJournal['eissn']])])]),
+        'isBasedOn' => $citationJournal['source_url'],
     ]);
 @endphp
 @extends('layouts.public')
@@ -39,11 +41,11 @@
 
 @push('head')
     <meta name="citation_title" content="{{ $article->title }}">
-    <meta name="citation_journal_title" content="{{ data_get($site, 'name', config('app.name')) }}">
+    <meta name="citation_journal_title" content="{{ $citationJournal['name'] }}">
     @foreach($article->authors as $author)<meta name="citation_author" content="{{ $author->name }}">@if(filled($author->affiliation) || filled($author->organization))<meta name="citation_author_institution" content="{{ $author->affiliation ?: $author->organization }}">@endif @endforeach
     <meta name="citation_publication_date" content="{{ optional($publishedAt)->format('Y/m/d') }}">
-    @if(data_get($site, 'journal.issn'))<meta name="citation_issn" content="{{ data_get($site, 'journal.issn') }}">@endif
-    @if(data_get($site, 'journal.eissn'))<meta name="citation_eissn" content="{{ data_get($site, 'journal.eissn') }}">@endif
+    @if($citationJournal['issn'])<meta name="citation_issn" content="{{ $citationJournal['issn'] }}">@endif
+    @if($citationJournal['eissn'])<meta name="citation_eissn" content="{{ $citationJournal['eissn'] }}">@endif
     @if($citationVolume)<meta name="citation_volume" content="{{ $citationVolume }}">@endif
     @if($citationIssue)<meta name="citation_issue" content="{{ $citationIssue }}">@endif
     @if($article->article_number && !Str::startsWith($article->article_number, config('journal.abbreviation', 'SJC').'-LEGACY-'))<meta name="citation_firstpage" content="{{ $article->article_number }}">@endif
@@ -182,7 +184,7 @@
 
                 <section class="citation-box" id="cite-this-article">
                     <div><p class="eyebrow">Citation</p><h2>Cite this article</h2></div>
-                    @php($citation = $article->authors->pluck('name')->join(', ').'. “'.$article->title.'.” '.data_get($site, 'name').', '.optional($publishedAt)->format('Y').'.'.($article->doi ? ' https://doi.org/'.$article->doi : ' '.route('articles.show', $article->slug)))
+                    @php($citation = $article->authors->pluck('name')->join(', ').'. “'.$article->title.'.” '.$citationJournal['name'].', '.optional($publishedAt)->format('Y').'.'.($article->doi ? ' https://doi.org/'.$article->doi : ' '.($citationJournal['source_url'] ?: route('articles.show', $article->slug))))
                     <p data-citation-text>{{ $citation }}</p>
                     <button class="text-link" type="button" data-copy-citation>Copy citation <x-public.icon name="arrow-up-right" /></button>
                 </section>

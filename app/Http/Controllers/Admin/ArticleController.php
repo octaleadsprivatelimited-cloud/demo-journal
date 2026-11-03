@@ -71,7 +71,7 @@ final class ArticleController extends Controller
         return redirect()->route('admin.articles.edit', $article)->with('success', 'Editorial draft created.');
     }
 
-    public function show(Article $article)
+    public function show(Article $article, ArticleWorkflowService $workflow)
     {
         Gate::authorize('view', $article);
         if ($article->workflow) {
@@ -80,6 +80,7 @@ final class ArticleController extends Controller
         $article->load(['category', 'creator:id,name,email', 'assignedEditor:id,name,email', 'authors', 'tags', 'seoMetadata', 'versions.creator:id,name', 'submissions.version', 'submissions.reviews.reviewer:id,name']);
 
         return view('admin.articles.show', ['article' => $article,
+            'canPublishEditorialDraft' => $workflow->canPublishEditorialDraft($article, request()->user()),
             'editors' => User::query()->active()->whereNotNull('email_verified_at')->whereHas('roles', fn ($query) => $query->whereIn('slug', ['editor', 'admin', 'super-admin']))->orderBy('name')->get(['id', 'name']),
             'reviewers' => User::query()->active()->whereNotNull('email_verified_at')->whereHas('roles', fn ($query) => $query->whereIn('slug', ['reviewer', 'editor', 'admin', 'super-admin']))->orderBy('name')->get(['id', 'name'])]);
     }
@@ -150,7 +151,9 @@ final class ArticleController extends Controller
                 'production' => $workflow->transition($article, ArticleStatus::Production, $request->user(), $request->input('note')),
                 'withdraw' => $workflow->transition($article, ArticleStatus::Withdrawn, $request->user(), $request->input('note')),
                 'schedule' => $workflow->transition($article, ArticleStatus::Scheduled, $request->user(), $request->input('note'), CarbonImmutable::parse($request->input('scheduled_for'))),
-                'publish' => $workflow->transition($article, ArticleStatus::Published, $request->user(), $request->input('note')),
+                'publish' => $article->status === ArticleStatus::Draft
+                    ? $workflow->publishEditorialDraft($article, $request->user(), $request->input('note'))
+                    : $workflow->transition($article, ArticleStatus::Published, $request->user(), $request->input('note')),
                 'unpublish' => $workflow->transition($article, ArticleStatus::Archived, $request->user(), $request->input('note')),
             };
         } catch (DomainException $exception) {
@@ -179,7 +182,9 @@ final class ArticleController extends Controller
                     'delete' => $article->delete(), 'feature' => $article->update(['is_featured' => true, 'is_homepage_latest' => false]),
                     'unfeature' => $article->update(['is_featured' => false]), 'trend' => $article->update(['is_trending' => true]),
                     'untrend' => $article->update(['is_trending' => false]), 'category' => $article->update(['category_id' => $request->integer('category_id')]),
-                    'publish' => $workflow->transition($article, ArticleStatus::Published, $request->user(), 'Bulk publication action'),
+                    'publish' => $article->status === ArticleStatus::Draft
+                        ? $workflow->publishEditorialDraft($article, $request->user(), 'Bulk editorial draft publication by an administrator')
+                        : $workflow->transition($article, ArticleStatus::Published, $request->user(), 'Bulk publication action'),
                 };
                 $completed++;
             } catch (DomainException) {
